@@ -19,6 +19,7 @@ use App\Repository\ShopOrderPositionRepository;
 use App\Repository\ShopOrderRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\UuidInterface;
 
 
@@ -34,10 +35,16 @@ class ShopService
     private readonly IdmRepository $userRepo;
 
     public const DEFAULT_TICKET_PRICE = 5000;
+<<<<<<< HEAD
     public const MAX_ADDON_COUNT = 20;
+=======
+    public const MAX_TICKET_COUNT = 20;
+    public const MAX_ADDON_COUNT = 7;
+    private LoggerInterface $logger;
+>>>>>>> 58a62d9d1c82c145e3ac1087ac2b64914b20c57e
 
     public function __construct(ShopOrderRepository $orderRepository, ShopOrderPositionRepository $shopOrderPositionRepository, ShopAddonsRepository $shopAddonsRepository,
-                                IdmManager          $idmManager, SettingService $settingService, TicketService $ticketService, EmailService $emailService, EntityManagerInterface $em)
+                                IdmManager          $idmManager, SettingService $settingService, TicketService $ticketService, EmailService $emailService, EntityManagerInterface $em, LoggerInterface $logger)
     {
         $this->orderRepository = $orderRepository;
         $this->shopOrderPositionRepository = $shopOrderPositionRepository;
@@ -47,6 +54,7 @@ class ShopService
         $this->ticketService = $ticketService;
         $this->emailService = $emailService;
         $this->em = $em;
+        $this->logger = $logger;
     }
 
     public function getAll()
@@ -120,7 +128,8 @@ class ShopService
     private function setState(ShopOrder $order, ShopOrderStatus $status): bool
     {
         $new_state = match ($order->getStatus()) {
-            null => ShopOrderStatus::Created,
+            // if the order has 0 amount, it is fulfilled immediately
+            null => $order->calculateTotal() == 0 ? ShopOrderStatus::Paid : ShopOrderStatus::Created,
             // currently only state transfer from created to both other states are allowed.
             ShopOrderStatus::Created => $status,
             default => $order->getStatus()
@@ -139,6 +148,7 @@ class ShopService
 
     private function handleNewState(ShopOrder $order): void
     {
+        $this->logger->info("Order {$order->getId()} is now in stage {$order->getStatus()->name}");
         switch ($order->getStatus()) {
             case ShopOrderStatus::Created:
                 $this->emailOrder($order);
@@ -209,6 +219,16 @@ class ShopService
     {
         $uuid = $user instanceof User ? $user->getUuid() : $user;
         return $this->orderRepository->queryOrders($uuid, $status);
+    }
+
+    public function deleteOrder(ShopOrder $order): void
+    {
+        if ($order->getStatus() !== ShopOrderStatus::Canceled) {
+            throw new OrderLifecycleException($order);
+        }
+        $this->logger->info("Order {$order->getId()} was deleted.");
+        $this->em->remove($order);
+        $this->em->flush();
     }
 
     public function toggleAddonActivity(ShopAddon $addon): void

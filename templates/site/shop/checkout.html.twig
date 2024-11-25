@@ -4,28 +4,39 @@
 
 {% block main %}
     {% set showTicketSale = form.tickets is defined %}
+    {% set showTicketRedeem = form.code is defined %}
     {% set showAddonSale = addons is not empty %}
+    {% set twoSteps = showTicketSale and not has_ticket %}
     {% set showAny = showTicketSale or showAddonSale %}
 
     {% if showAny %}{{ form_start(form) }}{% endif %}
     <div id="shop" class="container mb-4">
-        {% if showTicketSale %}
+        {% if showTicketSale or showTicketRedeem %}
             <div id="ticketWrapper">
                 {% include 'site/shop/_tickets.html.twig' %}
             </div>
         {% endif %}
         {% if showAddonSale %}
-            <div id="addonWrapper" class="{% if showTicketSale %}d-none{% endif %}">
+            <div id="addonWrapper" class="{% if twoSteps %}d-none{% endif %}">
                 {% if showTicketSale %}<hr />{% endif %}
                 {% include 'site/shop/_addons.html.twig' %}
             </div>
         {% endif %}
         {% if showAny %}
+<<<<<<< HEAD
             <div id="submitWrapper" class="{% if showTicketSale %}d-none{% endif %}">
                 {% if 'agb' is slug %}
                     <div class="row">
                         <div class="col text-right">
                             <p>Durch den Erwerb von Veranstaltungstickets stimmst du unseren {{ 'agb' | slug_link(null, true) }} zu.</p>
+=======
+            <div id="submitWrapper" class="{% if twoSteps %}d-none{% endif %}">
+                <hr/>
+                {% if 'agb' is slug %}
+                    <div class="row">
+                        <div class="col">
+                            <p>Durch das Absenden der Bestellung oder dem Einlösen eines Tickets stimmst du unseren {{ 'agb' | slug_link(null, true) }} zu.</p>
+>>>>>>> 58a62d9d1c82c145e3ac1087ac2b64914b20c57e
                             {% if settings.get('lan.signup.info') is not empty %}
                                 {{ settings.get('lan.signup.info') | raw }}
                             {% endif %}
@@ -35,8 +46,8 @@
                 <div class="row">
                     <div class="col d-flex">
                         <div class="flex-fill"></div>
-                        {% if showTicketSale %}
-                        <button class="btn btn-secondary m-1" type="button" id="buttonReset">Abbrechen</button>
+                        {% if twoSteps %}
+                        <button class="btn btn-secondary m-1" type="reset">Abbrechen</button>
                         {% endif %}
                         <button class="btn btn-primary m-1" type="submit"><i class="fas fa-shopping-cart"></i> Kostenpflichtig bestellen</button>
                     </div>

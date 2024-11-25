@@ -10,24 +10,32 @@ const Shop = function ($root, config) {
 
     this.$paneOne = this.$tickets.find('#ticketSelfBody');
     this.$paneMore = this.$tickets.find('#ticketClanBody');
-    this.$paneMore.find('#button-confirm-ticket').on('click', () => this.smNext());
     this.$paneRedeem = this.$tickets.find('#redeemCodeBody');
+    this.$backButton = this.$tickets.find('#backButton');
+
+    this.$paneAdditional = this.$root.find('#ticketAdditionalBody');
+    this.$showAdditionalPane = this.$root.find('#showAdditionalTicketsPane');
+    this.$showAdditionalPane.find('#showAdditionalTickets').on('click', (e) => { e.preventDefault(); this._showAdditional(); });
 
     this.$form = this.$root.find('form');
     this.$formTicketCount = this.$paneMore.find('input');
     this.$formRedeemInput = this.$paneRedeem.find('input');
     this.$formRedeemButton = this.$paneRedeem.find('button');
     this.$formRedeemButton.on('click', () => this._redeem());
+    this.$formTicketAdditional = this.$paneAdditional.find('input');
+    this.$formTicketAdditional.val(0);
 
     this.$addons = this.$root.find('#addonWrapper');
     this.$addonInputs = this.$addons.find('input');
-    this.$buttonReset = this.$root.find('#buttonReset');
-    this.$buttonReset.on('click', () => this.smClear());
+    this.$buttonReset = this.$root.find('button[type="reset"]');
+    this.$buttonReset.on('click', (e) => { e.preventDefault(); this.smClear() });
 
     this.$submit = this.$root.find('#submitWrapper');
 
     this.visibilityStates = storeVisibility([
         this.$buttonsWrapper,
+        this.$backButton,
+        this.$paneAdditional,
         this.$paneRedeem,
         this.$paneOne,
         this.$paneMore,
@@ -38,6 +46,7 @@ const Shop = function ($root, config) {
     this.defaultValues = storeValues([
         this.$formRedeemInput,
         this.$formTicketCount,
+        this.$formTicketAdditional,
     ].concat(this.$addonInputs.map((i, v) => $(v)).get()));
 
     this.path = config['path'];
@@ -151,11 +160,18 @@ $.extend(Shop.prototype, {
         this.$formRedeemInput.val('');
         this.$buttonsWrapper.addClass('d-none');
         this.$paneRedeem.removeClass('d-none');
+        this.$backButton.removeClass('d-none');
     },
     _showAddon() {
         this.$addons.find('input').val(0);
+        this.$backButton.addClass('d-none');
         this.$addons.removeClass('d-none');
         this.$submit.removeClass('d-none');
+    },
+    _showAdditional() {
+        this.$formTicketAdditional.val(0);
+        this.$showAdditionalPane.addClass('d-none');
+        this.$paneAdditional.removeClass('d-none');
     },
     _checkCode(code) {
         return new Promise(((resolve, reject) => {

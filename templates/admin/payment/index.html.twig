@@ -23,9 +23,10 @@
                         <th>&#8470;</th>
                         <th>Code</th>
                         <th><i class="fas fa-euro-sign"></i></th>
+                        <th>Eingelöst</th>
                         <th class="w-25">Nickname</th>
                         <th class="w-25">Name</th>
-                        <th class="w-25">Status</th>
+                        <th>Status</th>
                         <th
                                 class="text-nowrap w-1"
                                 data-orderable="false"
@@ -42,6 +43,7 @@
                             <td class="text-nowrap text-monospace">{{ ticket.code }}</td>
                             <td>{% if ticket.shopOrderPosition %} <span class="badge badge-secondary" title="Gekauft"><i class="fas fa-euro-sign"></i></span>{% endif %}</td>
                         {% if ticket.redeemed %}
+                            <td data-order="{{ ticket.redeemedAt | date('U') }}">{{ ticket.redeemedAt | date('d.m.y H:i') }}</td>
                             {% set user = users[ticket.redeemer.toString()] %}
                             <td data-order="{{ user.nickname }}">
                                 {% for clan in user.clans %}
@@ -53,18 +55,31 @@
                         {% else %}
                             <td></td>
                             <td></td>
+                            <td></td>
                         {% endif %}
                             <td>
                                 {% if ticket.isRedeemed() %}
-                                    <span class="badge badge-primary">Bezahlt</span>
-                                {% endif %}
-                                {% if ticket.isPunched() %}
-                                    <span class="badge badge-secondary">Checked-In</span>
+                                    {% if ticket.isPunched() %}
+                                        <span class="badge badge-success">Checked-In</span>
+                                    {% else %}
+                                        <span class="badge badge-primary">Eingel&ouml;st</span>
+                                    {% endif %}
+
+                                    {% set user = ticket.redeemer | user %}
+                                    {% if user is age_below(18) %}
+                                        <span class="badge badge-danger">U18</span>
+                                    {% endif %}
+
+                                    {% if ticket.redeemer is not seated_user %}
+                                        <span class="badge badge-danger">Kein Sitzplatz</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-secondary">Offen</span>
                                 {% endif %}
                             </td>
                             <td>
                                 <a class="btn btn-sm btn-outline-dark text-nowrap" data-toggle="ajaxModal" href="{{ path('admin_payment_show', {'id' : ticket.id}) }}">
-                                    <i class="fas fa-money-check"></i> Status ändern
+                                    <i class="fas fa-ticket"></i> Details
                                 </a>
                             </td>
                         </tr>

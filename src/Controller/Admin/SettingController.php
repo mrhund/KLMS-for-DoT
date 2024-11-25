@@ -4,10 +4,15 @@ namespace App\Controller\Admin;
 
 use App\Form\HtmlTextareaType;
 use App\Service\SettingService;
+use App\Service\SettingType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\MoneyType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\HttpFoundation\Request;
@@ -52,26 +57,44 @@ class SettingController extends AbstractController
     #[Route(path: '/edit', name: '_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request): Response
     {
-        $key = $request->get('key');
+        $key = $request->get('key', '');
         if (!$this->service->validKey($key)) {
             return $this->redirectToRoute('admin_setting');
         }
 
         $fb = $this->createFormBuilder($this->service->getSettingObject($key))
+            ->setAction($this->generateUrl('admin_setting_edit', ['key' => $key]))
             ->add('key', HiddenType::class);
 
+        $options = ['required' => false, 'label' => false];
         switch (SettingService::getType($key)) {
             default:
-            case SettingService::TB_TYPE_STRING:
-                $fb->add('text', TextType::class, ['required' => false, 'label' => false]);
+            case SettingType::String:
+                $fb->add('text', TextType::class, $options);
                 break;
-            case SettingService::TB_TYPE_HTML:
-                $fb->add('text', HtmlTextareaType::class, ['required' => false, 'label' => false]);
+            case SettingType::HTML:
+                $fb->add('text', HtmlTextareaType::class, $options);
                 break;
-            case SettingService::TB_TYPE_URL:
-                $fb->add('text', UrlType::class, ['required' => false, 'label' => false]);
+            case SettingType::URL:
+                $fb->add('text', UrlType::class, $options);
                 break;
-            case SettingService::TB_TYPE_FILE:
+            case SettingType::Integer:
+                $fb->add('text', IntegerType::class, $options);
+                $fb->get('text')
+                    ->addModelTransformer(new CallbackTransformer(
+                        fn($a) => intval($a),
+                        fn($a) => strval($a)
+                    ));
+                break;
+            case SettingType::Money:
+                $fb->add('text', MoneyType::class, array_merge($options, ['divisor' => 100]));
+                $fb->get('text')
+                    ->addModelTransformer(new CallbackTransformer(
+                        fn($a) => intval($a),
+                        fn($a) => empty($a) ? "0" : strval($a)
+                    ));
+                break;
+            case SettingType::File:
                 $fb->add('file', VichFileType::class, [
                     'required' => false,
                     'label' => false,
@@ -80,7 +103,7 @@ class SettingController extends AbstractController
                     'delete_label' => 'Löschen',
                     ]);
                 break;
-            case SettingService::TB_TYPE_BOOL:
+            case SettingType::Bool:
                 $fb->add('text', ChoiceType::class, [
                     'choices' => [
                         'Aktiviert' => '1',
@@ -93,16 +116,23 @@ class SettingController extends AbstractController
                 break;
         }
 
+        $fb->add('delete', SubmitType::class, ['label' => 'Löschen']);
+        $fb->add('save', SubmitType::class, ['label' => 'Speichern']);
+
         $form = $fb->getForm();
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            $data = $form->getData();
-            $this->service->setSettingsObject($data);
+            if ($form->get('delete')->isClicked()) {
+                $this->service->remove($key);
+            } else if ($form->get('save')->isClicked()) {
+                $data = $form->getData();
+                $this->service->setSettingsObject($data);
+            }
 
-            return $this->redirectToRoute('admin_setting');
+            return $this->redirectToRoute('admin_setting', ['_fragment' => $key]);
         }
 
-        return $this->render('admin/settings/edit.html.twig', [
+        return $this->render(!$request->isXmlHttpRequest() ? 'admin/settings/edit.html.twig' : 'admin/settings/edit.modal.html.twig', [
             'key' => $key,
             'desc' => SettingService::getDescription($key),
             'form' => $form->createView(),

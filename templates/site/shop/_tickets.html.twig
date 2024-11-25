@@ -2,6 +2,7 @@
     <div class="col">
         <h1 class="text-center">Ticketshop</h1>
         <div class="mb-3">
+        {% if not has_ticket %}
             {% if settings.get('lan.signup.info.ticket') is not empty %}
                 <div>
                     {{ settings.get('lan.signup.info.ticket') | raw }}
@@ -11,12 +12,30 @@
                     Hol dir dein Ticket für ein besonderes LAN-Event! Freu dich auf spannende Matches und exklusive Add-ons, die dein Gaming-Erlebnis erweitern. Jetzt buchen und dabei sein!
                 </p>
             {% endif %}
+        {% else %}
+            <div class="alert alert-success text-center" role="alert">
+            Du hast bereits ein Ticket und bist mit dabei!
+            </div>
+            {% if form.tickets is defined %}
+                <div id="showAdditionalTicketsPane">
+                    Wenn du weitere Tickets für Freunde kaufen möchtest, klicke <a id="showAdditionalTickets" href="#">hier</a>.
+                </div>
+            {% endif %}
+        {% endif %}
         </div>
     </div>
 </div>
+<<<<<<< HEAD
 
+=======
+{% set price = settings.get('lan.signup.price') %}
+{% set price_reduced = settings.get('lan.signup.discount.price') %}
+{% set price_reduced_limit = settings.get('lan.signup.discount.limit') %}
+{% if not has_ticket %}
+>>>>>>> 58a62d9d1c82c145e3ac1087ac2b64914b20c57e
 <div id="chooseTicketWrapper" class="mb-2">
     <div class="d-xs-block d-sm-block d-md-flex justify-content-center" >
+        {% if form.tickets is defined %}
         <div class="card m-2 p-0 col-md-4 col-lg-3" id="ticketSelfHead">
             <button class="btn btn-link btn-block text-center card-body pl-1 pr-1" type="button" data-mode="one">
                 <span class="h3"><i class="fa-solid fa-user"></i></span><br>
@@ -29,18 +48,26 @@
                 <span class="h4">Gruppenticket</span>
             </button>
         </div>
+        {% endif %}
+        {% if form.code is defined %}
         <div class="card m-2 p-0 col-md-4 col-lg-3" id="redeemCodeHead">
             <button class="btn btn-link btn-block text-center card-body pl-1 pr-1" type="button" data-mode="redeem">
                 <span class="h3"><i class="fa-solid fa-ticket"></i> </span><br>
                 <span class="h4">Ticket-Code<br/>einlösen</span>
             </button>
         </div>
+        {% endif %}
     </div>
 </div>
+<<<<<<< HEAD
 <div class="row">
     {% set price = settings.get('lan.signup.price') %}
     {% set price_reduced = settings.get('lan.signup.discount.price') %}
     {% set price_reduced_limit = settings.get('lan.signup.discount.limit') %}
+=======
+<div>
+    {% if form.tickets is defined %}
+>>>>>>> 58a62d9d1c82c145e3ac1087ac2b64914b20c57e
     <div id="ticketSelfBody" class="card d-none">
         <div class="card-body">
             <h2 class="my-0 font-weight-normal">Einzelticket kaufen</h2>
@@ -87,10 +114,13 @@
                         <span class="input-group-text">Anzahl der Tickets</span>
                     </div>
                     {{ form_widget(form.tickets) }}
+<<<<<<< HEAD
                     {# <input type="number" class="form-control" value="1" min="1" max="20"> #}
                     <div class="input-group-append">
                         {# <button class="btn btn-primary" type="button" id="button-confirm-ticket">Tickets kaufen</button> #}
                     </div>
+=======
+>>>>>>> 58a62d9d1c82c145e3ac1087ac2b64914b20c57e
                 </div>
                 <p class="mt-4">
                     Bei mehreren Tickets wird das erste automatisch für den eigenen Eintritt verwendet und alle
@@ -99,6 +129,8 @@
             </div>
         </div>
     </div>
+    {% endif %}
+    {% if form.code is defined %}
     <div id="redeemCodeBody" class="card d-none">
         <div class="card-body">
             <h2 class="my-0 font-weight-normal">Ticket Code einlösen</h2>
@@ -109,7 +141,6 @@
                     eingeben:</p>
                 <div class="input-group">
                     {{ form_widget(form.code, {'attr': {'placeholder': 'XXXXX-XXXXX-XXXXX'}}) }}
-                    {# <input type="text" class="form-control" placeholder="AAAAA-BBBBB-00000"> #}
                     <div class="input-group-append">
                         <button class="btn btn-primary" type="button" id="button-confirm-code">Code überprüfen</button>
                     </div>
@@ -117,4 +148,44 @@
             </div>
         </div>
     </div>
+    {% endif %}
+    <div id="backButton" class="d-none mt-2 text-right">
+        <button class="btn btn-secondary ml-1" type="reset">Abbrechen</button>
+    </div>
 </div>
+{% else %}
+    {% if form.tickets is defined %}
+        <div id="ticketAdditionalBody" class="card d-none">
+            <div class="card-header">
+                <h4 class="my-0 font-weight-normal">Weiteren LAN Eintritt kaufen</h4>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-center">
+                    <div class="mr-5 align-bottom" style="height: 100%">
+                        <h6 class="card-subtitle text-muted text-center">&nbsp;</h6>
+                        <h2 class="card-title text-center">{{ (price / 100) | format_currency('EUR') }}</h2>
+                        <h6 class="card-subtitle text-muted mb-4 text-center">pro Person</h6>
+                    </div>
+                    {% if price_reduced_limit and price_reduced %}
+                        <div class="ml-5 align-bottom">
+                            <h6 class="card-subtitle text-muted text-center">ab {{ price_reduced_limit}} Personen</h6>
+                            <h2 class="card-title text-center">{{ (price_reduced / 100) | format_currency('EUR') }}</h2>
+                            <h6 class="card-subtitle text-muted mb-4 text-center">pro Person</h6>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-text">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Anzahl der Tickets</span>
+                        </div>
+                        {{ form_widget(form.tickets) }}
+                    </div>
+                    <p class="text-muted">
+                        Du hast bereits ein Ticket. Weitere Tickets werden als Ticket-Codes für deine Freunde versendet.
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endif %}

@@ -53,8 +53,9 @@ class SeatRepository extends ServiceEntityRepository
     public function countFreeSeats(): int
     {
         return $this->createCountQueryBuilder('s')
-            ->andWhere('s.owner IS NULL')
             ->andWhere('s.type = :st')
+            ->andWhere('s.owner IS NULL')
+            ->andWhere('s.clanReservation IS NULL')
             ->setParameter('st', SeatKind::SEAT)
             ->getQuery()
             ->getSingleScalarResult();
@@ -74,6 +75,16 @@ class SeatRepository extends ServiceEntityRepository
             ->andWhere('s.owner IS NULL')
             ->andWhere('s.type = :st')
             ->setParameter('st', SeatKind::LOCKED)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countClanReservedSeats(): int
+    {
+        return $this->createCountQueryBuilder('s')
+            ->andWhere('s.owner IS NULL')
+            ->andWhere('s.type = :seat AND s.clanReservation IS NOT NULL')
+            ->setParameter('seat', SeatKind::SEAT)
             ->getQuery()
             ->getSingleScalarResult();
     }

@@ -20,6 +20,7 @@ use Twig\TwigTest;
 class UserExtension extends AbstractExtension
 {
     private readonly IdmRepository $userRepo;
+    private readonly IdmRepository $clanRepo;
     private readonly UserService $userService;
     private readonly SeatmapService $seatmapService;
     private readonly TicketService $ticketService;
@@ -27,6 +28,7 @@ class UserExtension extends AbstractExtension
     public function __construct(IdmManager $manager, UserService $userService, SeatmapService $seatmapService, TicketService $ticketService)
     {
         $this->userRepo = $manager->getRepository(User::class);
+        $this->clanRepo = $manager->getRepository(Clan::class);
         $this->userService = $userService;
         $this->seatmapService = $seatmapService;
         $this->ticketService = $ticketService;
@@ -43,6 +45,7 @@ class UserExtension extends AbstractExtension
             new TwigTest('seated_user', $this->userIsSeated(...)),
             new TwigTest('in_clan', $this->userIsInClan(...)),
             new TwigTest('in_clans', $this->userIsInClans(...)),
+            new TwigTest('age_below', $this->userAgeBelow(...)),
         ];
     }
 
@@ -53,6 +56,7 @@ class UserExtension extends AbstractExtension
     {
         return [
             new TwigFilter('user', $this->getUser(...)),
+            new TwigFilter('clan', $this->getClan(...)),
             new TwigFilter('username', $this->getUserName(...)),
             new TwigFilter('user_image', $this->getUserImage(...)),
             new TwigFilter('group_name', $this->getGroupName(...)),
@@ -67,6 +71,15 @@ class UserExtension extends AbstractExtension
         }
 
         return $this->userRepo->findOneById($userId);
+    }
+
+    public function getClan($clanId): ?Clan
+    {
+        if (empty($clanId) || !Uuid::isValid($clanId)) {
+            return null;
+        }
+
+        return $this->clanRepo->findOneById($clanId);
     }
 
     public function getUserName($userId): string
@@ -125,6 +138,11 @@ class UserExtension extends AbstractExtension
     public function userIsInClans(User|UuidInterface $user, array $clans): bool
     {
         return $this->userService->isUserInClans($user, $clans);
+    }
+
+    public function userAgeBelow(User|UuidInterface $user, int $age): bool
+    {
+        return !($this->userService->userAgeAbove($user, $age) ?? true);
     }
 
     public function getSeat(User $user): string

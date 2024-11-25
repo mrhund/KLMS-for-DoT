@@ -10,17 +10,21 @@
                 <table class="table">
                     <tbody>
                     {% for key in kk %}
+                        {% set SettingType = enum('\\App\\Service\\SettingType') %}
+                        {% set value = service.get(key) %}
+                        {% set type = service.getType(key) %}
                         {% set desc = service.getDescription(key) %}
-                        <tr>
+                        <tr id="{{ key }}">
                             <td style="width: 25%">
-                                <a href="{{ path('admin_setting_edit', {'key' : key}) }}" title="Bearbeiten {{ key }}"> {{ key }}</a><br>
+                                <a href="{{ path('admin_setting_edit', {'key' : key}) }}" {% if type != SettingType.HTML and type != SettingType.File %}data-toggle="ajaxModal"{% endif %} title="Bearbeiten {{ key }}"> {{ key }}</a><br>
                                 <small class="text-muted">{{ desc }}</small>
                             </td>
                             <td style="width: 75%">
-                                {% set value = service.get(key) %}
-                                {% if value is not empty %}
-                                    {% if service.getType(key) == 'bool' %}
+                                {% if service.isSet(key) %}
+                                    {% if type == SettingType.Bool %}
                                         {{ value ? 'Aktiviert' : 'Deaktiviert' }}
+                                    {% elseif type == SettingType.Money %}
+                                        {% if value is not empty %}{{ (value/100) | format_currency('EUR') }}{% endif %}
                                     {% else %}
                                         {{ value | striptags | u.truncate(100, '...', false) | raw }}
                                     {% endif %}
