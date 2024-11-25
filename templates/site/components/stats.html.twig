@@ -1,11 +1,9 @@
 {% if settings.get("lan.stats.show") %}
     {% set display = [
-        {name: 'Tickets bestellt', key: 'tickets_ordered', icon: 'fas fa-user' },
-        {name: 'Tickets verkauft', key: 'tickets_redeemed', icon: 'fas fa-money-bill' },
-        {name: 'Freie Sitzplätze', key: 'seats_free', icon: 'fas fa-chair' },
+        {name: 'Angemeldet', key: 'tickets_ordered', icon: 'fas fa-user' },
+        {name: 'Bezahlt', key: 'tickets_redeemed', icon: 'fas fa-money-bill' },
+        {name: 'Verfügbar', key: 'seats_free', icon: 'fas fa-chair' },
     ] %}
-    <div class="container">
-        <div class="card">
             <div class="card-body row justify-content-center">
                 {% for d in display %}
                 <div class="text-center col col-lg-2 col-md-3 col-sm-4 col-12 mb-1 mt-1">
@@ -14,6 +12,4 @@
                 </div>
                 {% endfor %}
             </div>
-        </div>
-    </div>
 {% endif %}

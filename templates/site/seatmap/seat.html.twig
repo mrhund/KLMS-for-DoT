@@ -9,8 +9,8 @@
         <div class="container-fluid">
             <div class="col">
                 <p>
-                    Sitzplatz: {{ seat.generateSeatName }}
-                    <br>
+                    <!--Sitzplatz: {{ seat.generateSeatName }}
+                    <br>-->
                     Status:
                     {% if seat.owner is not empty %}
                         Reserviert
@@ -19,14 +19,12 @@
                     {% else %}
                         Frei
                     {% endif %}
-                </p>
+                <br/>
                 {% if seat.owner is not empty %}
-                    <h1 title="Nickname" class="h4 d-inline-block">Nickname:
-                        <a target="_blank" href="{{ path('user_show', {'uuid': user.uuid }) }}">{{ user.nickname }}</a>
-                    </h1>
+                    Nickname: <a target="_blank" href="{{ path('user_show', {'uuid': user.uuid }) }}">{{ user.nickname }}</a>
                     <br/>
                     {% if user.clans is not empty %}
-                        <h5 title="Clan" class="d-inline-block">Clans:</h5>
+                        Clans:
                         <ul>
                             {% for clan in user.clans %}
                                 <li>
@@ -37,7 +35,7 @@
                         </ul>
                     {% endif %}
                 {% endif %}
-                <br>
+                </p>
             </div>
         </div>
     {% endblock %}

@@ -45,7 +45,8 @@ class ShopController extends AbstractController
     {
         if (!$this->settingService->isSet('lan.signup.enabled')) {
             $this->addFlash('warning', "Anmeldung ist noch nicht freigeschalten.");
-            return $this->redirect('/');
+            //return $this->redirect('/');
+            return $this->redirectToRoute('shop_orders');
         }
 
         /** @var User $user */

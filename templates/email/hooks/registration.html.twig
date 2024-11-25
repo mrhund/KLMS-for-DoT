@@ -5,7 +5,10 @@
   {% set org = settings.get('site.organisation') %}
   {% if text is empty %}
     <h1>Deine Registrierung bei {{ org }}</h1>
+  {% else %}
+   {{ text }}
   {% endif %}
+  <p></p>    
   <p>Zum Bestätigen der Registrierung <a href="{{ url('app_register_confirm', {'user' : user, 'token' : token}) }}">hier</a> klicken.</p>
   <p></p>
   {% include 'email/components/greetings.html.twig' %}

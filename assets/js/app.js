@@ -42,3 +42,12 @@ $(document).ready(function () {
     });
 
 });
+
+window.onscroll = function(e) { 
+    if (this.scrollY > 0) {
+      $('#main-nav').addClass('navbar-bg');
+    }
+    else {
+      $('#main-nav').removeClass('navbar-bg');
+    }
+};

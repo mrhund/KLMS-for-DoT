@@ -34,7 +34,7 @@ class ShopService
     private readonly IdmRepository $userRepo;
 
     public const DEFAULT_TICKET_PRICE = 5000;
-    public const MAX_ADDON_COUNT = 7;
+    public const MAX_ADDON_COUNT = 20;
 
     public function __construct(ShopOrderRepository $orderRepository, ShopOrderPositionRepository $shopOrderPositionRepository, ShopAddonsRepository $shopAddonsRepository,
                                 IdmManager          $idmManager, SettingService $settingService, TicketService $ticketService, EmailService $emailService, EntityManagerInterface $em)
