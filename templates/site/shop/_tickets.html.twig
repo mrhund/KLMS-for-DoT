@@ -1,7 +1,7 @@
 <div class="row">
     <div class="col">
         <h1 class="text-center">Ticketshop</h1>
-        <div class="mb-3">
+        <div class="pb-4">
         {% if not has_ticket %}
             {% if settings.get('lan.signup.info.ticket') is not empty %}
                 <div>
@@ -17,7 +17,7 @@
             Du hast bereits ein Ticket und bist mit dabei!
             </div>
             {% if form.tickets is defined %}
-                <div id="showAdditionalTicketsPane">
+                <div class="pt-4 pb-3" id="showAdditionalTicketsPane">
                     Wenn du weitere Tickets für Freunde kaufen möchtest, klicke <a id="showAdditionalTickets" href="#">hier</a>.
                 </div>
             {% endif %}
@@ -25,14 +25,10 @@
         </div>
     </div>
 </div>
-<<<<<<< HEAD
-
-=======
 {% set price = settings.get('lan.signup.price') %}
 {% set price_reduced = settings.get('lan.signup.discount.price') %}
 {% set price_reduced_limit = settings.get('lan.signup.discount.limit') %}
 {% if not has_ticket %}
->>>>>>> 58a62d9d1c82c145e3ac1087ac2b64914b20c57e
 <div id="chooseTicketWrapper" class="mb-2">
     <div class="d-xs-block d-sm-block d-md-flex justify-content-center" >
         {% if form.tickets is defined %}
@@ -59,19 +55,10 @@
         {% endif %}
     </div>
 </div>
-<<<<<<< HEAD
-<div class="row">
-    {% set price = settings.get('lan.signup.price') %}
-    {% set price_reduced = settings.get('lan.signup.discount.price') %}
-    {% set price_reduced_limit = settings.get('lan.signup.discount.limit') %}
-=======
 <div>
     {% if form.tickets is defined %}
->>>>>>> 58a62d9d1c82c145e3ac1087ac2b64914b20c57e
     <div id="ticketSelfBody" class="card d-none">
-        <div class="card-body">
-            <h2 class="my-0 font-weight-normal">Einzelticket kaufen</h2>
-        </div>
+        <h2 class="my-0 font-weight-normal">Einzelticket kaufen</h2>
         <div class="card-body">
             <h3 class="card-title text-center">{{ (price / 100) | format_currency('EUR') }}</h3>
             <div class="card-text">
@@ -90,9 +77,7 @@
         </div>
     </div>
     <div id="ticketClanBody" class="card d-none">
-        <div class="card-body">
-            <h2 class="my-0 font-weight-normal">Gruppenticket kaufen</h2>
-        </div>
+        <h2 class="my-0 font-weight-normal">Gruppenticket kaufen</h2>
         <div class="card-body">
             <div class="d-flex justify-content-center">
                 <div class="mr-5 align-bottom" style="height: 100%">
@@ -114,13 +99,6 @@
                         <span class="input-group-text">Anzahl der Tickets</span>
                     </div>
                     {{ form_widget(form.tickets) }}
-<<<<<<< HEAD
-                    {# <input type="number" class="form-control" value="1" min="1" max="20"> #}
-                    <div class="input-group-append">
-                        {# <button class="btn btn-primary" type="button" id="button-confirm-ticket">Tickets kaufen</button> #}
-                    </div>
-=======
->>>>>>> 58a62d9d1c82c145e3ac1087ac2b64914b20c57e
                 </div>
                 <p class="mt-4">
                     Bei mehreren Tickets wird das erste automatisch für den eigenen Eintritt verwendet und alle
@@ -132,9 +110,7 @@
     {% endif %}
     {% if form.code is defined %}
     <div id="redeemCodeBody" class="card d-none">
-        <div class="card-body">
-            <h2 class="my-0 font-weight-normal">Ticket Code einlösen</h2>
-        </div>
+        <h2 class="my-0 font-weight-normal">Ticket Code einlösen</h2>
         <div class="card-body">
             <div class="card-text">
                 <p>Wenn du einen Ticket-Code für einen LAN-Eintritt erhalten hast, kannst du ihn hier
@@ -156,10 +132,8 @@
 {% else %}
     {% if form.tickets is defined %}
         <div id="ticketAdditionalBody" class="card d-none">
-            <div class="card-header">
-                <h4 class="my-0 font-weight-normal">Weiteren LAN Eintritt kaufen</h4>
-            </div>
-            <div class="card-body">
+                <h2 class="my-0 font-weight-normal">Weiteren LAN Eintritt kaufen</h2>
+            <div class="pt-4 pb-3">
                 <div class="d-flex justify-content-center">
                     <div class="mr-5 align-bottom" style="height: 100%">
                         <h6 class="card-subtitle text-muted text-center">&nbsp;</h6>

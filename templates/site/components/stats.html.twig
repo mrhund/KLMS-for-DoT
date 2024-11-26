@@ -1,11 +1,4 @@
 {% if settings.get("lan.stats.show") %}
-<<<<<<< HEAD
-    {% set display = [
-        {name: 'Angemeldet', key: 'tickets_ordered', icon: 'fas fa-user' },
-        {name: 'Bezahlt', key: 'tickets_redeemed', icon: 'fas fa-money-bill' },
-        {name: 'Verfügbar', key: 'seats_free', icon: 'fas fa-chair' },
-    ] %}
-=======
     {% if settings.get("lan.stats.show_seats") %}
         {% set display = [
             {name: 'Reservierte Plätze', key: 'seats_taken', icon: 'fas fa-user' },
@@ -19,9 +12,7 @@
             {name: 'Freie Sitzplätze', key: 'seats_free', icon: 'fas fa-chair' },
         ] %}
     {% endif %}
-    <div class="container">
-        <div class="card">
->>>>>>> 58a62d9d1c82c145e3ac1087ac2b64914b20c57e
+    <div class="container mt-4">
             <div class="card-body row justify-content-center">
                 {% for d in display %}
                 <div class="text-center col col-lg-2 col-md-3 col-sm-4 col-12 mb-1 mt-1">
@@ -30,10 +21,5 @@
                 </div>
                 {% endfor %}
             </div>
-<<<<<<< HEAD
-{% endif %}
-=======
-        </div>
     </div>
 {% endif %}
->>>>>>> 58a62d9d1c82c145e3ac1087ac2b64914b20c57e

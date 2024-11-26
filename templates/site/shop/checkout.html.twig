@@ -18,25 +18,15 @@
         {% endif %}
         {% if showAddonSale %}
             <div id="addonWrapper" class="{% if twoSteps %}d-none{% endif %}">
-                {% if showTicketSale %}<hr />{% endif %}
                 {% include 'site/shop/_addons.html.twig' %}
             </div>
         {% endif %}
         {% if showAny %}
-<<<<<<< HEAD
             <div id="submitWrapper" class="{% if showTicketSale %}d-none{% endif %}">
                 {% if 'agb' is slug %}
                     <div class="row">
                         <div class="col text-right">
                             <p>Durch den Erwerb von Veranstaltungstickets stimmst du unseren {{ 'agb' | slug_link(null, true) }} zu.</p>
-=======
-            <div id="submitWrapper" class="{% if twoSteps %}d-none{% endif %}">
-                <hr/>
-                {% if 'agb' is slug %}
-                    <div class="row">
-                        <div class="col">
-                            <p>Durch das Absenden der Bestellung oder dem Einlösen eines Tickets stimmst du unseren {{ 'agb' | slug_link(null, true) }} zu.</p>
->>>>>>> 58a62d9d1c82c145e3ac1087ac2b64914b20c57e
                             {% if settings.get('lan.signup.info') is not empty %}
                                 {{ settings.get('lan.signup.info') | raw }}
                             {% endif %}
