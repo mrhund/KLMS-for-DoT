@@ -14,24 +14,25 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class CheckoutType extends AbstractType
 {
-    private const MAX_COUNT = ShopService::MAX_ADDON_COUNT;
-
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         if ($options['tickets']) {
             $builder
                 ->add('tickets', IntegerType::class, [
                     'required' => false,
-                    'empty_data' => 1,
+                    'empty_data' => 0,
                     'attr' => [
                         'min' => 0,
-                        'max' => self::MAX_COUNT,
+                        'max' => ShopService::MAX_TICKET_COUNT,
                     ],
                     'constraints' => [
                         new Assert\GreaterThanOrEqual(0),
-                        new Assert\LessThanOrEqual(self::MAX_COUNT)
+                        new Assert\LessThanOrEqual(ShopService::MAX_TICKET_COUNT)
                     ]
-                ])
+                ]);
+        }
+        if ($options['code']) {
+            $builder
                 ->add('code', TextType::class, [
                     'required' => false,
                     'attr' => [
@@ -49,11 +50,11 @@ class CheckoutType extends AbstractType
                 'empty_data' => 0,
                 'attr' => [
                     'min' => 0,
-                    'max' => self::MAX_COUNT,
+                    'max' => $addon->getMaxQuantity() ?? ShopService::MAX_ADDON_COUNT,
                 ],
                 'constraints' => [
                     new Assert\GreaterThanOrEqual(0),
-                    new Assert\LessThanOrEqual(self::MAX_COUNT)
+                    new Assert\LessThanOrEqual($addon->getMaxQuantity() ?? ShopService::MAX_ADDON_COUNT)
                 ]
             ]);
         }
@@ -63,10 +64,12 @@ class CheckoutType extends AbstractType
     {
         $resolver->setDefaults([
             'tickets' => true,
+            'code' => true,
             'addons' => []
         ]);
         $resolver
             ->setAllowedTypes('tickets', 'bool')
+            ->setAllowedTypes('code', 'bool')
             ->setAllowedTypes('addons', ShopAddon::class.'[]');
     }
 }

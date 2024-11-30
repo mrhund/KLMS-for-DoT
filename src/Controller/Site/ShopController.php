@@ -6,7 +6,6 @@ use App\Entity\ShopOrder;
 use App\Entity\User;
 use App\Exception\OrderLifecycleException;
 use App\Form\CheckoutType;
-use App\Repository\ShopOrderRepository;
 use App\Service\SettingService;
 use App\Service\ShopService;
 use App\Service\TicketService;
@@ -43,7 +42,7 @@ class ShopController extends AbstractController
     #[Route(path: '/checkout', name: '_checkout')]
     public function checkout(Request $request): Response
     {
-        if (!$this->settingService->isSet('lan.signup.enabled')) {
+        if (!$this->settingService->get('lan.signup.enabled', false)) {
             $this->addFlash('warning', "Anmeldung ist noch nicht freigeschalten.");
             return $this->redirect('/');
         }
@@ -64,7 +63,7 @@ class ShopController extends AbstractController
 
         $addons = $this->shopService->getAddons();
         $userRegistered = $this->ticketService->isUserRegistered($user);
-        $form = $this->createForm(CheckoutType::class, options: ['addons' => $addons, 'tickets' => !$userRegistered]);
+        $form = $this->createForm(CheckoutType::class, options: ['addons' => $addons, 'code' => !$userRegistered]);
 
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
@@ -82,8 +81,10 @@ class ShopController extends AbstractController
             }
 
             // handle code
+            $ticketActivation = false;
             $code = $data['code'] ?? '';
             if ($this->ticketService->ticketCodeUnused($code)) {
+                $ticketActivation = true;
                 if ($this->ticketService->redeemTicket($code, $user)) {
                     $this->addFlash('success', 'Ticket erfolgreich aktiviert.');
                 } else {
@@ -93,19 +94,20 @@ class ShopController extends AbstractController
 
             if (!$order->isEmpty()) {
                 $this->shopService->placeOrder($order);
-                $this->addFlash('success', "Order erfolgreich.");
+                $this->addFlash('success', "Order erfolgreich angelegt.");
                 return $this->redirectToRoute('shop_orders');
+            } else if(!$ticketActivation) {
+                $this->addFlash('warning', "Leere Bestellung kann nicht angelegt werden.");
             }
 
             return $this->redirect('/');
         }
 
         // show order dialog
-        $order_count = count($orders);
         return $this->render('site/shop/checkout.html.twig', [
             'form' => $form->createView(),
             'addons' => $addons,
-            'order_count' => $order_count,
+            'has_ticket' => $userRegistered,
         ]);
     }
 
@@ -120,8 +122,6 @@ class ShopController extends AbstractController
     #[Route(path: '/orders', name: '_orders', methods: ['GET', 'POST'])]
     public function orders(Request $request): Response
     {
-        $show_id = $request->request->getInt('show', -1);
-
         /** @var User $user */
         $user = $this->getUser()->getUser();
         $orders = $this->shopService->getOrderByUser($user);
@@ -153,13 +153,11 @@ class ShopController extends AbstractController
             } catch (OrderLifecycleException $e) {
                 $this->addFlash('error', "Bestellung #{$order->getId()} konnte nicht geändert werden.");
             }
-            $show_id = $order->getId();
         }
 
         // show open order with option to cancel
         return $this->render('site/shop/orders.html.twig', [
             'orders' => $orders,
-            'show_id' => $show_id,
             'csrf_token_cancel' => self::CSRF_TOKEN_CANCEL,
         ]);
     }

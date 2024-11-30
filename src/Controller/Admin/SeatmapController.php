@@ -4,14 +4,13 @@ namespace App\Controller\Admin;
 
 use App\Entity\Seat;
 use App\Entity\SeatOrientation;
-use App\Entity\User;
+use App\Form\ClanSelectType;
 use App\Form\SeatType;
 use App\Form\UserSelectType;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
 use App\Repository\SeatRepository;
 use App\Service\SeatmapService;
 use App\Service\SettingService;
+use App\Service\TicketService;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -27,26 +26,26 @@ use Symfony\Component\Validator\Constraints\Positive;
 #[Route(path: '/seatmap', name: 'seatmap')]
 class SeatmapController extends AbstractController
 {
-    private readonly IdmRepository $userRepo;
     private readonly EntityManagerInterface $em;
     private readonly SeatmapService $seatmapService;
+    private readonly TicketService $ticketService;
     private readonly SettingService $settingService;
     private readonly SeatRepository $seatRepository;
     private readonly SerializerInterface $serializer;
 
     public function __construct(EntityManagerInterface $em,
-                                IdmManager $manager,
-                                SeatmapService $seatmapService,
-                                SettingService $settingService,
-                                SeatRepository $seatRepository,
-                                SerializerInterface $serializer)
+                                SeatmapService         $seatmapService,
+                                SettingService         $settingService,
+                                TicketService          $ticketService,
+                                SeatRepository         $seatRepository,
+                                SerializerInterface    $serializer)
     {
         $this->em = $em;
-        $this->userRepo = $manager->getRepository(User::class);
         $this->seatmapService = $seatmapService;
         $this->settingService = $settingService;
         $this->seatRepository = $seatRepository;
         $this->serializer = $serializer;
+        $this->ticketService = $ticketService;
     }
 
     #[Route(path: '', name: '', methods: ['GET'])]
@@ -59,6 +58,7 @@ class SeatmapController extends AbstractController
             'seatmap' => $seats,
             'dim' => $dim,
             'users' => $this->seatmapService->getSeatedUser($seats),
+            'clans' => $this->seatmapService->getReservedClans($seats),
         ]);
     }
 
@@ -71,7 +71,8 @@ class SeatmapController extends AbstractController
             'action' => $this->generateUrl('admin_seatmap_seat_edit', ['id' => $seat->getId()]),
         ]);
 
-        $form->add('owner', UserSelectType::class, ['required' => false, 'hydrateUser' => false]);
+        $form->add('owner', UserSelectType::class, ['required' => false, 'hydrate' => false]);
+        $form->add('clanReservation', ClanSelectType::class, ['required' => false, 'hydrate' => false]);
         $form->setData($seat);
         $form->handleRequest($request);
 
@@ -149,8 +150,6 @@ class SeatmapController extends AbstractController
                 $this->em->persist($seat);
                 $this->em->flush();
                 $this->addFlash('success', "Sitzplatz {$seat->getSector()}-{$seat->getSeatNumber()} erfolgreich erstellt.");
-
-                return $this->redirectToRoute('admin_seatmap');
             } else {
                 // Create multiple Seats
                 $seatSize = $this->settingService->get('lan.seatmap.styles.seat_size');
@@ -159,9 +158,8 @@ class SeatmapController extends AbstractController
                 
                 $x = $seat->getPosX();
                 $y = $seat->getPosY();
-                $i = 1;
                 $seatNumber = $seat->getSeatNumber();
-                while ($i <= $count) {
+                for ($i = 0; $i <= $count; $i++) {
                     $newSeat = clone $seat;
                     $newSeat->setPosX($x);
                     $newSeat->setPosY($y);
@@ -175,13 +173,11 @@ class SeatmapController extends AbstractController
                         $y += $seatSize * $seatMultiplier + $seatSpacing;
                     }
                     $seatNumber += 2;
-                    ++$i;
                 }
                 $this->em->flush();
                 $this->addFlash('success', $count.' Sitzplätze erfolgreich erstellt.');
-
-                return $this->redirectToRoute('admin_seatmap');
             }
+            return $this->redirectToRoute('admin_seatmap');
         }
 
         return $this->render('admin/seatmap/create.html.twig', [
@@ -214,6 +210,7 @@ class SeatmapController extends AbstractController
                 'seat' => $seat->getLocation(),
                 'clans' => implode(', ', $clanTags),
                 'seatname' => $seatName,
+                'isPaid' => !empty($seatUser) && $this->ticketService->isUserRegistered($seatUser),
             ];
         }
 

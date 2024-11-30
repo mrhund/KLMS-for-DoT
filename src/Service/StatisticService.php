@@ -37,6 +37,7 @@ class StatisticService extends OptimalService
             'seats_taken' => $this->countSeatsTaken(),
             'seats_locked' => $this->countSeatsLocked(),
             'tickets_ordered' => $this->countOrderedTickets(),
+            'tickets_sold' => $this->countSoldTickets(),
             'tickets_redeemed' => $this->countRedeemedTickets(),
             default => '',
         };
@@ -59,12 +60,17 @@ class StatisticService extends OptimalService
 
     public function countSeatsLocked(): int
     {
-        return $this->seatRepository->countLockedSeats();
+        return $this->seatRepository->countLockedSeats() + $this->seatRepository->countClanReservedSeats();
     }
 
     public function countOrderedTickets(): int
     {
         return $this->ticketRepository->count([]) + $this->shopOrderPositionRepository->countOrderedTickets();
+    }
+
+    public function countSoldTickets(): int
+    {
+        return $this->ticketRepository->count([]);
     }
 
     public function countRedeemedTickets(): int
