@@ -117,6 +117,32 @@ z-index: -999;
   bottom: -1px;
 }
 
+.zsfeedbkrpanel {
+  border: none !important;
+  background-color: transparent !important;
+}
+
+.fbfpoptitle {
+  background: linear-gradient(60deg, #ff6a3f, #df1238);
+    -webkit-background-clip: text;
+    color: transparent !important;
+  font-family: Montserrat Alternates;
+  font-weight: 700;
+  font-size: 2rem;
+  font-style: normal;
+  line-height: 1.2;
+  letter-spacing: 0em;
+  text-transform: none;
+}
+
+.FBWordVerify {
+  background-color: #fff !important;
+}
+
+#advwebForm {
+  background-color: transparent !important;
+}
+
 
 .navbar {
     font-size: 1rem !important;

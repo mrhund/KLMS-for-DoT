@@ -22,7 +22,7 @@
                 <div class="card-body text-center">
                     <h3 class="card-title">{{ (addon.price / 100) | format_currency('EUR') }}</h3>
                     <div class="card-text">
-                        <p>{{ addon.description }}</p>
+                        <p>{{ addon.description | raw }}</p>
                         <div class="input-group">
                             <div class="input-group-prepend">
                                 <span class="input-group-text">Anzahl</span>

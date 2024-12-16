@@ -62,7 +62,7 @@ $seat-orientations: n, e, s, w;
   }
 
   .seat-own-clan {
-    @include seat-border($primary);
+    @include seat-border(#e0a800);
   }
 
   .seat-clan-reserved {

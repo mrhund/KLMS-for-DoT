@@ -12,7 +12,7 @@
                 </h4>
         </div>
 	<div class="col">
-			<span>{% if user is registered_user %}bezahlt{% else %}nicht bezahlt{% endif %}</span>	
+			<span>{% if user is registered_user %}Ticket vorhanden{% else %}kein Ticket{% endif %}</span>	
 	</div>
 	<div class="col">
 			<span>{% if user is seated_user %}Sitzplatz: {{ user | seat }}{% else %}kein Sitzplatz{% endif %}</span>                
