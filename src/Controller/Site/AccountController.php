@@ -214,10 +214,7 @@ class AccountController extends AbstractController
         $form = $this->createForm(UserRegisterType::class);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {      
-            if ($request->request->get('g-recaptcha-response') == "") {
-                $this->addFlash('error', 'Löse die reCAPTCHA-Aufgabe, um zu bestätigen, dass du kein Roboter bist.');
-            } else {
+        if ($form->isSubmitted() && $form->isValid()) {               
               try {
                 $user = $form->getData();
                 $this->manager->persist($user);
@@ -231,8 +228,7 @@ class AccountController extends AbstractController
                     PersistException::REASON_NON_UNIQUE => $this->addFlash('error', 'Nickname und/oder E-Mail Adresse schon vergeben'),
                     default => $this->addFlash('error', 'Es ist ein unerwarteter Fehler aufgetreten'),
                 };
-              }
-            }    
+              } 
         }
 
         return $this->render('security/register.html.twig', [
