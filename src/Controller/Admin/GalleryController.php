@@ -162,6 +162,41 @@ class GalleryController extends AbstractController
         ]);
     }
 
+    #[Route('/edit/{uuid}', name: '_edit', methods: ['GET', 'POST'])]
+    public function edit(GalleryImage $galleryImage, Request $request, GalleryImageRepository $repository): Response
+    {
+        $form = $this->createFormBuilder($galleryImage)
+            ->add('event', TextType::class, [
+                'label' => 'Event Name',
+                'attr' => ['placeholder' => 'z.B. lan-party-2023']
+            ])
+            ->add('title', TextType::class, [
+                'label' => 'Titel',
+                'required' => false
+            ])
+            ->add('description', TextareaType::class, [
+                'label' => 'Beschreibung',
+                'required' => false,
+                'attr' => ['rows' => 4]
+            ])
+            ->add('submit', SubmitType::class, ['label' => 'Änderungen speichern'])
+            ->getForm();
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $repository->save($galleryImage, true);
+
+            $this->addFlash('success', 'Bild wurde erfolgreich aktualisiert!');
+            return $this->redirectToRoute('admin_gallery');
+        }
+
+        return $this->render('admin/gallery/edit.html.twig', [
+            'form' => $form->createView(),
+            'galleryImage' => $galleryImage,
+        ]);
+    }
+
     #[Route('/delete/{uuid}', name: '_delete', methods: ['POST'])]
     public function delete(GalleryImage $galleryImage, Request $request, GalleryImageRepository $repository): Response
     {
