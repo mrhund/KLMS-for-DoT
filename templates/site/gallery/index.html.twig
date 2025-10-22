@@ -46,15 +46,15 @@
                         
                         <div class="row g-3 mb-5">
                             {% for photo in photos %}
-                                <div class="col-6 col-md-4 col-lg-3">
+                                <div class="col-6 col-md-4 col-lg-3 mb-4">
                                     <div class="card border-0">
                                         <a href="{{ photo.getImagePath() }}" 
                                            class="glightbox" 
                                            data-gallery="{{ event }}"
-                                           data-title="{{ photo.title ?? 'Bild ' ~ photo.uuid }}"
-                                           data-description="{{ photo.description ?? '' }}">
+                                           data-glightbox="title: {{ photo.title ? photo.title|e('html_attr') : (event|replace({'-': ' '})|title ~ ' - Bild ' ~ loop.index) }}; description: {{ photo.description ? photo.description|e('html_attr') : 'Event: ' ~ (event|replace({'-': ' '})|title) }}"
+                                           title="{{ photo.title ?? (event|replace({'-': ' '})|title ~ ' - Bild ' ~ loop.index) }}">
                                             <img src="{{ photo.getImagePath()|imagine_filter('gallery_thumb') }}"
-                                                 alt="{{ photo.title ?? 'Bild ' ~ photo.uuid }}"
+                                                 alt="{{ photo.title ?? 'Bild' }}"
                                                  class="card-img-top"
                                                  loading="lazy"
                                                  style="height: 200px; object-fit: cover;">
@@ -78,12 +78,209 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css">
     <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
     
+    {# Custom GLightbox Styles #}
+    <style>
+        /* Custom GLightbox Styling */
+        .glightbox-container {
+            background: rgba(0, 0, 0, 0.95) !important;
+        }
+        
+        /* Custom overlay */
+        .goverlay {
+            background: linear-gradient(45deg, rgba(0, 123, 255, 0.1), rgba(40, 167, 69, 0.1)) !important;
+        }
+        
+        /* Image container styling */
+        .gslide-image img {
+            max-width: 90vw;
+            max-height: 80vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Title and description styling */
+        .gslide-title {
+            color: #fff !important;
+            font-size: 1.5rem !important;
+            font-weight: 600 !important;
+            margin-bottom: 0.5rem !important;
+            text-align: center;
+        }
+        
+        .gslide-desc {
+            color: #e9ecef !important;
+            font-size: 1rem !important;
+            line-height: 1.5;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .gslide-description {
+            background: rgba(0, 0, 0, 0.7) !important;
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        /* Navigation buttons */
+        .gbtn {
+            color: #fff !important;
+            background: rgba(255, 255, 255, 0.2) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .gbtn:hover {
+            background: rgba(255, 255, 255, 0.3) !important;
+            transform: scale(1.1);
+        }
+        
+        .gclose {
+            top: 20px !important;
+            right: 20px !important;
+            width: 45px;
+            height: 45px;
+        }
+        
+        .gprev, .gnext {
+            width: 50px;
+            height: 50px;
+            top: 50% !important;
+        }
+        
+        .gprev {
+            left: 20px !important;
+        }
+        
+        .gnext {
+            right: 20px !important;
+        }
+        
+        /* Loading animation */
+        .gloader {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #007bff;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .gslide-image img {
+                max-width: 95vw;
+                max-height: 70vh;
+            }
+            
+            .gslide-title {
+                font-size: 1.2rem !important;
+            }
+            
+            .gslide-desc {
+                font-size: 0.9rem !important;
+            }
+            
+            .gbtn {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .gclose {
+                width: 35px;
+                height: 35px;
+                top: 10px !important;
+                right: 10px !important;
+            }
+        }
+        
+        /* Custom body class when lightbox is open */
+        body.glightbox-open {
+            overflow: hidden;
+        }
+        
+        /* Zoom animation on image hover in grid */
+        .card img {
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover img {
+            transform: scale(1.05);
+        }
+    </style>
+    
     <script>
-        // Initialize GLightbox
+        // Initialize GLightbox with custom configuration
         const lightbox = GLightbox({
+            selector: '.glightbox',
             touchNavigation: true,
             loop: true,
-            autoplayVideos: false
+            autoplayVideos: false,
+            closeButton: true,
+            touchFollowAxis: true,
+            keyboardNavigation: true,
+            
+            // Custom slide configuration
+            slideEffect: 'slide', // 'slide', 'fade', 'zoom'
+            openEffect: 'zoomIn', // 'zoomIn', 'zoomOut', 'fadeIn', 'fadeInUp', 'none'
+            closeEffect: 'zoomOut', // 'zoomOut', 'zoomIn', 'fadeOut', 'fadeOutUp', 'none'
+            
+            // Responsive breakpoints
+            width: '90vw',
+            height: '90vh',
+            videosWidth: '960px',
+            
+            // Custom skin/theme
+            skin: 'clean', // You can create custom skins
+            
+            // Callbacks for customization
+            onOpen: () => {
+                console.log('Lightbox opened');
+                // Add custom CSS class to body when lightbox opens
+                document.body.classList.add('glightbox-open');
+            },
+            onClose: () => {
+                console.log('Lightbox closed');
+                // Remove custom CSS class when lightbox closes
+                document.body.classList.remove('glightbox-open');
+            },
+            
+            // Slide HTML template customization
+            slideHTML: '<div class="gslide">' +
+                          '<div class="gslide-inner-content">' +
+                              '<div class="ginner-container">' +
+                                  '<div class="gslide-media">' +
+                                  '</div>' +
+                                  '<div class="gslide-description">' +
+                                      '<div class="gdesc-inner">' +
+                                          '<h4 class="gslide-title"></h4>' +
+                                          '<div class="gslide-desc"></div>' +
+                                      '</div>' +
+                                  '</div>' +
+                              '</div>' +
+                          '</div>' +
+                      '</div>',
+                      
+            // Lightbox HTML structure
+            lightboxHTML: '<div id="glightbox-body" class="glightbox-container" tabindex="-1" role="dialog" aria-hidden="false">' +
+                             '<div class="gloader visible"></div>' +
+                             '<div class="goverlay"></div>' +
+                             '<div class="gcontainer">' +
+                                 '<div id="glightbox-slider" class="gslider"></div>' +
+                                 '<button class="gclose gbtn" aria-label="Close" data-taborder="3">{closeSVG}</button>' +
+                                 '<button class="gprev gbtn" aria-label="Previous" data-taborder="2">{prevSVG}</button>' +
+                                 '<button class="gnext gbtn" aria-label="Next" data-taborder="1">{nextSVG}</button>' +
+                             '</div>' +
+                         '</div>'
         });
 
         // Event filtering
