@@ -13,9 +13,7 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
 #[Vich\Uploadable]
 class GalleryImage
 {
-    #[ORM\Id, ORM\GeneratedValue, ORM\Column(type: 'integer')]
-    private ?int $id = null;
-
+    #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
@@ -48,9 +46,9 @@ class GalleryImage
         $this->updatedAt = new \DateTimeImmutable();
     }
 
-    public function getId(): ?int 
+    public function getId(): ?UuidInterface 
     { 
-        return $this->id; 
+        return $this->uuid; 
     }
 
     public function getUuid(): ?UuidInterface 

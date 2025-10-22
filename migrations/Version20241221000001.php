@@ -21,7 +21,6 @@ final class Version20241221000001 extends AbstractMigration
     {
         // Create gallery_image table
         $this->addSql('CREATE TABLE gallery_image (
-            id INT AUTO_INCREMENT NOT NULL, 
             uuid CHAR(36) NOT NULL COMMENT \'(DC2Type:uuid)\', 
             event VARCHAR(255) NOT NULL, 
             title VARCHAR(255) DEFAULT NULL, 
@@ -29,9 +28,8 @@ final class Version20241221000001 extends AbstractMigration
             image_name VARCHAR(255) DEFAULT NULL, 
             updated_at DATETIME DEFAULT NULL COMMENT \'(DC2Type:datetime_immutable)\', 
             created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', 
-            UNIQUE INDEX UNIQ_21A0D47CD17F50A6 (uuid), 
             INDEX IDX_21A0D47C3BAE0AA7 (event), 
-            PRIMARY KEY(id)
+            PRIMARY KEY(uuid)
         ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
 
         // Add checkoutId to shop_order if it doesn't exist and table exists
