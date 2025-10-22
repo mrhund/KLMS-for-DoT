@@ -6,21 +6,19 @@
 {% block main %}
 <div class="container-fluid mt-4">
     <div class="row">
+
+        
+
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>
-                    <i class="fas fa-images me-3"></i>
-                    Galerie Verwaltung
-                </h1>
-                <div class="btn-group" role="group">
-                    <a href="{{ path('admin_gallery_upload') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Einzelbild hochladen
+            <a href="{{ path('admin_gallery_upload') }}" class="btn btn-success">
+                        <i class="fas fa-upload me-2"></i> Einzel Upload
                     </a>
                     <a href="{{ path('admin_gallery_bulk_upload') }}" class="btn btn-success">
-                        <i class="fas fa-cloud-upload-alt me-2"></i>Bulk Upload
+                        <i class="fas fa-cloud-upload me-2"></i> Mehrfach Upload
                     </a>
                 </div>
-            </div>
+
+      
 
             {% for message in app.flashes('success') %}
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -84,7 +82,7 @@
                                                         <h6 class="card-title small mb-1">{{ photo.title }}</h6>
                                                     {% endif %}
                                                     <p class="card-text small text-muted mb-2">
-                                                        <i class="fas fa-calendar me-1"></i>{{ photo.createdAt|date('d.m.Y H:i') }}
+                                                        <i class="fas fa-calendar me-1"></i> {{ photo.createdAt|date('d.m.Y H:i') }}
                                                     </p>
                                                     <div class="btn-group w-100" role="group">
                                                         <a href="{{ photo.getImagePath() }}" 
