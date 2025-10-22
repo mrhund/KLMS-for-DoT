@@ -49,6 +49,8 @@ class GalleryImageRepository extends ServiceEntityRepository
             }
             $grouped[$event][] = $image;
         }
+    
+        ksort($grouped);
 
         return $grouped;
     }
