@@ -1,3 +1,5 @@
+<?php
+
 namespace App\Entity;
 
 use App\Repository\GalleryImageRepository;
@@ -46,36 +48,93 @@ class GalleryImage
         $this->updatedAt = new \DateTimeImmutable();
     }
 
-    public function getId(): ?int { return $this->id; }
+    public function getId(): ?int 
+    { 
+        return $this->id; 
+    }
 
-    public function getUuid(): ?UuidInterface { return $this->uuid; }
-    public function setUuid(?UuidInterface $uuid): void { $this->uuid = $uuid; }
+    public function getUuid(): ?UuidInterface 
+    { 
+        return $this->uuid; 
+    }
+    
+    public function setUuid(?UuidInterface $uuid): void 
+    { 
+        $this->uuid = $uuid; 
+    }
 
-    public function setImageFile(?File $file = null): void {
+    public function setImageFile(?File $file = null): void 
+    {
         $this->imageFile = $file;
         if ($file) {
             $this->updatedAt = new \DateTimeImmutable();
         }
     }
 
-    public function getImageFile(): ?File { return $this->imageFile; }
-    public function getImageName(): ?string { return $this->imageName; }
-    public function setImageName(?string $name): void { $this->imageName = $name; }
+    public function getImageFile(): ?File 
+    { 
+        return $this->imageFile; 
+    }
+    
+    public function getImageName(): ?string 
+    { 
+        return $this->imageName; 
+    }
+    
+    public function setImageName(?string $name): void 
+    { 
+        $this->imageName = $name; 
+    }
 
-    public function setEvent(string $event): void { $this->event = $event; }
-    public function getEvent(): ?string { return $this->event; }
+    public function setEvent(string $event): void 
+    { 
+        $this->event = $event; 
+    }
+    
+    public function getEvent(): ?string 
+    { 
+        return $this->event; 
+    }
 
-    public function getTitle(): ?string { return $this->title; }
-    public function setTitle(?string $title): void { $this->title = $title; }
+    public function getTitle(): ?string 
+    { 
+        return $this->title; 
+    }
+    
+    public function setTitle(?string $title): void 
+    { 
+        $this->title = $title; 
+    }
 
-    public function getDescription(): ?string { return $this->description; }
-    public function setDescription(?string $description): void { $this->description = $description; }
+    public function getDescription(): ?string 
+    { 
+        return $this->description; 
+    }
+    
+    public function setDescription(?string $description): void 
+    { 
+        $this->description = $description; 
+    }
 
-    public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
-    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): void { $this->updatedAt = $updatedAt; }
+    public function getUpdatedAt(): ?\DateTimeImmutable 
+    { 
+        return $this->updatedAt; 
+    }
+    
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): void 
+    { 
+        $this->updatedAt = $updatedAt; 
+    }
 
-    public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
-    public function setCreatedAt(\DateTimeImmutable $createdAt): void { $this->createdAt = $createdAt; }
+    public function getCreatedAt(): \DateTimeImmutable 
+    { 
+        return $this->createdAt; 
+    }
+    
+    public function setCreatedAt(\DateTimeImmutable $createdAt): void 
+    { 
+        $this->createdAt = $createdAt; 
+    }
 
     public function getImagePath(): string
     {
