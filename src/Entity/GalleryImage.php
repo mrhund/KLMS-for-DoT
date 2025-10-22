@@ -1,15 +1,23 @@
 namespace App\Entity;
 
+use App\Repository\GalleryImageRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Ramsey\Uuid\Doctrine\UuidGenerator;
+use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\HttpFoundation\File\File;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: GalleryImageRepository::class)]
 #[Vich\Uploadable]
 class GalleryImage
 {
     #[ORM\Id, ORM\GeneratedValue, ORM\Column(type: 'integer')]
     private ?int $id = null;
+
+    #[ORM\Column(type: 'uuid', unique: true)]
+    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
+    #[ORM\CustomIdGenerator(class: UuidGenerator::class)]
+    private ?UuidInterface $uuid = null;
 
     #[ORM\Column(type: 'string', length: 255)]
     private ?string $imageName = null;
@@ -26,11 +34,11 @@ class GalleryImage
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(type: 'datetime')]
-    private \DateTimeInterface $updatedAt;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\Column(type: 'datetime')]
-    private \DateTimeInterface $createdAt;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private \DateTimeImmutable $createdAt;
 
     public function __construct()
     {
@@ -39,6 +47,9 @@ class GalleryImage
     }
 
     public function getId(): ?int { return $this->id; }
+
+    public function getUuid(): ?UuidInterface { return $this->uuid; }
+    public function setUuid(?UuidInterface $uuid): void { $this->uuid = $uuid; }
 
     public function setImageFile(?File $file = null): void {
         $this->imageFile = $file;
@@ -60,11 +71,11 @@ class GalleryImage
     public function getDescription(): ?string { return $this->description; }
     public function setDescription(?string $description): void { $this->description = $description; }
 
-    public function getUpdatedAt(): \DateTimeInterface { return $this->updatedAt; }
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): void { $this->updatedAt = $updatedAt; }
+    public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): void { $this->updatedAt = $updatedAt; }
 
-    public function getCreatedAt(): \DateTimeInterface { return $this->createdAt; }
-    public function setCreatedAt(\DateTimeInterface $createdAt): void { $this->createdAt = $createdAt; }
+    public function getCreatedAt(): \DateTimeImmutable { return $this->createdAt; }
+    public function setCreatedAt(\DateTimeImmutable $createdAt): void { $this->createdAt = $createdAt; }
 
     public function getImagePath(): string
     {
