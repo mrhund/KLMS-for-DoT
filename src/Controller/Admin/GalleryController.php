@@ -12,8 +12,10 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Constraints\File;
+use Doctrine\ORM\EntityManagerInterface;
 
 #[IsGranted('ROLE_ADMIN_MEDIA')]
 #[Route('/gallery', name: 'gallery', methods: ['GET'])]
@@ -86,6 +88,77 @@ class GalleryController extends AbstractController
 
         return $this->render('admin/gallery/upload.html.twig', [
             'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/bulk-upload', name: '_bulk_upload', methods: ['GET', 'POST'])]
+    public function bulkUpload(Request $request, GalleryImageRepository $repository, EntityManagerInterface $em): Response
+    {
+        if ($request->isMethod('POST')) {
+            $event = $request->request->get('event');
+            $files = $request->files->get('images');
+            
+            if (!$event) {
+                return $this->json(['error' => 'Event name is required'], 400);
+            }
+
+            if (!$files || !is_array($files)) {
+                return $this->json(['error' => 'No files uploaded'], 400);
+            }
+
+            $uploaded = 0;
+            $errors = [];
+
+            // Create event directory if it doesn't exist
+            $eventFolder = $this->getParameter('kernel.project_dir') . '/public/images/gallery/' . $event;
+            if (!is_dir($eventFolder)) {
+                mkdir($eventFolder, 0755, true);
+            }
+
+            foreach ($files as $file) {
+                try {
+                    // Validate file
+                    $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!in_array($file->getMimeType(), $allowedMimes)) {
+                        $errors[] = $file->getClientOriginalName() . ': Invalid file type';
+                        continue;
+                    }
+
+                    if ($file->getSize() > 10 * 1024 * 1024) { // 10MB
+                        $errors[] = $file->getClientOriginalName() . ': File too large';
+                        continue;
+                    }
+
+                    // Create GalleryImage entity
+                    $galleryImage = new GalleryImage();
+                    $galleryImage->setEvent($event);
+                    $galleryImage->setTitle(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+                    $galleryImage->setImageFile($file);
+
+                    $repository->save($galleryImage, false); // Don't flush yet
+                    $uploaded++;
+
+                } catch (\Exception $e) {
+                    $errors[] = $file->getClientOriginalName() . ': ' . $e->getMessage();
+                }
+            }
+
+            // Flush all changes at once
+            if ($uploaded > 0) {
+                $em->flush();
+            }
+
+            return $this->json([
+                'success' => true,
+                'uploaded' => $uploaded,
+                'errors' => $errors
+            ]);
+        }
+
+        // GET request - show bulk upload form
+        $events = $repository->findEvents();
+        return $this->render('admin/gallery/bulk-upload.html.twig', [
+            'events' => $events
         ]);
     }
 
