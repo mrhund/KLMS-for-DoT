@@ -87,7 +87,7 @@
                                                             <i class="fas fa-eye"></i>
                                                         </a>
                                                         <form method="post" 
-                                                              action="{{ path('admin_gallery_delete', {'id': photo.id}) }}"
+                                                              action="{{ path('admin_gallery_delete', {'uuid': photo.id}) }}"
                                                               onsubmit="return confirm('Bild wirklich löschen?')"
                                                               class="d-inline">
                                                             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ photo.id) }}">

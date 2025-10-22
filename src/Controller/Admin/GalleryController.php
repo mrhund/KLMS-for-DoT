@@ -15,11 +15,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Constraints\File;
 
-#[Route('/admin/gallery', name: 'admin_gallery')]
-#[IsGranted('ROLE_ADMIN')]
+#[IsGranted('ROLE_ADMIN_MEDIA')]
+#[Route('/gallery', name: 'gallery', methods: ['GET'])]
 class GalleryController extends AbstractController
 {
-    #[Route('', name: '', methods: ['GET'])]
+    #[Route(path: '', name: '')]
     public function index(GalleryImageRepository $repository): Response
     {
         $photosByEvent = $repository->findAllGroupedByEvent();
