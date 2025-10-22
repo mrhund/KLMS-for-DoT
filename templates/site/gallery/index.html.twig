@@ -46,16 +46,15 @@
                         
                         <div class="row g-3 mb-5">
                             {% for photo in photos %}
-                                <div class="col-6 col-md-4 col-lg-3 mb-4">
+                                <div class="col-6 col-md-4 col-lg-3">
                                     <div class="card border-0">
                                         <a href="{{ photo.getImagePath() }}" 
                                            class="glightbox" 
                                            data-gallery="{{ event }}"
-                                           data-title="{{ photo.title ? photo.title : (event|replace({'-': ' '})|title ~ ' - Bild ' ~ loop.index) }}"
-                                           data-description="{{ photo.description ? photo.description : 'Event: ' ~ (event|replace({'-': ' '})|title) }}"
-                                           title="{{ photo.title ?? (event|replace({'-': ' '})|title ~ ' - Bild ' ~ loop.index) }}">
+                                           data-title="{{ photo.title ?? ''  }}"
+                                           data-description="{{ photo.description ?? '' }}">
                                             <img src="{{ photo.getImagePath()|imagine_filter('gallery_thumb') }}"
-                                                 alt="{{ photo.title ?? 'Bild' }}"
+                                                 alt="{{ photo.title ?? 'Bild'}}"
                                                  class="card-img-top"
                                                  loading="lazy"
                                                  style="height: 200px; object-fit: cover;">
@@ -79,107 +78,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css">
     <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
     
-    {# Custom GLightbox Styles #}
-    <style>
-        /* Grundlegendes Lightbox-Styling */
-        .glightbox-container {
-            background: rgba(0, 0, 0, 0.9);
-        }
-        
-        /* Bild-Styling im Lightbox */
-        .gslide-image img {
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-        
-        /* Titel und Beschreibung */
-        .gslide-title {
-            color: #fff;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            text-align: center;
-        }
-        
-        .gslide-desc {
-            color: #e9ecef;
-            font-size: 1rem;
-            line-height: 1.5;
-            text-align: center;
-        }
-        
-        .gslide-description {
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-        
-        /* Navigation Buttons */
-        .gbtn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-        
-        .gbtn:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-        
-        /* Hover-Effekt für Grid-Bilder */
-        .card img {
-            transition: transform 0.3s ease;
-        }
-        
-        .card:hover img {
-            transform: scale(1.05);
-        }
-        
-        /* Mobile Optimierungen */
-        @media (max-width: 768px) {
-            .gslide-title {
-                font-size: 1.2rem;
-            }
-            
-            .gslide-desc {
-                font-size: 0.9rem;
-            }
-        }
-    </style>
-    
     <script>
-        // Initialize GLightbox with simplified configuration
+        // Initialize GLightbox
         const lightbox = GLightbox({
-            selector: '.glightbox',
             touchNavigation: true,
             loop: true,
-            closeButton: true,
-            keyboardNavigation: true,
-            plyr: {
-                config: {
-                    ratio: '16:9',
-                    youtube: {
-                        noCookie: true,
-                        rel: 0,
-                        showinfo: 0,
-                        iv_load_policy: 3
-                    },
-                    vimeo: {
-                        byline: false,
-                        portrait: false,
-                        title: false,
-                        speed: true,
-                        transparent: false
-                    }
-                }
-            },
-            openEffect: 'zoomIn',
-            closeEffect: 'zoomOut',
-            slideEffect: 'slide',
-            moreText: 'Mehr anzeigen',
-            moreLength: 60,
-            closeBtnInside: false
+            autoplayVideos: false
         });
 
         // Event filtering
