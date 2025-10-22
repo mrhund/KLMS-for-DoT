@@ -89,7 +89,7 @@ class GalleryController extends AbstractController
         ]);
     }
 
-    #[Route('/delete/{id}', name: '_delete', methods: ['POST'])]
+    #[Route('/delete/{uuid}', name: '_delete', methods: ['POST'])]
     public function delete(GalleryImage $galleryImage, Request $request, GalleryImageRepository $repository): Response
     {
         if ($this->isCsrfTokenValid('delete'.$galleryImage->getId(), $request->request->get('_token'))) {
