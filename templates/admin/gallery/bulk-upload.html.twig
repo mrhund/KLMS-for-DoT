@@ -231,7 +231,14 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Debug: Check what values we have
+        console.log('eventSelect.value:', eventSelect.value);
+        console.log('newEventInput.value:', newEventInput.value);
+        console.log('newEventInput.value.trim():', newEventInput.value.trim());
+
         const eventName = (newEventInput.value.trim() || eventSelect.value || '').trim();
+        console.log('Final eventName:', eventName);
+        
         if (!eventName) {
             alert('Bitte wählen Sie ein Event aus oder geben Sie einen neuen Event-Namen ein.');
             return;
@@ -249,6 +256,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData();
         formData.append('event', eventName);
+        
+        // Debug: Log what we're sending
+        console.log('Sending event name:', eventName);
+        console.log('FormData entries:');
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
         
         selectedFiles.forEach(file => {
             formData.append('images[]', file);

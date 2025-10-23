@@ -102,12 +102,21 @@ class GalleryController extends AbstractController
             $event = $request->request->get('event');
             $files = $request->files->get('images');
             
-            // Debug logging
-            error_log('Bulk upload received - Event: ' . ($event ?? 'NULL') . ', Files count: ' . (is_array($files) ? count($files) : 'not array'));
+            // Debug logging - log all request data
+            error_log('=== BULK UPLOAD DEBUG ===');
+            error_log('Request method: ' . $request->getMethod());
+            error_log('Content type: ' . $request->headers->get('Content-Type'));
+            error_log('All request data: ' . print_r($request->request->all(), true));
+            error_log('All files data: ' . print_r($request->files->all(), true));
+            error_log('Event parameter: "' . ($event ?? 'NULL') . '"');
+            error_log('Event after trim: "' . (($event !== null) ? trim($event) : 'NULL') . '"');
+            error_log('Files count: ' . (is_array($files) ? count($files) : 'not array or null'));
+            error_log('========================');
             
             // Validate event name
             if (!$event || trim($event) === '') {
-                return $this->json(['error' => 'Event name is required'], 400);
+                error_log('VALIDATION FAILED: Event name empty or null');
+                return $this->json(['error' => 'Event name is required. Received: "' . ($event ?? 'NULL') . '"'], 400);
             }
             
             $event = trim($event);
