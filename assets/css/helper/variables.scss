@@ -1,4 +1,4 @@
-$main-color: #e67925;
+$main-color: #6dc8ed;
 $body-bg:#fafafa;
 $shadow-color:#000;
 
@@ -37,7 +37,9 @@ $sizes: (
 ) !default;
 
 $enable-rounded: false;
-$enable-shadows: true;
+$enable-shadows: false;
+
+$navbar-padding-y: 2px;
 
 $box-shadow-sm: 0 1.6px 3.6px 0 rgba($shadow-color,.132),0 .3px .9px 0 rgba($shadow-color,.108);
 $box-shadow:    0 3.2px 7.2px 0 rgba($shadow-color,.132),0 .6px 1.8px 0 rgba($shadow-color,.108);

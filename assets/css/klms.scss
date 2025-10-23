@@ -24,8 +24,18 @@ footer, #footer {
     flex-shrink: 0;
 }
 
+.card-img-top {
+  flex-shrink: 0; // For IE: https://github.com/twbs/bootstrap/issues/29396
+  width: 100%; // Required because we use flexbox and this inherently applies align-self: stretch
+  //max-height: 250px;
+}
+
 .navbar {
-    box-shadow:  $box-shadow-sm;
+    
+}
+
+.bg-dark {
+  background-color: #304b5b !important;
 }
 
 .list-group-hover .list-group-item:hover {

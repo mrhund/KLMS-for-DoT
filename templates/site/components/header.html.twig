@@ -1,3 +1,8 @@
+{% block nav %}
+    <div class="d-flex justify-content-center bg-dark">
+        {%  include 'site/components/nav/navMain.html.twig' %}
+    </div>
+{% endblock %}
 <div class="head-wrap {% if startpage is defined %}startpage{% endif %}" style="background-image: url({{ settings.get('style.bg_image') }})">
     <div class="head-content container">
         {% set logo = settings.get('style.logo') %}
@@ -13,8 +18,3 @@
     </div>
 </div>
 
-{% block nav %}
-    <div class="container">
-        {%  include 'site/components/nav/navMain.html.twig' %}
-    </div>
-{% endblock %}
