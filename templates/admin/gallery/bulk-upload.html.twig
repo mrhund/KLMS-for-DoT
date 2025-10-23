@@ -262,15 +262,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Try using the form directly instead of FormData
         const form = document.getElementById('bulkUploadForm');
-        const formData = new FormData(form);
+        const formData = new FormData();
         
-        // Add files to form data
-        selectedFiles.forEach(file => {
+        // Manually add the event
+        formData.append('event', eventName);
+        
+        // Add files manually
+        selectedFiles.forEach((file, index) => {
             formData.append('images[]', file);
         });
-        
-        // Ensure event is in FormData (double-check)
-        formData.set('event', eventName);
         
         // Debug: Log what we're sending
         console.log('Sending event name:', eventName);

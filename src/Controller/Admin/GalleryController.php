@@ -100,20 +100,34 @@ class GalleryController extends AbstractController
             set_time_limit(0); // No time limit
             ini_set('memory_limit', '1G');
             
+            // Additional debugging - check if this is a proper multipart request
+            $contentType = $request->headers->get('Content-Type');
+            $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
+            
+            $logger->info('Request preprocessing', [
+                'is_multipart' => $isMultipart,
+                'content_type' => $contentType,
+                'has_files' => !empty($_FILES),
+                'has_post' => !empty($_POST)
+            ]);
+            
             // Try multiple ways to get the event parameter
             $event = $request->request->get('event') 
                   ?? $request->get('event') 
-                  ?? $request->query->get('event');
+                  ?? $request->query->get('event')
+                  ?? ($_POST['event'] ?? null);
             
-            $files = $request->files->get('images');
+            $files = $request->files->get('images') ?? ($_FILES['images'] ?? null);
             
             // Debug logging using Symfony logger
             $logger->info('=== BULK UPLOAD DEBUG ===', [
                 'request_method' => $request->getMethod(),
                 'content_type' => $request->headers->get('Content-Type'),
+                'content_length' => $request->headers->get('Content-Length'),
                 'post_data' => $request->request->all(),
                 'get_data' => $request->query->all(),
                 'files_data' => array_keys($request->files->all()),
+                'raw_content_length' => strlen($request->getContent()),
                 'event_request' => $request->request->get('event'),
                 'event_get' => $request->get('event'),
                 'event_query' => $request->query->get('event'),
