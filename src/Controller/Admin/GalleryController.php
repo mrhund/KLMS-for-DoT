@@ -95,19 +95,24 @@ class GalleryController extends AbstractController
     public function bulkUpload(Request $request, GalleryImageRepository $repository, EntityManagerInterface $em): Response
     {
         if ($request->isMethod('POST')) {
+            // Increase limits for bulk upload
+            set_time_limit(0); // No time limit
+            ini_set('memory_limit', '1G');
+            
             $event = $request->request->get('event');
             $files = $request->files->get('images');
             
-            if (!$event) {
+            if (!$event || trim($event) === '') {
                 return $this->json(['error' => 'Event name is required'], 400);
             }
 
-            if (!$files || !is_array($files)) {
+            if (!$files || !is_array($files) || count($files) === 0) {
                 return $this->json(['error' => 'No files uploaded'], 400);
             }
 
             $uploaded = 0;
             $errors = [];
+            $batchSize = 10; // Process in smaller batches
 
             // Create event directory if it doesn't exist
             $eventFolder = $this->getParameter('kernel.project_dir') . '/public/images/gallery/' . $event;
@@ -115,7 +120,10 @@ class GalleryController extends AbstractController
                 mkdir($eventFolder, 0755, true);
             }
 
-            foreach ($files as $file) {
+            $totalFiles = count($files);
+            $processedInBatch = 0;
+            
+            foreach ($files as $index => $file) {
                 try {
                     // Validate file
                     $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -135,17 +143,25 @@ class GalleryController extends AbstractController
                     $galleryImage->setTitle(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
                     $galleryImage->setImageFile($file);
 
-                    $repository->save($galleryImage, false); // Don't flush yet
+                    $em->persist($galleryImage);
                     $uploaded++;
+                    $processedInBatch++;
+
+                    // Flush in batches to avoid memory issues
+                    if ($processedInBatch >= $batchSize || $index === $totalFiles - 1) {
+                        $em->flush();
+                        $em->clear(); // Clear entities from memory
+                        $processedInBatch = 0;
+                        
+                        // Force garbage collection
+                        if (function_exists('gc_collect_cycles')) {
+                            gc_collect_cycles();
+                        }
+                    }
 
                 } catch (\Exception $e) {
                     $errors[] = $file->getClientOriginalName() . ': ' . $e->getMessage();
                 }
-            }
-
-            // Flush all changes at once
-            if ($uploaded > 0) {
-                $em->flush();
             }
 
             return $this->json([

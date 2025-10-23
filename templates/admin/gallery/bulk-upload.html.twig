@@ -254,11 +254,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 100);
 
-        fetch('{{ path("admin_gallery_bulk_upload") }}', {
+        // Start upload with extended timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutes timeout
+        
+        fetch('{{ path('admin_gallery_bulk_upload') }}', {
             method: 'POST',
-            body: formData
+            body: formData,
+            signal: controller.signal
         })
-        .then(response => response.json())
+        .then(response => {
+            clearTimeout(timeoutId);
+            return response.json();
+        })
         .then(data => {
             clearInterval(progressInterval);
             
@@ -313,12 +321,23 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             clearInterval(progressInterval);
+            clearTimeout(timeoutId);
             console.error('Upload error:', error);
+            
+            let errorMessage = 'Netzwerkfehler beim Upload';
+            if (error.name === 'AbortError') {
+                errorMessage = 'Upload-Timeout: Der Upload dauerte zu lange. Bitte versuchen Sie es mit weniger Dateien.';
+            } else if (error.message.includes('timeout')) {
+                errorMessage = 'Upload-Timeout: Versuchen Sie es mit weniger Dateien oder einer besseren Internetverbindung.';
+            }
             
             uploadResults.innerHTML = `
                 <div class="alert alert-danger">
                     <i class="fas fa-times-circle me-2"></i>
-                    <strong>Fehler:</strong> Netzwerkfehler beim Upload
+                    <strong>Fehler:</strong> ${errorMessage}
+                    <div class="mt-2">
+                        <small>Tipp: Bei sehr vielen Dateien kann der Upload längere Zeit dauern. Versuchen Sie es mit kleineren Mengen (z.B. 20-30 Bilder auf einmal).</small>
+                    </div>
                 </div>
             `;
             uploadResults.style.display = 'block';
