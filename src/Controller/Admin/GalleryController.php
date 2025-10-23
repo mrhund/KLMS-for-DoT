@@ -103,13 +103,35 @@ class GalleryController extends AbstractController
             // Additional debugging - check if this is a proper multipart request
             $contentType = $request->headers->get('Content-Type');
             $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
+            $contentLength = $request->headers->get('Content-Length');
+            
+            // Check PHP limits
+            $postMaxSize = ini_get('post_max_size');
+            $uploadMaxFilesize = ini_get('upload_max_filesize');
+            $maxFileUploads = ini_get('max_file_uploads');
             
             $logger->info('Request preprocessing', [
                 'is_multipart' => $isMultipart,
                 'content_type' => $contentType,
+                'content_length' => $contentLength,
+                'content_length_mb' => round($contentLength / 1024 / 1024, 2),
                 'has_files' => !empty($_FILES),
-                'has_post' => !empty($_POST)
+                'has_post' => !empty($_POST),
+                'php_post_max_size' => $postMaxSize,
+                'php_upload_max_filesize' => $uploadMaxFilesize,
+                'php_max_file_uploads' => $maxFileUploads
             ]);
+            
+            // If content is too large, reject immediately
+            $postMaxBytes = $this->parseSize($postMaxSize);
+            if ($contentLength > $postMaxBytes) {
+                $logger->error('Content too large for PHP limits', [
+                    'content_length' => $contentLength,
+                    'post_max_size' => $postMaxSize,
+                    'post_max_bytes' => $postMaxBytes
+                ]);
+                return $this->json(['error' => 'Upload zu groß. Maximum: ' . $postMaxSize . ', empfangen: ' . round($contentLength / 1024 / 1024, 2) . 'MB'], 413);
+            }
             
             // Try multiple ways to get the event parameter
             $event = $request->request->get('event') 
@@ -220,6 +242,27 @@ class GalleryController extends AbstractController
         return $this->render('admin/gallery/bulk-upload.html.twig', [
             'events' => $events
         ]);
+    }
+
+    private function parseSize(string $size): int
+    {
+        $size = trim($size);
+        $value = (int) $size;
+        $unit = strtolower(substr($size, -1));
+        
+        switch ($unit) {
+            case 'g':
+                $value *= 1024 * 1024 * 1024;
+                break;
+            case 'm':
+                $value *= 1024 * 1024;
+                break;
+            case 'k':
+                $value *= 1024;
+                break;
+        }
+        
+        return $value;
     }
 
     #[Route('/edit/{uuid}', name: '_edit', methods: ['GET', 'POST'])]
