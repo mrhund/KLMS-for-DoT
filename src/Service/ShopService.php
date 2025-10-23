@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\ShopAddon;
 use App\Entity\ShopOrder;
+use Ramsey\Uuid\UuidInterface;
 use App\Entity\ShopOrderHistory;
 use App\Entity\ShopOrderHistoryAction;
 use App\Entity\ShopOrderPositionAddon;
@@ -20,7 +21,6 @@ use App\Repository\ShopOrderRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\UuidInterface;
 
 
 class ShopService
@@ -35,13 +35,21 @@ class ShopService
     private readonly IdmRepository $userRepo;
 
     public const DEFAULT_TICKET_PRICE = 5000;
+    public const MAX_ADDON_COUNT = 20;
     public const MAX_TICKET_COUNT = 20;
-    public const MAX_ADDON_COUNT = 7;
     private LoggerInterface $logger;
 
-    public function __construct(ShopOrderRepository $orderRepository, ShopOrderPositionRepository $shopOrderPositionRepository, ShopAddonsRepository $shopAddonsRepository,
-                                IdmManager          $idmManager, SettingService $settingService, TicketService $ticketService, EmailService $emailService, EntityManagerInterface $em, LoggerInterface $logger)
-    {
+    public function __construct(
+        ShopOrderRepository $orderRepository,
+        ShopOrderPositionRepository $shopOrderPositionRepository,
+        ShopAddonsRepository $shopAddonsRepository,
+        IdmManager          $idmManager,
+        SettingService $settingService,
+        TicketService $ticketService,
+        EmailService $emailService,
+        EntityManagerInterface $em,
+        LoggerInterface $logger
+    ) {
         $this->orderRepository = $orderRepository;
         $this->shopOrderPositionRepository = $shopOrderPositionRepository;
         $this->shopAddonsRepository = $shopAddonsRepository;
@@ -58,16 +66,19 @@ class ShopService
         return $this->orderRepository->findAll();
     }
 
-    private function checkLimits(ShopOrder $order): bool
+    private function checkLimits(ShopOrder $order, bool $paidOnly = false): bool
     {
-        $countTotal = $this->countOrderedAddons();
-        $countUser = $this->countOrderedAddons($order->getOrderer());
+        $countTotal = $this->countOrderedAddons(null, $paidOnly);
+        $countUser = $this->countOrderedAddons($order->getOrderer(), $paidOnly);
 
         foreach ($order->getShopOrderPositions() as $pos) {
             if (!($pos instanceof ShopOrderPositionAddon)) {
                 continue;
             }
             $addon = $pos->getAddon();
+            if (empty($addon)) {
+                continue;
+            }
             $id = $addon->getId();
             if (!$addon->isActive()) {
                 return false;
@@ -94,12 +105,29 @@ class ShopService
             if ($pos instanceof ShopOrderPositionTicket) {
                 $ticket = $this->ticketService->createTicket();
                 $pos->setTicket($ticket);
-                if (!$first_ticket) { $first_ticket = $ticket; }
+                if (!$first_ticket) {
+                    $first_ticket = $ticket;
+                }
             }
         }
         // activate one ticket for buyer if they don't have a ticket yet
         if ($first_ticket && !$this->ticketService->getTicketUser($buyer)) {
             $this->ticketService->redeemTicket($first_ticket, $buyer);
+        }
+    }
+
+    private function unfulfillOrder(ShopOrder $order, bool $deleteTickets): void
+    {
+        // handle tickets
+        foreach ($order->getShopOrderPositions() as $pos) {
+            if ($pos instanceof ShopOrderPositionTicket) {
+                // invalidate ticket
+                $pos->setTicket(null);
+                $ticket = $pos->getTicket();
+                if ($deleteTickets && $ticket) {
+                    $this->ticketService->deleteTicket($ticket);
+                }
+            }
         }
     }
 
@@ -136,6 +164,17 @@ class ShopService
         }
     }
 
+    public function refundOrder(ShopOrder $order): void
+    {
+        if ($order->countRedeemedTickets() > 0) {
+            throw new OrderLifecycleException($order);
+        }
+        $result = $this->setState($order, ShopOrderStatus::Refunded);
+        if (!$result) {
+            throw new OrderLifecycleException($order);
+        }
+    }
+
     public function setOrderPaid(ShopOrder $order): void
     {
         $result = $this->setState($order, ShopOrderStatus::Paid);
@@ -154,23 +193,28 @@ class ShopService
 
     private function setState(ShopOrder $order, ShopOrderStatus $status): bool
     {
+        $valid_transfer = match ($order->getStatus()) {
+            null => $status == ShopOrderStatus::Created,
+            ShopOrderStatus::Created => $status == ShopOrderStatus::Paid || $status == ShopOrderStatus::Canceled,
+            ShopOrderStatus::Paid => $status == ShopOrderStatus::Refunded,
+            default => false,
+        };
+        if (!$valid_transfer) {
+            return false;
+        }
+
         $new_state = match ($order->getStatus()) {
             // if the order has 0 amount, it is fulfilled immediately
             null => $order->calculateTotal() == 0 ? ShopOrderStatus::Paid : ShopOrderStatus::Created,
             // currently only state transfer from created to both other states are allowed.
-            ShopOrderStatus::Created => $status,
-            default => $order->getStatus()
+            default => $status,
         };
-        if ($new_state != $order->getStatus()){
-            $order->setStatus($new_state);
-            $this->em->persist($order);
-            $this->em->flush();
-            $this->handleNewState($order);
-            $this->em->flush();
-            return true;
-        } else {
-            return false;
-        }
+        $order->setStatus($new_state);
+        $this->em->persist($order);
+        $this->em->flush();
+        $this->handleNewState($order);
+        $this->em->flush();
+        return true;
     }
 
     private function handleNewState(ShopOrder $order): void
@@ -179,6 +223,9 @@ class ShopService
         switch ($order->getStatus()) {
             case ShopOrderStatus::Created:
                 $this->emailOrder($order);
+                break;
+            case ShopOrderStatus::Refunded:
+                $this->unfulfillOrder($order, true);
                 break;
             case ShopOrderStatus::Canceled:
                 break;
@@ -190,17 +237,18 @@ class ShopService
         $order->addShopOrderHistory(
             (new ShopOrderHistory())
                 ->setLoggedAt(new DateTimeImmutable())
-                ->setAction(match ($order->getStatus()){
+                ->setAction(match ($order->getStatus()) {
                     ShopOrderStatus::Created => ShopOrderHistoryAction::OrderCreated,
                     ShopOrderStatus::Paid => ShopOrderHistoryAction::PaymentSuccessful,
+                    ShopOrderStatus::Refunded => ShopOrderHistoryAction::OrderRefunded,
                     ShopOrderStatus::Canceled => ShopOrderHistoryAction::OrderCanceled,
                 })
         );
     }
 
-    public function orderAdheresToLimits(ShopOrder $order): bool
+    public function orderAdheresToLimits(ShopOrder $order, bool $paidOnly): bool
     {
-        return $this->checkLimits($order);
+        return $this->checkLimits($order, $paidOnly);
     }
 
     public function hasOpenOrders(User|UuidInterface $user): bool
@@ -222,14 +270,17 @@ class ShopService
             ->setCreatedAt(new DateTimeImmutable());
     }
 
-    public function orderAddTickets(ShopOrder $order, int $ticketCnt): void
+    public function orderAddTickets(ShopOrder $order, int $ticketCnt, int $price): void
     {
-        $price = $this->settingService->get('lan.signup.price', self::DEFAULT_TICKET_PRICE);
-        $discount_limit = $this->settingService->get('lan.signup.discount.limit');
-        $discount_price = $this->settingService->get('lan.signup.discount.price');
-        if ($discount_price && $discount_limit && $ticketCnt >= $discount_limit) {
-            $price = $discount_price;
+        if ($price === null) {
+            $price = $this->settingService->get('lan.signup.price', self::DEFAULT_TICKET_PRICE);
+            $discount_limit = $this->settingService->get('lan.signup.discount.limit');
+            $discount_price = $this->settingService->get('lan.signup.discount.price');
+            if ($discount_price && $discount_limit && $ticketCnt >= $discount_limit) {
+                $price = $discount_price;
+            }
         }
+
         for ($i = 0; $i < $ticketCnt; $i++) {
             $order->addShopOrderPosition((new ShopOrderPositionTicket())->setPrice($price));
         }
@@ -255,7 +306,7 @@ class ShopService
 
     public function deleteOrder(ShopOrder $order): void
     {
-        if ($order->getStatus() !== ShopOrderStatus::Canceled) {
+        if (!$order->getStatus()->isDead()) {
             throw new OrderLifecycleException($order);
         }
         $this->logger->info("Order {$order->getId()} was deleted.");
@@ -283,7 +334,28 @@ class ShopService
     public function deleteAddon(ShopAddon $addon): void
     {
         $this->em->remove($addon);
-        $this->em->flush();;
+        $this->em->flush();
+    }
+
+    /**
+     * @return array [[User, Order], ...]
+     */
+    public function getOrders(): array
+    {
+        $orders = $this->orderRepository->findAll();
+        $uuids = array_map(fn($o) => $o->getOrderer(), $orders);
+
+        // preload users
+        $this->userRepo->findById($uuids);
+
+        $result = [];
+        foreach ($orders as $item) {
+            $result[] = [
+                'user' => $this->userRepo->findOneById($item->getOrderer()),
+                'order' => $item
+            ];
+        }
+        return $result;
     }
 
     /**
@@ -291,7 +363,8 @@ class ShopService
      */
     public function getAddonOrders(): array
     {
-        $sop = $this->shopOrderPositionRepository->getOrderedAddons(ShopOrderStatus::Paid);
+        $filter = ShopOrderStatus::STATUS_ACTIVE;
+        $sop = $this->shopOrderPositionRepository->getOrderedAddons($filter);
         $uuids = array_map(fn($p) => $p->getOrder()->getOrderer(), $sop);
 
         // preload users
@@ -299,39 +372,63 @@ class ShopService
 
         $result = [];
         foreach ($sop as $item) {
-            $result[] = ['user' => $this->userRepo->findOneById($item->getOrder()->getOrderer()),
-                'text' => $item->getText(), 'price' => $item->getPrice()];
+            $result[] = [
+                'user' => $this->userRepo->findOneById($item->getOrder()->getOrderer()),
+                'text' => $item->getText(),
+                'price' => $item->getPrice()
+            ];
         }
         return $result;
     }
 
     /**
-     * @param User|UuidInterface|null $user An optimal user to count the purchases for that user.
+     * @param User|UuidInterface|null $user An optional user to count the purchases for that user.
+     * @param bool $paidOnly only handle paid orders
      * @return array Array mapping AddonId to count of sold items of that addon.
      */
-    public function countOrderedAddons(User|UuidInterface|null $user = null): array
+    public function countOrderedAddons(User|UuidInterface|null $user = null, bool $paidOnly = false): array
     {
         $uuid = $user instanceof User ? $user->getUuid() : $user;
-        return $this->shopOrderPositionRepository->countOrderedAddonsById($uuid);
+        $filter = $paidOnly ? ShopOrderStatus::STATUS_ACTIVE : ShopOrderStatus::STATUS_NOT_DEAD;
+        return $this->shopOrderPositionRepository->countOrderedAddonsById($uuid, $filter);
     }
 
     /**
      * @param ShopAddon $addon The addon to be counted.
+     * @param bool $paidOnly only handle paid orders
      * @return int The number of purchased items
      */
-    public function countOrderedAddon(ShopAddon $addon): int
+    public function countOrderedAddon(ShopAddon $addon, bool $paidOnly = false): int
     {
-        return $this->shopOrderPositionRepository->countOrderedAddons($addon);
+        $filter = $paidOnly ? ShopOrderStatus::STATUS_ACTIVE : ShopOrderStatus::STATUS_NOT_DEAD;
+        return $this->shopOrderPositionRepository->countOrderedAddons($addon, null, $filter);
     }
 
     /**
-     * @param ShopAddon $addon The addon to be counted.
-     * @param User|UuidInterface $user
-     * @return int The number of purchased items
+     * Liefert die gespeicherte checkoutId (falls vorhanden) für eine Order.
      */
-    public function countOrderedAddonByUser(ShopAddon $addon, User|UuidInterface $user): int
+    public function getCheckoutId(ShopOrder $order): ?UuidInterface
     {
-        $uuid = $user instanceof User ? $user->getUuid() : $user;
-        return $this->shopOrderPositionRepository->countOrderedAddons($addon, $uuid);
+        // order enthält ggf. das Feld checkoutId
+        return method_exists($order, 'getCheckoutId') ? $order->getCheckoutId() : null;
+    }
+
+    /**
+     * Speichert die checkoutId an der Order und persistiert sie.
+     */
+    public function saveCheckoutId(ShopOrder $order, string $checkoutId): void
+    {
+        if (!method_exists($order, 'setCheckoutId')) {
+            // If entity doesn't expose setter, do nothing
+            return;
+        }
+        try {
+            $uuid = \Ramsey\Uuid\Uuid::fromString($checkoutId);
+            $order->setCheckoutId($uuid);
+            $this->em->persist($order);
+            $this->em->flush();
+        } catch (\Throwable $e) {
+            $this->logger->warning('Could not parse checkoutId to UUID.');
+        }
     }
 }

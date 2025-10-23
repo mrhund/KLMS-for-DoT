@@ -24,27 +24,26 @@
                 <div class="col">
                     <div class="card w-100 mb-4 sponsor-category">
                         {% if settings.get('sponsor.page.show_header', true) %}
-                        <div class="card-header" id="cat{{ category.id }}">
-                            <h3>{{ category.name }}</h3>
+                        <div class="card-body" id="cat{{ category.id }}">
+                            <h2>{{ category.name }}</h2>
                         </div>
                         <div class="card-body">
                         {% else %}
                         <div class="card-body" id="cat{{ category.id }}">
                         {% endif %}
                             <ul class="list-unstyled">
-                            {% for s in category.sponsors %}
+                            {% for s in category.sponsors | sort((a, b) => b.sortOrder <=> a.sortOrder) %}
                                 <li class="row mb-4 sponsor">
-                                    <div class="col-lg-5 col-12 text-center">
+                                    <div class="col-lg-5 col-12 align-self-center text-center">
                                         {% if s.url is not empty %}<a href="{{ s.url }}" target="_blank">{% endif %}
-                                        <img style="max-width: 350px; max-height: 350px;" src="{{ vich_uploader_asset(s, 'logoFile') | imagine_filter('sponsor_logo') }}">
+                                        <img style="width: 300px; max-height: 300px;" src="{{ vich_uploader_asset(s, 'logoFile') | imagine_filter('sponsor_logo') }}">
                                         {% if s.url is not empty %}</a>{% endif %}
                                     </div>
                                     <div class="col-lg-7 col-12">
-                                        <h5 class="mt-2 mb-2 sponsor-name">{{ s.name }}</h5>
+                                        <h4 class="mt-2 mb-2 sponsor-name">{{ s.name }}</h4>
                                         {{ s.text | raw }}
                                     </div>
                                 </li>
-                                {% if not loop.last %}<hr/>{% endif %}
                             {% endfor %}
                             </ul>
                         </div>

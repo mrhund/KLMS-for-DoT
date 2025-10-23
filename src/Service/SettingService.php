@@ -26,6 +26,8 @@ class SettingService
         'site.subtitle.show' => [self::TB_DESCRIPTION => 'Untertitel der Seite anzeigen', self::TB_TYPE => SettingType::Bool],
         'site.about' => [self::TB_DESCRIPTION => 'Über uns, Homepage links unten', self::TB_TYPE => SettingType::HTML],
         'site.organisation' => [self::TB_DESCRIPTION => 'Organisationsname / Vereinsname', self::TB_TYPE => SettingType::String],
+        'site.prepage.show' => [self::TB_DESCRIPTION => 'Vorschau der Seite anzeigen', self::TB_TYPE => SettingType::Bool],
+        'site.prepage.text' => [self::TB_DESCRIPTION => 'Text der Vorschau-Seite', self::TB_TYPE => SettingType::HTML],
 
         'sponsor.enabled' => [self::TB_DESCRIPTION => 'Sponsorenbanner einschalten', self::TB_TYPE => SettingType::Bool],
         'sponsor.banner.show' => [self::TB_DESCRIPTION => 'Sponsoren-Banner anzeigen', self::TB_TYPE => SettingType::Bool],
@@ -51,6 +53,10 @@ class SettingService
         'lan.signup.discount.price' => [self::TB_DESCRIPTION => 'Preis für einen Eintritt mit Gruppenermäßigung.', self::TB_TYPE => SettingType::Money],
         'lan.signup.discount.limit' => [self::TB_DESCRIPTION => 'Gruppenermäßigung ab x Eintritte.', self::TB_TYPE => SettingType::Integer],
         'lan.signup.payment_details' => [self::TB_DESCRIPTION => 'Bankdaten für die Zahlung von Bestellungen', self::TB_TYPE => SettingType::HTML],
+        'lan.signup.payment_sumupenabled' => [self::TB_DESCRIPTION => 'SumUp-Zahlungen aktivieren', self::TB_TYPE => SettingType::Bool, self::TB_DEFAULT_VALUE => false],
+        'lan.signup.payment_sumupclientid' => [self::TB_DESCRIPTION => 'SumUp-Client-ID', self::TB_TYPE => SettingType::String, self::TB_DEFAULT_VALUE => ''],
+        'lan.signup.payment_sumupclientsecret' => [self::TB_DESCRIPTION => 'SumUp-Client-Secret', self::TB_TYPE => SettingType::String, self::TB_DEFAULT_VALUE => ''],
+        'lan.signup.payment_paytoemail' => [self::TB_DESCRIPTION => 'Zahlungen an diese E-Mail-Adresse senden (SumUp Account)', self::TB_TYPE => SettingType::String, self::TB_DEFAULT_VALUE => ''],
 
         'lan.seatmap.enabled' => [self::TB_DESCRIPTION => 'Sitzplanbuchungen einschalten', self::TB_TYPE => SettingType::Bool],
         'lan.seatmap.allow_booking_for_non_paid' => [self::TB_DESCRIPTION => 'Sitzplanbuchungen für nicht bezahlte Gamer erlauben', self::TB_TYPE => SettingType::Bool],
@@ -68,7 +74,10 @@ class SettingService
 
         'lan.tourney.enabled' => [self::TB_DESCRIPTION => 'Tourney einschalten', self::TB_TYPE => SettingType::Bool],
         'lan.tourney.text' => [self::TB_DESCRIPTION => 'Tourney Einleitungstext', self::TB_TYPE => SettingType::HTML],
+        'lan.tourney.proper_double_elim' => [self::TB_DESCRIPTION => 'Loser bracket winner must win twice.', self::TB_TYPE => SettingType::Bool, self::TB_DEFAULT_VALUE => true],
+        'lan.tourney.small_final' => [self::TB_DESCRIPTION => 'Kleines Finale (Spiel um Platz 3) generieren', self::TB_TYPE => SettingType::Bool, self::TB_DEFAULT_VALUE => true],
         'lan.tourney.registration_open' => [self::TB_DESCRIPTION => 'Registrierung freigeschalten', self::TB_TYPE => SettingType::Bool],
+        'lan.tourney.registration_require_checkin' => [self::TB_DESCRIPTION => 'Tourney Anmeldung nur mit check-in erlauben', self::TB_TYPE => SettingType::Bool],
 
         'style.logo' => [self::TB_DESCRIPTION => 'Logo', self::TB_TYPE => SettingType::File],
         'style.logo_full_height' => [self::TB_DESCRIPTION => 'Soll das Logo die volle Höhe des Headers einnehmen?', self::TB_TYPE => SettingType::Bool, self::TB_DEFAULT_VALUE => false],

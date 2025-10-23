@@ -10,7 +10,7 @@
             <h3>{{ settings.get('site.title') }}</h3>
             {% endif %}
             {% if settings.get('site.subtitle.show', false) %}
-            <p>{{ settings.get('site.subtitle') }}</p>
+            <h3>{{ settings.get('site.subtitle') }}</h3>
             {% endif %}
         {% endblock %}
     {% endembed %}
@@ -18,7 +18,6 @@
 
 
 {% block main %}
-    {% include 'site/components/stats.html.twig' %}
 
     {% set cnt = news | length %}
 
@@ -31,7 +30,7 @@
     <div class="text-center mb-4 mt-0">
         {% set noMore = cnt >= news_total_cnt %}
         <button id="loadMore" class="btn btn-outline-secondary" {% if noMore %} style="display: none;"{% endif %}>Mehr News</button>
-        <span id="noMore" class="text-muted" {% if not noMore %} style="display: none;"{% endif %}>Keine weiteren News</span>
+        <!--<span id="noMore" class="text-muted" {% if not noMore %} style="display: none;"{% endif %}>Keine weiteren News</span>-->
         <div id="spinner" class="spinner-grow" role="status" style="display: none;">
             <span class="sr-only">Loading...</span>
         </div>

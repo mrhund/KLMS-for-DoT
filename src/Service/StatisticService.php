@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Entity\ShopOrderStatus;
 use App\Repository\SeatRepository;
 use App\Repository\ShopOrderPositionRepository;
 use App\Repository\TicketRepository;
@@ -38,7 +39,6 @@ class StatisticService extends OptimalService
             'seats_locked' => $this->countSeatsLocked(),
             'tickets_ordered' => $this->countOrderedTickets(),
             'tickets_sold' => $this->countSoldTickets(),
-            'tickets_redeemed' => $this->countRedeemedTickets(),
             default => '',
         };
     }
@@ -65,12 +65,12 @@ class StatisticService extends OptimalService
 
     public function countOrderedTickets(): int
     {
-        return $this->ticketRepository->count([]) + $this->shopOrderPositionRepository->countOrderedTickets();
+        return $this->ticketRepository->countRedeemedWithoutOrder() + $this->shopOrderPositionRepository->countTicketsNotCancelled();
     }
 
     public function countSoldTickets(): int
     {
-        return $this->ticketRepository->count([]);
+        return $this->ticketRepository->countRedeemed() + $this->ticketRepository->countFromTicket();
     }
 
     public function countRedeemedTickets(): int
