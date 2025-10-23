@@ -13,15 +13,16 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Psr\Log\LoggerInterface;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Constraints\File;
-use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 
+use Doctrine\ORM\EntityManagerInterface;
 #[IsGranted('ROLE_ADMIN_MEDIA')]
-#[Route('/gallery', name: 'gallery', methods: ['GET'])]
+#[Route('gallery', name: '_gallery')]
 class GalleryController extends AbstractController
 {
-    #[Route(path: '', name: '')]
+    #[Route('', name: '', methods: ['GET'])]
     public function index(GalleryImageRepository $repository): Response
     {
         $photosByEvent = $repository->findAllGroupedByEvent();
@@ -91,7 +92,7 @@ class GalleryController extends AbstractController
         ]);
     }
 
-    #[Route('/bulk-upload', name: '_bulk_upload', methods: ['GET', 'POST'])]
+    #[Route('/admin/gallery/bulk-upload', name: 'admin_gallery_bulk_upload', methods: ['GET', 'POST'])]
     public function bulkUpload(Request $request, GalleryImageRepository $repository, EntityManagerInterface $em, LoggerInterface $logger): Response
     {
         if ($request->isMethod('POST')) {
