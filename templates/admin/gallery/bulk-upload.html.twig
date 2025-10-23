@@ -10,8 +10,6 @@
             <div class="card">
                 <div class="card-body">
                     <form id="bulkUploadForm" enctype="multipart/form-data">
-                        <!-- Hidden field for event name -->
-                        <input type="hidden" id="hiddenEvent" name="event" value="">
                         
                         <div class="row mb-4">
                             <div class="col-md-6">
@@ -45,7 +43,7 @@
                             <div id="dropZone" class="border border-2 border-dashed border-primary rounded p-5 text-center bg-light">
                                 <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
                                 <h4>Bilder hierher ziehen oder klicken zum Auswählen</h4>
-                                <p class="text-muted">
+                                                                <p class="text-muted">
                                     Unterstützte Formate: JPEG, PNG, GIF, WebP<br>
                                     Maximale Dateigröße: 10MB pro Bild<br>
                                     Bis zu 100+ Bilder gleichzeitig möglich
@@ -234,80 +232,44 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Debug: Check what values we have
-        console.log('eventSelect.value:', eventSelect.value);
-        console.log('newEventInput.value:', newEventInput.value);
-        console.log('newEventInput.value.trim():', newEventInput.value.trim());
-
         const eventName = (newEventInput.value.trim() || eventSelect.value || '').trim();
-        console.log('Final eventName:', eventName);
         
         if (!eventName) {
             alert('Bitte wählen Sie ein Event aus oder geben Sie einen neuen Event-Namen ein.');
             return;
         }
 
-        // Additional validation for event name
         if (eventName.length < 3) {
             alert('Der Event-Name muss mindestens 3 Zeichen lang sein.');
             return;
         }
 
-        // Update hidden field
-        document.getElementById('hiddenEvent').value = eventName;
-
         uploadProgress.style.display = 'block';
         uploadBtn.disabled = true;
         clearBtn.disabled = true;
 
-        // Try using the form directly instead of FormData
-        const form = document.getElementById('bulkUploadForm');
         const formData = new FormData();
-        
-        // Manually add the event
         formData.append('event', eventName);
         
-        // Add files manually
         selectedFiles.forEach((file, index) => {
             formData.append('images[]', file);
         });
-        
-        // Debug: Log what we're sending
-        console.log('Sending event name:', eventName);
-        console.log('FormData entries:');
-        for (let pair of formData.entries()) {
-            console.log(pair[0] + ': ' + (pair[1] instanceof File ? 'FILE: ' + pair[1].name : pair[1]));
-        }
 
         let uploaded = 0;
         const total = selectedFiles.length;
 
-        // Simulate progress (since we can't track individual file progress easily)
-        const progressInterval = setInterval(() => {
-            if (uploaded < total) {
-                const progress = (uploaded / total) * 100;
-                progressBar.style.width = progress + '%';
-                progressText.textContent = `${uploaded} / ${total} Bilder hochgeladen`;
-            }
-        }, 100);
+        // Show indeterminate progress
+        progressBar.classList.add('progress-bar-striped', 'progress-bar-animated');
+        progressBar.style.width = '100%';
+        progressText.textContent = `${total} Bilder werden hochgeladen...`;
 
-        // Start upload with extended timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutes timeout
-        
+        // Start upload
         fetch('{{ path('admin_gallery_bulk_upload') }}', {
             method: 'POST',
-            body: formData,
-            signal: controller.signal
+            body: formData
         })
-        .then(response => {
-            clearTimeout(timeoutId);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            clearInterval(progressInterval);
-            
-            progressBar.style.width = '100%';
             progressText.textContent = `Upload abgeschlossen`;
             
             let resultHtml = '';
@@ -357,24 +319,12 @@ document.addEventListener('DOMContentLoaded', function() {
             uploadResults.style.display = 'block';
         })
         .catch(error => {
-            clearInterval(progressInterval);
-            clearTimeout(timeoutId);
             console.error('Upload error:', error);
-            
-            let errorMessage = 'Netzwerkfehler beim Upload';
-            if (error.name === 'AbortError') {
-                errorMessage = 'Upload-Timeout: Der Upload dauerte zu lange. Bitte versuchen Sie es mit weniger Dateien.';
-            } else if (error.message.includes('timeout')) {
-                errorMessage = 'Upload-Timeout: Versuchen Sie es mit weniger Dateien oder einer besseren Internetverbindung.';
-            }
             
             uploadResults.innerHTML = `
                 <div class="alert alert-danger">
                     <i class="fas fa-times-circle me-2"></i>
-                    <strong>Fehler:</strong> ${errorMessage}
-                    <div class="mt-2">
-                        <small>Tipp: Bei sehr vielen Dateien kann der Upload längere Zeit dauern. Versuchen Sie es mit kleineren Mengen (z.B. 20-30 Bilder auf einmal).</small>
-                    </div>
+                    <strong>Fehler:</strong> Upload fehlgeschlagen
                 </div>
             `;
             uploadResults.style.display = 'block';
