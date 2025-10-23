@@ -102,10 +102,20 @@ class GalleryController extends AbstractController
             $event = $request->request->get('event');
             $files = $request->files->get('images');
             
+            // Debug logging
+            error_log('Bulk upload received - Event: ' . ($event ?? 'NULL') . ', Files count: ' . (is_array($files) ? count($files) : 'not array'));
+            
+            // Validate event name
             if (!$event || trim($event) === '') {
                 return $this->json(['error' => 'Event name is required'], 400);
             }
-
+            
+            $event = trim($event);
+            if (strlen($event) < 3) {
+                return $this->json(['error' => 'Event name must be at least 3 characters long'], 400);
+            }
+            
+            // Validate files
             if (!$files || !is_array($files) || count($files) === 0) {
                 return $this->json(['error' => 'No files uploaded'], 400);
             }

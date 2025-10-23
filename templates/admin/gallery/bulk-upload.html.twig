@@ -226,10 +226,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function uploadFiles() {
-        if (selectedFiles.length === 0) return;
+        if (selectedFiles.length === 0) {
+            alert('Bitte wählen Sie mindestens eine Datei aus.');
+            return;
+        }
 
-        const eventName = newEventInput.value.trim() || eventSelect.value;
-        if (!eventName) return;
+        const eventName = (newEventInput.value.trim() || eventSelect.value || '').trim();
+        if (!eventName) {
+            alert('Bitte wählen Sie ein Event aus oder geben Sie einen neuen Event-Namen ein.');
+            return;
+        }
+
+        // Additional validation for event name
+        if (eventName.length < 3) {
+            alert('Der Event-Name muss mindestens 3 Zeichen lang sein.');
+            return;
+        }
 
         uploadProgress.style.display = 'block';
         uploadBtn.disabled = true;
