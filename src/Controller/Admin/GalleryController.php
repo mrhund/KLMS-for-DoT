@@ -19,7 +19,7 @@ use Psr\Log\LoggerInterface;
 
 use Doctrine\ORM\EntityManagerInterface;
 #[IsGranted('ROLE_ADMIN_MEDIA')]
-#[Route('gallery', name: '_gallery')]
+#[Route('gallery', name: 'gallery')]
 class GalleryController extends AbstractController
 {
     #[Route('', name: '', methods: ['GET'])]
@@ -92,7 +92,7 @@ class GalleryController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/gallery/bulk-upload', name: 'admin_gallery_bulk_upload', methods: ['GET', 'POST'])]
+    #[Route('/bulk-upload', name: '_bulk_upload', methods: ['GET', 'POST'])]
     public function bulkUpload(Request $request, GalleryImageRepository $repository, EntityManagerInterface $em, LoggerInterface $logger): Response
     {
         if ($request->isMethod('POST')) {
