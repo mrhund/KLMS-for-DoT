@@ -13,7 +13,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Validator\Constraints\File;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -92,31 +92,41 @@ class GalleryController extends AbstractController
     }
 
     #[Route('/bulk-upload', name: '_bulk_upload', methods: ['GET', 'POST'])]
-    public function bulkUpload(Request $request, GalleryImageRepository $repository, EntityManagerInterface $em): Response
+    public function bulkUpload(Request $request, GalleryImageRepository $repository, EntityManagerInterface $em, LoggerInterface $logger): Response
     {
         if ($request->isMethod('POST')) {
             // Increase limits for bulk upload
             set_time_limit(0); // No time limit
             ini_set('memory_limit', '1G');
             
-            $event = $request->request->get('event');
+            // Try multiple ways to get the event parameter
+            $event = $request->request->get('event') 
+                  ?? $request->get('event') 
+                  ?? $request->query->get('event');
+            
             $files = $request->files->get('images');
             
-            // Debug logging - log all request data
-            error_log('=== BULK UPLOAD DEBUG ===');
-            error_log('Request method: ' . $request->getMethod());
-            error_log('Content type: ' . $request->headers->get('Content-Type'));
-            error_log('All request data: ' . print_r($request->request->all(), true));
-            error_log('All files data: ' . print_r($request->files->all(), true));
-            error_log('Event parameter: "' . ($event ?? 'NULL') . '"');
-            error_log('Event after trim: "' . (($event !== null) ? trim($event) : 'NULL') . '"');
-            error_log('Files count: ' . (is_array($files) ? count($files) : 'not array or null'));
-            error_log('========================');
+            // Debug logging using Symfony logger
+            $logger->info('=== BULK UPLOAD DEBUG ===', [
+                'request_method' => $request->getMethod(),
+                'content_type' => $request->headers->get('Content-Type'),
+                'post_data' => $request->request->all(),
+                'get_data' => $request->query->all(),
+                'files_data' => array_keys($request->files->all()),
+                'event_request' => $request->request->get('event'),
+                'event_get' => $request->get('event'),
+                'event_query' => $request->query->get('event'),
+                'final_event' => $event,
+                'files_count' => is_array($files) ? count($files) : 'not array or null'
+            ]);
             
             // Validate event name
             if (!$event || trim($event) === '') {
-                error_log('VALIDATION FAILED: Event name empty or null');
-                return $this->json(['error' => 'Event name is required. Received: "' . ($event ?? 'NULL') . '"'], 400);
+                $logger->error('VALIDATION FAILED: Event name empty or null', [
+                    'post_data' => $request->request->all(),
+                    'files_keys' => array_keys($request->files->all())
+                ]);
+                return $this->json(['error' => 'Event name is required. Debug: POST=' . json_encode($request->request->all()) . ', FILES=' . json_encode(array_keys($request->files->all()))], 400);
             }
             
             $event = trim($event);

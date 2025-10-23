@@ -10,6 +10,9 @@
             <div class="card">
                 <div class="card-body">
                     <form id="bulkUploadForm" enctype="multipart/form-data">
+                        <!-- Hidden field for event name -->
+                        <input type="hidden" id="hiddenEvent" name="event" value="">
+                        
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="eventSelect" class="form-label">Event auswählen</label>
@@ -250,23 +253,31 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Update hidden field
+        document.getElementById('hiddenEvent').value = eventName;
+
         uploadProgress.style.display = 'block';
         uploadBtn.disabled = true;
         clearBtn.disabled = true;
 
-        const formData = new FormData();
-        formData.append('event', eventName);
+        // Try using the form directly instead of FormData
+        const form = document.getElementById('bulkUploadForm');
+        const formData = new FormData(form);
+        
+        // Add files to form data
+        selectedFiles.forEach(file => {
+            formData.append('images[]', file);
+        });
+        
+        // Ensure event is in FormData (double-check)
+        formData.set('event', eventName);
         
         // Debug: Log what we're sending
         console.log('Sending event name:', eventName);
         console.log('FormData entries:');
         for (let pair of formData.entries()) {
-            console.log(pair[0] + ': ' + pair[1]);
+            console.log(pair[0] + ': ' + (pair[1] instanceof File ? 'FILE: ' + pair[1].name : pair[1]));
         }
-        
-        selectedFiles.forEach(file => {
-            formData.append('images[]', file);
-        });
 
         let uploaded = 0;
         const total = selectedFiles.length;
