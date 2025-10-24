@@ -3,13 +3,17 @@
 namespace App\Controller\Admin;
 
 use App\Entity\GalleryImage;
+use App\Entity\GalleryEvent;
 use App\Repository\GalleryImageRepository;
+use App\Repository\GalleryEventRepository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -196,5 +200,56 @@ class GalleryController extends AbstractController
         }
 
         return $this->redirectToRoute('admin_gallery');
+    }
+
+    #[Route('/events', name: '_events', methods: ['GET', 'POST'])]
+    public function events(Request $request, GalleryEventRepository $repository): Response
+    {
+        $events = $repository->findAllOrderedByPriority();
+
+        $form = $this->createFormBuilder(['events' => $events])
+            ->add('events', CollectionType::class, [
+                'entry_type' => HiddenType::class,
+                'label' => false,
+                'allow_add' => true,
+                'allow_delete' => true,
+                'prototype' => true,
+                'by_reference' => false,
+            ])
+            ->getForm();
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data = $form->getData();
+            $eventsData = $data['events'] ?? [];
+
+            // Remove all existing events and recreate from form data
+            foreach ($events as $event) {
+                if ($event->getGalleryImages()->count() === 0) {
+                    $repository->remove($event);
+                }
+            }
+
+            // Create new events from form data
+            foreach ($eventsData as $priority => $eventName) {
+                if (!empty(trim($eventName))) {
+                    $event = new GalleryEvent();
+                    $event->setName(trim($eventName));
+                    $event->setPriority($priority);
+                    $repository->save($event);
+                }
+            }
+
+            $repository->getEntityManager()->flush();
+            $this->addFlash('success', 'Events wurden erfolgreich gespeichert!');
+
+            return $this->redirectToRoute('admin_gallery_events');
+        }
+
+        return $this->render('admin/gallery/events.html.twig', [
+            'form' => $form->createView(),
+            'events' => $events,
+        ]);
     }
 }
