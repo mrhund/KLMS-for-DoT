@@ -1,6 +1,5 @@
 const $ = require('jquery');
 
-// Gallery Events Management (based on sponsor.js)
 let GalleryEventList = function ($wrapper) {
     this.$root = $wrapper;
     this.dataSource = $wrapper.attr('data-source-input');
@@ -32,7 +31,7 @@ $.extend(GalleryEventList.prototype, {
     },
     draw() {
         this.$root.empty();
-        this._buildHTML(this.$root[0], this.eventList);
+        this._buildHTML(this.$root[ 0 ], this.eventList);
     },
     addNew(name = null) {
         this._createEntry(name);
