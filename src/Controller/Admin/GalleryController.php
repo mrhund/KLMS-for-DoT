@@ -20,6 +20,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints as Assert;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -204,7 +205,7 @@ class GalleryController extends AbstractController
     }
 
     #[Route('/events', name: '_events', methods: ['GET', 'POST'])]
-    public function events(Request $request, GalleryEventRepository $repository): Response
+    public function events(Request $request, GalleryEventRepository $repository, EntityManagerInterface $entityManager): Response
     {
         $events = $repository->findAllOrderedByPriority();
         
@@ -249,7 +250,7 @@ class GalleryController extends AbstractController
                 }
             }
 
-            $repository->getEntityManager()->flush();
+            $entityManager->flush();
             $this->addFlash('success', 'Events wurden erfolgreich gespeichert!');
 
             return $this->redirectToRoute('admin_gallery_events');
