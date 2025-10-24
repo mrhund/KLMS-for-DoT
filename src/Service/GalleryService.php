@@ -148,6 +148,40 @@ class GalleryService
         return $this->imageRepository->findEvents();
     }
 
+    /**
+     * Get all events with their images grouped by event entity
+     * @return array Array with event entities as keys and their images as values
+     */
+    public function getAllEventsWithImages(): array
+    {
+        // Get all events ordered by priority
+        $events = $this->eventRepository->findBy([], ['priority' => 'ASC']);
+        $result = [];
+        
+        foreach ($events as $event) {
+            $images = $event->getGalleryImages()->toArray();
+            if (!empty($images)) {
+                // Sort images by createdAt DESC
+                usort($images, fn($a, $b) => $b->getCreatedAt() <=> $a->getCreatedAt());
+                $result[$event->getName()] = [
+                    'event' => $event,
+                    'images' => $images
+                ];
+            }
+        }
+        
+        // Add images without event
+        $imagesWithoutEvent = $this->imageRepository->findByEvent('Ohne Event');
+        if (!empty($imagesWithoutEvent)) {
+            $result['Ohne Event'] = [
+                'event' => null,
+                'images' => $imagesWithoutEvent
+            ];
+        }
+        
+        return $result;
+    }
+
     private const ARRAY_ID = 'id';
     private const ARRAY_NAME = 'name';
     private const ARRAY_COUNT = 'count';

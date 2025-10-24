@@ -1,6 +1,6 @@
 {% extends 'site/siteBase.html.twig' %}
 
-{% block title %}{{ event|replace({'-': ' '})|title }} - Galerie - {{ parent() }}{% endblock %}
+{% block title %}{{ eventName }} - Galerie - {{ parent() }}{% endblock %}
 
 {% block main %}
 <div class="container my-5">
@@ -14,17 +14,24 @@
                         </a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
-                        {{ event|replace({'-': ' '})|title }}
+                        {{ eventName }}
                     </li>
                 </ol>
             </nav>
 
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>
-                    <i class="fas fa-calendar-alt me-3"></i>
-                    {{ event|replace({'-': ' '})|title }}
-                    <small class="text-muted">({{ photos|length }} Bilder)</small>
-                </h1>
+                <div>
+                    <h1>
+                        <i class="fas fa-calendar-alt me-3"></i>
+                        {{ eventName }}
+                        <small class="text-muted">({{ photos|length }} Bilder)</small>
+                    </h1>
+                    {% if eventData.event %}
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-sort-numeric-up me-1"></i>Priorität: {{ eventData.event.priority }}
+                        </p>
+                    {% endif %}
+                </div>
                 <a href="{{ path('gallery') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Zurück zur Übersicht
                 </a>
@@ -42,7 +49,7 @@
                             <div class="card border-0 shadow-sm">
                                 <a href="{{ photo.getImagePath() }}" 
                                    class="glightbox" 
-                                   data-gallery="{{ event }}"
+                                   data-gallery="{{ eventName }}"
                                    data-title="{{ photo.title ?? 'Bild ' ~ photo.uuid }}"
                                    data-description="{{ photo.description ?? '' }}">
                                     <img src="{{ photo.getImagePath()|imagine_filter('gallery_thumb') }}"
@@ -51,11 +58,18 @@
                                          loading="lazy"
                                          style="height: 200px; object-fit: cover;">
                                 </a>
-                                {% if photo.title %}
+                                {% if photo.title or photo.description %}
                                     <div class="card-body p-2">
-                                        <p class="card-text small text-muted mb-0">{{ photo.title }}</p>
+                                        {% if photo.title %}
+                                            <p class="card-text small text-muted mb-1">{{ photo.title }}</p>
+                                        {% endif %}
                                         {% if photo.description %}
                                             <p class="card-text small text-muted mb-0">{{ photo.description|truncate(50) }}</p>
+                                        {% endif %}
+                                        {% if photo.galleryEvent %}
+                                            <p class="card-text small text-primary mb-0">
+                                                <i class="fas fa-tag me-1"></i>{{ photo.galleryEvent.name }}
+                                            </p>
                                         {% endif %}
                                     </div>
                                 {% endif %}
@@ -69,19 +83,18 @@
 </div>
 {% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    {# GLightbox CSS #}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css">
+{% endblock %}
+
 {% block javascripts %}
     {{ parent() }}
     
-    {# GLightbox CSS and JS #}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css">
+    {# GLightbox JS #}
     <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
     
-    <script>
-        // Initialize GLightbox
-        const lightbox = GLightbox({
-            touchNavigation: true,
-            loop: true,
-            autoplayVideos: false
-        });
-    </script>
+    {# Gallery functionality #}
+    {{ encore_entry_script_tags('gallery') }}
 {% endblock %}

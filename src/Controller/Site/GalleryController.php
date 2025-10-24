@@ -2,8 +2,7 @@
 
 namespace App\Controller\Site;
 
-use App\Entity\GalleryImage;
-use App\Repository\GalleryImageRepository;
+use App\Service\GalleryService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -12,29 +11,30 @@ use Symfony\Component\Routing\Annotation\Route;
 class GalleryController extends AbstractController
 {
     #[Route('', name: '', methods: ['GET'])]
-    public function index(GalleryImageRepository $repository): Response
+    public function index(GalleryService $galleryService): Response
     {
-        $photosByEvent = $repository->findAllGroupedByEvent();
-        $events = $repository->findEvents();
+        $eventsWithImages = $galleryService->getAllEventsWithImages();
 
         return $this->render('site/gallery/index.html.twig', [
-            'photosByEvent' => $photosByEvent,
-            'events' => $events,
+            'eventsWithImages' => $eventsWithImages,
         ]);
     }
 
-    #[Route('/event/{event}', name: '_event', methods: ['GET'])]
-    public function event(string $event, GalleryImageRepository $repository): Response
+    #[Route('/event/{eventName}', name: '_event', methods: ['GET'])]
+    public function event(string $eventName, GalleryService $galleryService): Response
     {
-        $photos = $repository->findByEvent($event);
+        $eventsWithImages = $galleryService->getAllEventsWithImages();
         
-        if (empty($photos)) {
+        if (!isset($eventsWithImages[$eventName])) {
             throw $this->createNotFoundException('Event not found');
         }
+        
+        $eventData = $eventsWithImages[$eventName];
 
         return $this->render('site/gallery/event.html.twig', [
-            'event' => $event,
-            'photos' => $photos,
+            'eventName' => $eventName,
+            'eventData' => $eventData,
+            'photos' => $eventData['images'],
         ]);
     }
 }

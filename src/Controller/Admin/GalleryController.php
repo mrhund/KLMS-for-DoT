@@ -28,12 +28,10 @@ class GalleryController extends AbstractController
     #[Route('', name: '', methods: ['GET'])]
     public function index(GalleryService $galleryService): Response
     {
-        $photosByEvent = $galleryService->getAllImagesGroupedByEvent();
-        $events = $galleryService->getEventNames();
+        $eventsWithImages = $galleryService->getAllEventsWithImages();
 
         return $this->render('admin/gallery/index.html.twig', [
-            'photosByEvent' => $photosByEvent,
-            'events' => $events,
+            'eventsWithImages' => $eventsWithImages,
         ]);
     }
 
