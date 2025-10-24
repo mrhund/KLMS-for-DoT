@@ -94,14 +94,14 @@
                 </div>
                 <div class="card-text">
                     {% if podium | default([]) is not empty %}
-                        <h3><i class="fa-solid fa-trophy"></i> Ergebnis</h3>
+                        <h4><i class="fa-solid fa-trophy"></i> Ergebnis</h4>
                         <hr/>
                             <div class="container-fluid row justify-content-center">
                                 <div class="col-md-5">
                                     {{ _self.podium_list(podium) }}
                                 </div>
                         </div>
-                        <h3><i class="fa-solid fa-tree"></i> Turnierbaum</h3>
+                        <h4><i class="fa-solid fa-tree"></i> Turnierbaum</h4>
                         <hr/>
                     {% endif %}
                     {% set show_seat = participates or is_granted('ROLE_ADMIN_TOURNEY') %}
