@@ -19,6 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Constraints\File;
+use Symfony\Component\Validator\Constraints as Assert;
 use Psr\Log\LoggerInterface;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -206,15 +207,21 @@ class GalleryController extends AbstractController
     public function events(Request $request, GalleryEventRepository $repository): Response
     {
         $events = $repository->findAllOrderedByPriority();
+        
+        // Convert events to array format for JavaScript (like sponsor categories)
+        $eventArray = [];
+        foreach ($events as $event) {
+            $eventArray[] = [
+                'name' => $event->getName(),
+                'count' => $event->getGalleryImages()->count()
+            ];
+        }
 
-        $form = $this->createFormBuilder(['events' => $events])
-            ->add('events', CollectionType::class, [
-                'entry_type' => HiddenType::class,
-                'label' => false,
-                'allow_add' => true,
-                'allow_delete' => true,
-                'prototype' => true,
-                'by_reference' => false,
+        $form = $this->createFormBuilder()
+            ->add('events', HiddenType::class, [
+                'required' => true,
+                'data' => json_encode($eventArray, JSON_THROW_ON_ERROR),
+                'constraints' => [new Assert\Json()],
             ])
             ->getForm();
 
@@ -222,7 +229,8 @@ class GalleryController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
-            $eventsData = $data['events'] ?? [];
+            $eventsJson = $data['events'] ?? '[]';
+            $eventsData = json_decode($eventsJson, true, 512, JSON_THROW_ON_ERROR);
 
             // Remove all existing events and recreate from form data
             foreach ($events as $event) {
@@ -232,10 +240,10 @@ class GalleryController extends AbstractController
             }
 
             // Create new events from form data
-            foreach ($eventsData as $priority => $eventName) {
-                if (!empty(trim($eventName))) {
+            foreach ($eventsData as $priority => $eventData) {
+                if (!empty(trim($eventData['name']))) {
                     $event = new GalleryEvent();
-                    $event->setName(trim($eventName));
+                    $event->setName(trim($eventData['name']));
                     $event->setPriority($priority);
                     $repository->save($event);
                 }
