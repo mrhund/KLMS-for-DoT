@@ -16,7 +16,7 @@
                     <a href="{{ path('admin_gallery_bulk_upload') }}" class="btn btn-success">
                         <i class="fas fa-cloud-upload me-2"></i> Mehrfach Upload
                     </a>
-                    <a href="{{ path('admin_gallery_events') }}" class="btn btn-primary">
+                    <a href="{{ path('admin_gallery_events') }}" class="btn btn-success">
                         <i class="fas fa-cogs me-2"></i> Events verwalten
                     </a>
                 </div>
@@ -31,12 +31,11 @@
             {% endfor %}
 
             {% if photosByEvent is empty %}
+                <div class="card-header">
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
                     Noch keine Bilder in der Galerie vorhanden.
-                    <a href="{{ path('admin_gallery_upload') }}" class="btn btn-sm btn-primary ms-3">
-                        Jetzt Bilder hochladen
-                    </a>
+                </div>
                 </div>
             {% else %}
                 <div class="row">
