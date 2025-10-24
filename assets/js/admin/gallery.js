@@ -462,6 +462,28 @@ let showAreYouSureFunction = function (e) {
     return confirmationMessage;
 };
 
+// Form Validation Handler
+class FormValidationHandler {
+    constructor() {
+        this.init();
+    }
+
+    init() {
+        window.addEventListener('load', () => {
+            const forms = document.getElementsByClassName('needs-validation');
+            Array.prototype.filter.call(forms, (form) => {
+                form.addEventListener('submit', (event) => {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    }
+}
+
 // Initialize components when DOM is ready
 $(document).ready(() => {
     // Initialize Gallery Events Management if elements exist
@@ -488,5 +510,10 @@ $(document).ready(() => {
     // Initialize Bulk Upload if elements exist
     if (document.getElementById('bulkUploadForm')) {
         new GalleryBulkUpload();
+    }
+
+    // Initialize Form Validation for any form with needs-validation class
+    if (document.querySelector('.needs-validation')) {
+        new FormValidationHandler();
     }
 });
