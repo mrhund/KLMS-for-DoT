@@ -46,7 +46,7 @@
                             </h2>
                         </div>
                         
-                        <div class="row g-3 mb-5">
+                        <div class="row g-3 mb-4">
                             {% for photo in data.images|slice(0, 8) %}
                                 <div class="col-6 col-md-4 col-lg-3 mb-4">
                                     <div class="card border-0">
@@ -65,7 +65,6 @@
                                 </div>
                             {% endfor %}
                         </div>
-                        
                         {% if data.images|length > 8 %}
                             <div class="text-center mb-4">
                                 <a href="{{ path('gallery_event', {'eventName': eventName}) }}" class="btn btn-primary">
