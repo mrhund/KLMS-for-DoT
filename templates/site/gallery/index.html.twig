@@ -28,9 +28,6 @@
                                 {% for eventName, data in eventsWithImages %}
                                     <button type="button" class="btn btn-outline-primary" onclick="showEvent('{{ eventName }}')">
                                         {{ eventName }}
-                                        {% if data.event %}
-                                            <span class="badge bg-secondary ms-1">{{ data.event.priority }}</span>
-                                        {% endif %}
                                     </button>
                                 {% endfor %}
                             </div>
