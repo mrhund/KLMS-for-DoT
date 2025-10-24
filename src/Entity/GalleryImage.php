@@ -26,7 +26,11 @@ class GalleryImage
     private ?File $imageFile = null;
 
     #[ORM\Column(type: 'string', length: 255)]
-    private ?string $event = null; // Event-Ordner
+    private ?string $event = null; // Event-Ordner (legacy)
+
+    #[ORM\ManyToOne(targetEntity: GalleryEvent::class, inversedBy: 'galleryImages')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?GalleryEvent $galleryEvent = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $title = null;
@@ -134,8 +138,20 @@ class GalleryImage
         $this->createdAt = $createdAt; 
     }
 
+    public function getGalleryEvent(): ?GalleryEvent
+    {
+        return $this->galleryEvent;
+    }
+
+    public function setGalleryEvent(?GalleryEvent $galleryEvent): self
+    {
+        $this->galleryEvent = $galleryEvent;
+        return $this;
+    }
+
     public function getImagePath(): string
     {
-        return '/images/gallery/' . $this->event . '/' . $this->imageName;
+        $eventPath = $this->galleryEvent ? $this->galleryEvent->getName() : $this->event;
+        return '/images/gallery/' . $eventPath . '/' . $this->imageName;
     }
 }
