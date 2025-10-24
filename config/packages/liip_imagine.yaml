@@ -34,8 +34,8 @@ liip_imagine:
         card_img:
             filters:
                 fixed:
-                    width: 600
-                    height: 240
+                    width: 1170
+                    height: 250
 
         news_header:
             filters:
