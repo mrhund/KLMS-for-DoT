@@ -29,6 +29,7 @@ Encore
     .addEntry('media', './assets/js/admin/media.js')
     .addEntry('teamsite', './assets/js/admin/teamsite.js')
     .addEntry('sponsor', './assets/js/admin/sponsor.js')
+    .addEntry('gallery', './assets/js/admin/gallery.js')
     .addEntry('news', './assets/js/site/news.js')
     .addEntry('seatmap', './assets/js/site/seatmap.js')
     .addEntry('tourney', './assets/js/site/tourney.js')

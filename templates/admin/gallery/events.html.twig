@@ -5,7 +5,7 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {{ encore_entry_script_tags('sponsor') }}
+    {{ encore_entry_script_tags('gallery') }}
 {% endblock %}
 
 {% block main %}
@@ -18,7 +18,7 @@
         <div class="col mb-2">
             <div class="card">
                 <div class="card-body">
-                    <ul id="categoryList" class="list-group list-group-hover" data-source-input="#form_events">
+                    <ul id="eventList" class="list-group list-group-hover" data-source-input="#form_events">
                     </ul>
                 </div>
             </div>
