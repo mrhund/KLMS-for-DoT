@@ -65,12 +65,12 @@
                             {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
                             
                             <div class="mb-3">
-                                {{ form_label(form.event, null, {'label_attr': {'class': 'form-label'}}) }}
-                                {{ form_widget(form.event, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_label(form.galleryEvent, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.galleryEvent, {'attr': {'class': 'form-control'}}) }}
                                 <div class="form-text">
-                                    Event-Name in kebab-case (z.B. "lan-party-2023")
+                                    Event aus der Liste auswählen
                                 </div>
-                                {{ form_errors(form.event) }}
+                                {{ form_errors(form.galleryEvent) }}
                             </div>
 
                             <div class="mb-3">
@@ -105,23 +105,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<script>
-    // Form validation
-    (function() {
-        'use strict';
-        window.addEventListener('load', function() {
-            var forms = document.getElementsByClassName('needs-validation');
-            var validation = Array.prototype.filter.call(forms, function(form) {
-                form.addEventListener('submit', function(event) {
-                    if (form.checkValidity() === false) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                    form.classList.add('was-validated');
-                }, false);
-            });
-        }, false);
-    })();
-</script>
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('admin_gallery') }}
 {% endblock %}

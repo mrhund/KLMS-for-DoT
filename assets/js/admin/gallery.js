@@ -484,6 +484,47 @@ class FormValidationHandler {
     }
 }
 
+// Gallery Event Filtering for Gallery Index
+class GalleryEventFilter {
+    constructor() {
+        this.init();
+    }
+
+    init() {
+        // Make functions globally available for onclick handlers
+        window.showAllEvents = this.showAllEvents.bind(this);
+        window.showEvent = this.showEvent.bind(this);
+    }
+
+    showAllEvents() {
+        document.querySelectorAll('.event-section').forEach(section => {
+            section.style.display = 'block';
+        });
+        this.setActiveButton('all');
+    }
+
+    showEvent(eventName) {
+        document.querySelectorAll('.event-section').forEach(section => {
+            if (section.dataset.event === eventName) {
+                section.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+            }
+        });
+        this.setActiveButton(eventName);
+    }
+
+    setActiveButton(activeEvent) {
+        document.querySelectorAll('.list-group-item').forEach(btn => {
+            btn.classList.remove('active');
+            if ((activeEvent === 'all' && btn.textContent.includes('Alle Events')) ||
+                (activeEvent !== 'all' && btn.onclick && btn.onclick.toString().includes(`'${activeEvent}'`))) {
+                btn.classList.add('active');
+            }
+        });
+    }
+}
+
 // Initialize components when DOM is ready
 $(document).ready(() => {
     // Initialize Gallery Events Management if elements exist
@@ -510,6 +551,11 @@ $(document).ready(() => {
     // Initialize Bulk Upload if elements exist
     if (document.getElementById('bulkUploadForm')) {
         new GalleryBulkUpload();
+    }
+
+    // Initialize Gallery Event Filtering for index page
+    if (document.querySelector('.event-section')) {
+        new GalleryEventFilter();
     }
 
     // Initialize Form Validation for any form with needs-validation class

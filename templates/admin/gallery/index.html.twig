@@ -139,34 +139,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<script>
-    function showAllEvents() {
-        document.querySelectorAll('.event-section').forEach(section => {
-            section.style.display = 'block';
-        });
-        setActiveButton('all');
-    }
-
-    function showEvent(eventName) {
-        document.querySelectorAll('.event-section').forEach(section => {
-            if (section.dataset.event === eventName) {
-                section.style.display = 'block';
-            } else {
-                section.style.display = 'none';
-            }
-        });
-        setActiveButton(eventName);
-    }
-
-    function setActiveButton(activeEvent) {
-        document.querySelectorAll('.list-group-item').forEach(btn => {
-            btn.classList.remove('active');
-            if ((activeEvent === 'all' && btn.textContent.includes('Alle Events')) ||
-                (activeEvent !== 'all' && btn.onclick && btn.onclick.toString().includes(`'${activeEvent}'`))) {
-                btn.classList.add('active');
-            }
-        });
-    }
-</script>
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('admin_gallery') }}
 {% endblock %}
