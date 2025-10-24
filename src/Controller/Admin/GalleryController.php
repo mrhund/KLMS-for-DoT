@@ -23,7 +23,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
-use Doctrine\ORM\EntityManagerInterface;
 #[IsGranted('ROLE_ADMIN_MEDIA')]
 #[Route('gallery', name: 'gallery')]
 class GalleryController extends AbstractController
