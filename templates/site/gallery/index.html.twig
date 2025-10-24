@@ -67,9 +67,11 @@
                         </div>
                         {% if data.images|length > 8 %}
                             <div class="text-center mb-4">
-                                <a href="{{ path('gallery_event', {'eventName': eventName}) }}" class="btn btn-primary">
-                                    <i class="fas fa-images me-2"></i>Alle {{ data.images|length }} Bilder anzeigen
-                                </a>
+                                {% if data.event %}
+                                    <a href="{{ path('gallery_event', {'id': data.event.id}) }}" class="btn btn-primary">
+                                        <i class="fas fa-images me-2"></i>Alle {{ data.images|length }} Bilder anzeigen
+                                    </a>
+                                {% endif %}
                             </div>
                         {% endif %}
                     </div>

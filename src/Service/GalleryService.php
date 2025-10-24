@@ -74,6 +74,11 @@ class GalleryService
         return $event;
     }
 
+    public function getEventById(int $id): ?GalleryEvent
+    {
+        return $this->eventRepository->find($id);
+    }
+
     public function renderEvents(): array
     {
         return self::render($this->getAll());

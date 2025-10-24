@@ -20,21 +20,26 @@ class GalleryController extends AbstractController
         ]);
     }
 
-    #[Route('/event/{eventName}', name: '_event', methods: ['GET'])]
-    public function event(string $eventName, GalleryService $galleryService): Response
+    #[Route('/event/{id}', name: '_event', methods: ['GET'])]
+    public function event(int $id, GalleryService $galleryService): Response
     {
-        $eventsWithImages = $galleryService->getAllEventsWithImages();
+        // Get the specific event by ID
+        $event = $galleryService->getEventById($id);
         
-        if (!isset($eventsWithImages[$eventName])) {
+        if (!$event) {
             throw $this->createNotFoundException('Event not found');
         }
+
+        // Get images for this event
+        $images = $event->getGalleryImages()->toArray();
         
-        $eventData = $eventsWithImages[$eventName];
+        // Sort images by createdAt DESC
+        usort($images, fn($a, $b) => $b->getCreatedAt() <=> $a->getCreatedAt());
 
         return $this->render('site/gallery/event.html.twig', [
-            'eventName' => $eventName,
-            'eventData' => $eventData,
-            'photos' => $eventData['images'],
+            'event' => $event,
+            'eventName' => $event->getName(),
+            'photos' => $images,
         ]);
     }
 }
