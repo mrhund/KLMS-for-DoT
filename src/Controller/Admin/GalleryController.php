@@ -14,6 +14,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -40,14 +41,19 @@ class GalleryController extends AbstractController
     }
 
     #[Route('/upload', name: '_upload', methods: ['GET', 'POST'])]
-    public function upload(Request $request, GalleryImageRepository $repository): Response
+    public function upload(Request $request, GalleryImageRepository $repository, GalleryEventRepository $eventRepository): Response
     {
         $galleryImage = new GalleryImage();
 
         $form = $this->createFormBuilder($galleryImage)
-            ->add('event', TextType::class, [
-                'label' => 'Event Name',
-                'attr' => ['placeholder' => 'z.B. lan-party-2023']
+            ->add('galleryEvent', EntityType::class, [
+                'class' => GalleryEvent::class,
+                'choice_label' => 'name',
+                'label' => 'Event auswählen',
+                'placeholder' => '-- Event auswählen --',
+                'query_builder' => function (GalleryEventRepository $er) {
+                    return $er->createQueryBuilder('e')->orderBy('e.priority', 'ASC');
+                }
             ])
             ->add('title', TextType::class, [
                 'label' => 'Titel (optional)',
@@ -80,10 +86,9 @@ class GalleryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Create event directory if it doesn't exist
-            $eventFolder = $this->getParameter('kernel.project_dir') . '/public/images/gallery/' . $galleryImage->getEvent();
-            if (!is_dir($eventFolder)) {
-                mkdir($eventFolder, 0755, true);
+            // Set legacy event field from selected GalleryEvent
+            if ($galleryImage->getGalleryEvent()) {
+                $galleryImage->setEvent($galleryImage->getGalleryEvent()->getName());
             }
 
             $repository->save($galleryImage, true);
@@ -98,14 +103,23 @@ class GalleryController extends AbstractController
     }
 
     #[Route('/bulk-upload', name: '_bulk_upload', methods: ['GET', 'POST'])]
-    public function bulkUpload(Request $request, GalleryImageRepository $repository, EntityManagerInterface $em): Response
+    public function bulkUpload(Request $request, GalleryImageRepository $repository, GalleryEventRepository $eventRepository, EntityManagerInterface $em): Response
     {
         if ($request->isMethod('POST')) {
-            $event = $request->request->get('event');
+            $eventName = $request->request->get('event');
             $files = $request->files->get('images');
             
-            if (!$event || trim($event) === '') {
+            if (!$eventName || trim($eventName) === '') {
                 return $this->json(['error' => 'Event name is required'], 400);
+            }
+            
+            // Find or create GalleryEvent
+            $galleryEvent = $eventRepository->findOneBy(['name' => $eventName]);
+            if (!$galleryEvent) {
+                $galleryEvent = new GalleryEvent();
+                $galleryEvent->setName($eventName);
+                $galleryEvent->setPriority(999); // Set high priority for new events
+                $eventRepository->save($galleryEvent);
             }
             
             if (!$files || !is_array($files) || count($files) === 0) {
@@ -131,7 +145,8 @@ class GalleryController extends AbstractController
 
                     // Create GalleryImage entity
                     $galleryImage = new GalleryImage();
-                    $galleryImage->setEvent(trim($event));
+                    $galleryImage->setEvent($eventName); // Legacy field
+                    $galleryImage->setGalleryEvent($galleryEvent); // New relation
                     $galleryImage->setTitle(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
                     $galleryImage->setImageFile($file);
 
@@ -151,19 +166,24 @@ class GalleryController extends AbstractController
         }
 
         // GET request - show bulk upload form
-        $events = $repository->findEvents();
+        $events = $eventRepository->findAllOrderedByPriority();
         return $this->render('admin/gallery/bulk-upload.html.twig', [
             'events' => $events
         ]);
     }
 
     #[Route('/edit/{uuid}', name: '_edit', methods: ['GET', 'POST'])]
-    public function edit(GalleryImage $galleryImage, Request $request, GalleryImageRepository $repository): Response
+    public function edit(GalleryImage $galleryImage, Request $request, GalleryImageRepository $repository, GalleryEventRepository $eventRepository): Response
     {
         $form = $this->createFormBuilder($galleryImage)
-            ->add('event', TextType::class, [
-                'label' => 'Event Name',
-                'attr' => ['placeholder' => 'z.B. lan-party-2023']
+            ->add('galleryEvent', EntityType::class, [
+                'class' => GalleryEvent::class,
+                'choice_label' => 'name',
+                'label' => 'Event auswählen',
+                'placeholder' => '-- Event auswählen --',
+                'query_builder' => function (GalleryEventRepository $er) {
+                    return $er->createQueryBuilder('e')->orderBy('e.priority', 'ASC');
+                }
             ])
             ->add('title', TextType::class, [
                 'label' => 'Titel',
@@ -180,6 +200,11 @@ class GalleryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Update legacy event field from selected GalleryEvent
+            if ($galleryImage->getGalleryEvent()) {
+                $galleryImage->setEvent($galleryImage->getGalleryEvent()->getName());
+            }
+            
             $repository->save($galleryImage, true);
 
             $this->addFlash('success', 'Bild wurde erfolgreich aktualisiert!');

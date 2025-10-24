@@ -27,7 +27,7 @@
                                     <select id="eventSelect" name="event" class="form-select" required>
                                         <option value="">-- Event auswählen --</option>
                                         {% for event in events %}
-                                            <option value="{{ event }}">{{ event }}</option>
+                                            <option value="{{ event.name }}">{{ event.name }}</option>
                                         {% endfor %}
                                     </select>
                                     <button type="button" class="btn btn-outline-secondary ml-2" id="newEventBtn">
@@ -35,7 +35,7 @@
                                     </button>
                                 </div>
                                 <div class="form-text">
-                                    Vorhandenes Event wählen oder ein neues erstellen.
+                                    Vorhandenes Event wählen oder ein neues erstellen. Neue Events können über die <a href="{{ path('admin_gallery_events') }}" target="_blank">Event-Verwaltung</a> verwaltet werden.
                                 </div>
                             </div>
                             <div class="col-md-6" id="newEventField" style="display: none;">
