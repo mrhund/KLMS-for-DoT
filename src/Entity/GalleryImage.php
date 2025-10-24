@@ -25,9 +25,6 @@ class GalleryImage
     #[Vich\UploadableField(mapping: 'gallery', fileNameProperty: 'imageName')]
     private ?File $imageFile = null;
 
-    #[ORM\Column(type: 'string', length: 255)]
-    private ?string $event = null; // Event-Ordner (legacy)
-
     #[ORM\ManyToOne(targetEntity: GalleryEvent::class, inversedBy: 'galleryImages')]
     #[ORM\JoinColumn(nullable: true)]
     private ?GalleryEvent $galleryEvent = null;
@@ -88,16 +85,6 @@ class GalleryImage
         $this->imageName = $name; 
     }
 
-    public function setEvent(string $event): void 
-    { 
-        $this->event = $event; 
-    }
-    
-    public function getEvent(): ?string 
-    { 
-        return $this->event; 
-    }
-
     public function getTitle(): ?string 
     { 
         return $this->title; 
@@ -149,9 +136,22 @@ class GalleryImage
         return $this;
     }
 
+    /**
+     * Get directory name for VichUploader based on event ID
+     * This is used by VichUploader's PropertyDirectoryNamer
+     */
+    public function getEventDirectoryName(): string
+    {
+        if ($this->galleryEvent) {
+            return 'event-' . $this->galleryEvent->getId();
+        }
+        
+        return 'ohne-event';
+    }
+
     public function getImagePath(): string
     {
-        $eventPath = $this->galleryEvent ? $this->galleryEvent->getName() : $this->event;
+        $eventPath = $this->getEventDirectoryName();
         return '/images/gallery/' . $eventPath . '/' . $this->imageName;
     }
 }

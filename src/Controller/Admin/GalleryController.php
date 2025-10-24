@@ -79,11 +79,6 @@ class GalleryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Set legacy event field from selected GalleryEvent
-            if ($galleryImage->getGalleryEvent()) {
-                $galleryImage->setEvent($galleryImage->getGalleryEvent()->getName());
-            }
-
             $galleryService->saveImage($galleryImage);
 
             $this->addFlash('success', 'Bild wurde erfolgreich hochgeladen!');
@@ -132,8 +127,7 @@ class GalleryController extends AbstractController
 
                     // Create GalleryImage entity
                     $galleryImage = new GalleryImage();
-                    $galleryImage->setEvent($eventName); // Legacy field
-                    $galleryImage->setGalleryEvent($galleryEvent); // New relation
+                    $galleryImage->setGalleryEvent($galleryEvent);
                     $galleryImage->setTitle(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
                     $galleryImage->setImageFile($file);
 
@@ -185,11 +179,6 @@ class GalleryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Update legacy event field from selected GalleryEvent
-            if ($galleryImage->getGalleryEvent()) {
-                $galleryImage->setEvent($galleryImage->getGalleryEvent()->getName());
-            }
-            
             $galleryService->saveImage($galleryImage);
 
             $this->addFlash('success', 'Bild wurde erfolgreich aktualisiert!');
