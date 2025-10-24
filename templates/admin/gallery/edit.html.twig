@@ -63,21 +63,16 @@
                         <!-- Bearbeitung-Formular -->
                         <div class="col-md-7">
                             {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
-                            
                             <div class="mb-3">
                                 <label class="form-label">Event</label>
                                 <div class="form-control-plaintext bg-light p-2 rounded border">
                                     {% if galleryImage.galleryEvent %}
                                         <i class="fas fa-calendar-alt me-2 text-primary"></i>
                                         <strong>{{ galleryImage.galleryEvent.name }}</strong>
-                                        <small class="text-muted ms-2">(Priorität: {{ galleryImage.galleryEvent.priority }})</small>
                                     {% else %}
                                         <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
                                         <span class="text-muted">Ohne Event zugewiesen</span>
                                     {% endif %}
-                                </div>
-                                <div class="form-text">
-                                    Das Event kann nach dem Upload nicht mehr geändert werden, da es die Ordnerstruktur beeinflusst.
                                 </div>
                             </div>
 
