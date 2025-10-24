@@ -157,13 +157,6 @@ class GalleryController extends AbstractController
     public function edit(GalleryImage $galleryImage, Request $request, GalleryService $galleryService): Response
     {
         $form = $this->createFormBuilder($galleryImage)
-            ->add('galleryEvent', EntityType::class, [
-                'class' => GalleryEvent::class,
-                'choice_label' => 'name',
-                'label' => 'Event auswählen',
-                'placeholder' => '-- Event auswählen --',
-                'choices' => $galleryService->getAll()
-            ])
             ->add('title', TextType::class, [
                 'label' => 'Titel',
                 'required' => false
