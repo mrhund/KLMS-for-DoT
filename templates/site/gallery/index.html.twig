@@ -26,8 +26,8 @@
                                     Alle Events
                                 </button>
                                 {% for eventName, data in eventsWithImages %}
-                                    <button type="button" class="btn btn-outline-primary" onclick="showEvent('{{ eventName }}')">
-                                        {{ eventName }}
+                                    <button type="button" class="btn btn-outline-primary" onclick="showEvent('{{ eventName }}')" title="{{ eventName }}">
+                                        {{ eventName|length > 20 ? eventName|slice(0, 17) ~ '...' : eventName }}
                                     </button>
                                 {% endfor %}
                             </div>
