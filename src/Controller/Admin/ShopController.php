@@ -48,7 +48,13 @@ class ShopController extends AbstractController
         
         // Convert string UUIDs to UuidInterface objects for UserService
         $userUuids = array_map(fn($id) => \Ramsey\Uuid\Uuid::fromString($id), $userIds);
-        $users = $this->userService->getUsers($userUuids, true); // assoc=true for UUID => User mapping
+        $usersData = $this->userService->getUsers($userUuids, true); // assoc=true for UUID => User mapping
+        
+        // Ensure we have string keys for template lookup
+        $users = [];
+        foreach ($usersData as $key => $user) {
+            $users[(string) $key] = $user;
+        }
         
         return $this->render('admin/shop/index.html.twig', [
             'orders' => $orders,
