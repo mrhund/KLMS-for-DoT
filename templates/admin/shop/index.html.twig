@@ -28,7 +28,7 @@
                     </thead>
                     <tbody>
                     {% for order in orders %}
-                        {% set user = users[order.orderer|string] ?? null %}
+                        {% set user = users[order.orderer] ?? null %}
                         <tr>
                             <td class="text-center">{{ order.id }}</td>
                             <td data-order="{{ order.createdAt | date('U') }}">{{ order.createdAt | date('d.m.y H:i') }}</td>
