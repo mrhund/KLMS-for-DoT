@@ -150,55 +150,12 @@ class UserService
 
     public function userAgeAbove(UuidInterface|User $user, int $age): ?bool
     {
-        $user = $user instanceof User ? $user : $this->userRepo->findOneById($user);
+        $user = $user instanceof User ? $user : $this->userRepo->findoneById($user);
         if (empty($user) || empty($user->getBirthdate())) {
             return null;
         }
         $limit = DateInterval::createFromDateString($age.' years');
         $birthday = $user->getBirthdate()->add($limit);
         return (new DateTime()) >= $birthday;
-    }
-
-    /**
-     * Get user-to-clans mapping for multiple users to avoid N+1 queries
-     * 
-     * @param UuidInterface[] $userUuids
-     * @return array Array mapping user UUID string to array of clan objects
-     */
-    public function getUserClanMapping(array $userUuids): array
-    {
-        // Load all users first
-        $users = $this->getUsers($userUuids, true);
-        
-        // Collect all clan UUIDs from all users
-        $allClanUuids = [];
-        $userClanUuids = []; // Track which clans belong to which user
-        
-        foreach ($users as $userUuidString => $user) {
-            $userClanUuids[$userUuidString] = [];
-            foreach ($user->getClans() as $clan) {
-                $clanUuidString = (string) $clan->getUuid();
-                $allClanUuids[] = $clanUuidString;
-                $userClanUuids[$userUuidString][] = $clanUuidString;
-            }
-        }
-        
-        // Batch load all clans
-        $allClanUuids = array_unique($allClanUuids);
-        $clanUuidObjects = array_map(fn($id) => Uuid::fromString($id), $allClanUuids);
-        $clans = $this->getClans($clanUuidObjects, true);
-        
-        // Build final user => clan mapping
-        $result = [];
-        foreach ($userClanUuids as $userUuid => $clanUuids) {
-            $result[$userUuid] = [];
-            foreach ($clanUuids as $clanUuid) {
-                if (isset($clans[$clanUuid])) {
-                    $result[$userUuid][] = $clans[$clanUuid];
-                }
-            }
-        }
-        
-        return $result;
     }
 }
