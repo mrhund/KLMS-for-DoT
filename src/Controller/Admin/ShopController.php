@@ -44,8 +44,16 @@ class ShopController extends AbstractController
         // Batch-load all users to avoid N+1 queries
         $userIds = array_map(fn(ShopOrder $order) => $order->getOrderer(), $orders);
         $userIds = array_filter($userIds); // Remove empty values
+        
+        // Convert string UUIDs to UuidInterface objects for UserService
         $userUuids = array_map(fn($id) => \Ramsey\Uuid\Uuid::fromString($id), $userIds);
-        $users = $this->userService->getUsers($userUuids, true); // assoc=true for UUID => User mapping
+        $usersData = $this->userService->getUsers($userUuids, true); // assoc=true for UUID => User mapping
+        
+        // Create a lookup array with string keys for the template
+        $users = [];
+        foreach ($usersData as $uuidString => $user) {
+            $users[$uuidString] = $user;
+        }
         
         return $this->render('admin/shop/index.html.twig', [
             'orders' => $orders,
