@@ -42,19 +42,15 @@ class ShopController extends AbstractController
         $orders = $this->orderRepository->findAll();
         
         // Batch-load all users to avoid N+1 queries
-        $userIds = array_map(fn(ShopOrder $order) => (string) $order->getOrderer(), $orders);
-        $userIds = array_filter($userIds); // Remove empty values
-        $userIds = array_unique($userIds); // Remove duplicates
-        
-        // Convert string UUIDs to UuidInterface objects for UserService
-        $userUuids = array_map(fn($id) => \Ramsey\Uuid\Uuid::fromString($id), $userIds);
-        $usersData = $this->userService->getUsers($userUuids, true); // assoc=true for UUID => User mapping
-        
-        // Ensure we have string keys for template lookup
-        $users = [];
-        foreach ($usersData as $key => $user) {
-            $users[(string) $key] = $user;
+        $userIds = [];
+        foreach ($orders as $order) {
+            $userIds[] = (string) $order->getOrderer();
         }
+        $userIds = array_unique(array_filter($userIds));
+        
+        // Load users and create lookup array
+        $userUuids = array_map(fn($id) => \Ramsey\Uuid\Uuid::fromString($id), $userIds);
+        $users = $this->userService->getUsers($userUuids, true);
         
         return $this->render('admin/shop/index.html.twig', [
             'orders' => $orders,
