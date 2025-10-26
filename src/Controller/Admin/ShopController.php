@@ -48,13 +48,20 @@ class ShopController extends AbstractController
         }
         $userIds = array_unique(array_filter($userIds));
         
-        // Load users and create lookup array
+        // Load users and their clans
         $userUuids = array_map(fn($id) => \Ramsey\Uuid\Uuid::fromString($id), $userIds);
         $users = $this->userService->getUsers($userUuids, true);
         
+        // Create user-to-clans mapping to avoid N+1 queries for clans
+        $userClans = [];
+        foreach ($users as $userUuid => $user) {
+            $userClans[$userUuid] = $user->getClans()->toArray();
+        }
+        
         return $this->render('admin/shop/index.html.twig', [
             'orders' => $orders,
-            'users' => $users
+            'users' => $users,
+            'userClans' => $userClans
         ]);
     }
 
