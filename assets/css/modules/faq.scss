@@ -10,6 +10,7 @@
     .faq-question {
       cursor: pointer;
       transition: border-color 0.2s ease;
+      border: 1px transparent $main-color;
       
       &:hover {
         border: 1px solid $main-color;
@@ -23,49 +24,6 @@
       &.rotated {
         transform: rotate(180deg);
       }
-    }
-
-    .faq-answer {
-      border-top: 1px solid $card-border-color;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-  }
-}
-
-// FAQ search styling
-.faq-search {
-  .input-group-text {
-    background-color: transparent;
-    border-color: $card-border-color;
-    color: $light-muted;
-  }
-  
-  .form-control {
-    border-color: $card-border-color;
-    background-color: transparent;
-    color: $body-color;
-    
-    &::placeholder {
-      color: $light-muted;
-      opacity: 0.7;
-    }
-    
-    &:focus {
-      border-color: $main-color;
-      box-shadow: 0 0 0 0.2rem rgba($main-color, 0.25);
-    }
-  }
-}
-
-// FAQ result alerts
-.faq-alerts {
-  .alert {
-    background-color: rgba($main-color, 0.1);
-    border-color: $main-color;
-    color: $light-muted;
-    
-    .alert-heading {
-      color: $main-color;
     }
   }
 }

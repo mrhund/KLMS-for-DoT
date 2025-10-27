@@ -17,11 +17,11 @@
     <div class="row">
         <div class="col-12">
             <h1 class="text-center mb-4">
-                Häufig gestellte Fragen
+                Häufige Fragen
             </h1>
 
             <!-- Search -->
-            <div class="card mb-4 faq-search">
+            <div class="card mb-4">
                 <div class="row">
                     <div class="col mb-3 mb-md-0">
                         <form action="{{ path('faq') }}" method="get">
@@ -64,22 +64,16 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="row faq-alerts">
                     <div class="col mb-3">
-                        <div class="alert" role="alert">
+                        <div role="alert">
                             <h4 class="alert-heading">Kein Ergebnis gefunden!</h4>
                             {% if searchTerm %}
                                 <p>Es konnte keine FAQ mit dem Suchbegriff <strong>{{ searchTerm }}</strong> gefunden werden!</p>
-                                <p class="text-muted">
-                                    Versuchen Sie einen anderen Suchbegriff oder 
-                                    <a href="{{ path('faq') }}">zeigen Sie alle FAQs an</a>.
-                                </p>
                             {% else %}
                                 <p>Noch keine FAQs vorhanden.</p>
                             {% endif %}
                         </div>
                     </div>
-                </div>
             {% endif %}
         </div>
     </div>
