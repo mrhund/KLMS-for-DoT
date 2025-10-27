@@ -2,6 +2,16 @@
 
 {% block title %}{{ settings.get('site.title') }} - FAQ{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('faq') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('faq') }}
+{% endblock %}
+
 {% block main %}
 <div class="container my-5">
     <div class="row">
@@ -11,7 +21,7 @@
             </h1>
 
             <!-- Search -->
-            <div class="card mb-4">
+            <div class="card mb-4 faq-search">
                 <div class="row">
                     <div class="col mb-3 mb-md-0">
                         <form action="{{ path('faq') }}" method="get">
@@ -54,9 +64,9 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="row">
+                <div class="row faq-alerts">
                     <div class="col mb-3">
-                        <div role="alert">
+                        <div class="alert" role="alert">
                             <h4 class="alert-heading">Kein Ergebnis gefunden!</h4>
                             {% if searchTerm %}
                                 <p>Es konnte keine FAQ mit dem Suchbegriff <strong>{{ searchTerm }}</strong> gefunden werden!</p>
@@ -74,78 +84,4 @@
         </div>
     </div>
 </div>
-
-{% if faqs %}
-<style>
-.faq-question:hover {
-    border: 1px solid #df1238;
-}
-
-.faq-toggle-icon {
-    transition: transform 0.3s ease;
-}
-
-.faq-toggle-icon.rotated {
-    transform: rotate(180deg);
-}
-
-.faq-answer {
-    border-top: 1px solid #dee2e6;
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // FAQ Toggle Functionality
-    document.querySelectorAll('.faq-question').forEach(function(question) {
-        question.addEventListener('click', function() {
-            const faqId = this.getAttribute('data-faq-id');
-            const answer = document.getElementById('answer-' + faqId);
-            const icon = this.querySelector('.faq-toggle-icon');
-            
-            if (answer.style.display === 'none' || answer.style.display === '') {
-                // Show answer with slide down effect
-                answer.style.display = 'block';
-                answer.style.opacity = '0';
-                answer.style.transform = 'translateY(-10px)';
-                
-                setTimeout(function() {
-                    answer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                    answer.style.opacity = '1';
-                    answer.style.transform = 'translateY(0)';
-                }, 10);
-                
-                icon.classList.add('rotated');
-                
-                // Update URL hash
-                history.pushState(null, null, '#' + faqId);
-            } else {
-                // Hide answer with slide up effect
-                answer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                answer.style.opacity = '0';
-                answer.style.transform = 'translateY(-10px)';
-                
-                setTimeout(function() {
-                    answer.style.display = 'none';
-                }, 300);
-                
-                icon.classList.remove('rotated');
-                
-                // Remove URL hash
-                history.pushState(null, null, window.location.pathname + window.location.search);
-            }
-        });
-    });
-    
-    // Auto-expand FAQ if URL contains hash
-    if (window.location.hash) {
-        const faqId = window.location.hash.substring(1);
-        const question = document.querySelector('[data-faq-id="' + faqId + '"]');
-        if (question) {
-            question.click();
-        }
-    }
-});
-</script>
-{% endif %}
 {% endblock %}
