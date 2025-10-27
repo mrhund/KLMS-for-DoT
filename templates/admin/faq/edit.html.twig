@@ -1,14 +1,14 @@
 {% extends 'admin/adminBase.html.twig' %}
 
-{% block title %}FAQ bearbeiten - KLMS - Admin{% endblock %}
-{% block siteheading %}<i class="fas fa-question-circle"></i> FAQ bearbeiten{% endblock %}
+{% block title %}{% if faq.id %}FAQ bearbeiten{% else %}FAQ anlegen{% endif %} - KLMS - Admin{% endblock %}
+{% block siteheading %}<i class="fas fa-question-circle"></i> {% if faq.id %}FAQ bearbeiten{% else %}FAQ anlegen{% endif %}{% endblock %}
 
 {% block main %}
 <div class="row">
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title">FAQ #{{ faq.id }} bearbeiten</h5>
+                <h5 class="card-title">{% if faq.id %}FAQ #{{ faq.id }} bearbeiten{% else %}Neue FAQ{% endif %}</h5>
             </div>
             <div class="card-body">
                 {{ form_start(form) }}
@@ -46,8 +46,8 @@
                         <a href="{{ path('admin_faq') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> Zurück
                         </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Aktualisieren
+                        <button type="submit" class="btn {% if faq.id %}btn-primary{% else %}btn-success{% endif %}">
+                            <i class="fas fa-save"></i> {% if faq.id %}Aktualisieren{% else %}Speichern{% endif %}
                         </button>
                     </div>
                 {{ form_end(form) }}

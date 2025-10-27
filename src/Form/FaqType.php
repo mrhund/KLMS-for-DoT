@@ -6,7 +6,6 @@ use App\Entity\Faq;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -30,13 +29,11 @@ class FaqType extends AbstractType
                     'placeholder' => 'Wie kann ich mich registrieren?'
                 ]
             ])
-            ->add('answer', TextareaType::class, [
-                'label' => 'Antwort (HTML erlaubt)',
-                'attr' => [
-                    'class' => 'form-control',
-                    'rows' => 6,
-                    'placeholder' => 'Du kannst dich <a href="/register">hier</a> registrieren...'
-                ]
+            ->add('answer', HtmlTextareaType::class, [
+                'label' => 'Antwort',
+                'fix_urls' => 'relative',
+                'required' => false,
+                'empty_data' => '',
             ])
             ->add('active', CheckboxType::class, [
                 'label' => 'Aktiv',

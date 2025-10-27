@@ -54,17 +54,9 @@ class FaqController extends AbstractController
             }
         }
 
-        return $this->render('admin/faq/new.html.twig', [
+        return $this->render('admin/faq/edit.html.twig', [
             'faq' => $faq,
             'form' => $form->createView(),
-        ]);
-    }
-
-    #[Route(path: '/{id}', name: '_show', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function show(Faq $faq): Response
-    {
-        return $this->render('admin/faq/show.html.twig', [
-            'faq' => $faq,
         ]);
     }
 
