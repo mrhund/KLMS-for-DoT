@@ -6,26 +6,24 @@
     <div class="container block-search" data-limit="{{ limit }}">
         <h1 class='text-center'>Clans</h1>
         <div class="card mb-4">
-                <div class="row align-items-stretch">
+                <div class="row">
                     <div class="col mb-3 mb-md-0">
-                        <form action="{{ path('clan') }}" method="get" class="h-100">
-                            <div class="input-group h-100">
+                        <form action="{{ path('clan') }}" method="get">
+                            <div class="input-group">
                                 <div class="input-group-prepend">
                                     <span class="input-group-text">
                                         <i class="fas fa-search"></i>
                                     </span>
                                 </div>
                                 <input type="text" name="q" class="form-control block-search-input" placeholder="Clan suchen" value="{{ search }}">
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-primary" type="submit" style="width: 140px;">Suchen</button>
+                                <div class="input-group-append ml-2">
+                                    <button class="btn btn-outline-primary" type="submit" id="button-addon2">Suchen</button>
                                 </div>
                             </div>
                         </form>
                     </div>
                     <div class="col-md-auto">
-                        <a role="button" class="btn btn-primary h-100 d-flex align-items-center justify-content-center" href="{{ path('clan_create') }}" style="width: 140px;">
-                            <i class="fas fa-plus me-2"></i>Clan erstellen
-                        </a>
+                        <a role="button" class="btn btn-primary" href="{{ path('clan_create') }}"><i class="fas fa-plus"></i> Clan erstellen</a>
                     </div>
                 </div>
         </div>
