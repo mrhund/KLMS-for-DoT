@@ -1,19 +1,14 @@
 @import '../helper/variables.scss';
 
-/**
- * FAQ Module Styles
- * Handles FAQ accordion styling with smooth transitions
- */
-
 .faq-list {
   .faq-item {
     .faq-question {
       cursor: pointer;
+      border: 1px solid transparent;
       transition: border-color 0.2s ease;
-      border: 1px transparent $main-color;
       
       &:hover {
-        border: 1px solid $main-color;
+        border-color: $main-color;
       }
     }
 
