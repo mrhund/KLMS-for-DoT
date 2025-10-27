@@ -1,0 +1,43 @@
+{% extends 'admin/adminBase.html.twig' %}
+
+{% block title %}FAQ Details - KLMS - Admin{% endblock %}
+{% block siteheading %}<i class="fas fa-question-circle"></i> FAQ Details{% endblock %}
+
+{% block main %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">FAQ #{{ faq.id }}</h5>
+                <div>
+                    <span class="badge {{ faq.active ? 'badge-success' : 'badge-secondary' }}">
+                        {{ faq.active ? 'Aktiv' : 'Inaktiv' }}
+                    </span>
+                    <span class="badge badge-info">Priorität: {{ faq.priority }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <h6 class="fw-bold">Frage:</h6>
+                <p class="mb-4">{{ faq.question }}</p>
+
+                <h6 class="fw-bold">Antwort:</h6>
+                <div class="border p-3 bg-light">
+                    {{ faq.answer|raw }}
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ path('admin_faq') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Zurück zur Übersicht
+                    </a>
+                    <div>
+                        <a href="{{ path('admin_faq_edit', {'id': faq.id}) }}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Bearbeiten
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

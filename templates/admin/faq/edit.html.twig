@@ -1,0 +1,58 @@
+{% extends 'admin/adminBase.html.twig' %}
+
+{% block title %}FAQ bearbeiten - KLMS - Admin{% endblock %}
+{% block siteheading %}<i class="fas fa-question-circle"></i> FAQ bearbeiten{% endblock %}
+
+{% block main %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">FAQ #{{ faq.id }} bearbeiten</h5>
+            </div>
+            <div class="card-body">
+                {{ form_start(form) }}
+                    <div class="mb-3">
+                        {{ form_label(form.priority) }}
+                        {{ form_widget(form.priority) }}
+                        {{ form_errors(form.priority) }}
+                        <small class="form-text text-muted">
+                            Niedrigere Zahlen werden zuerst angezeigt.
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.question) }}
+                        {{ form_widget(form.question) }}
+                        {{ form_errors(form.question) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.answer) }}
+                        {{ form_widget(form.answer) }}
+                        {{ form_errors(form.answer) }}
+                        <small class="form-text text-muted">
+                            HTML-Tags sind erlaubt (z.B. &lt;strong&gt;, &lt;a href=""&gt;, &lt;ul&gt;, etc.)
+                        </small>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        {{ form_widget(form.active) }}
+                        {{ form_label(form.active) }}
+                        {{ form_errors(form.active) }}
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('admin_faq') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Zurück
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Aktualisieren
+                        </button>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

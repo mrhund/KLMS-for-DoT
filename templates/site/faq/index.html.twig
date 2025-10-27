@@ -1,0 +1,121 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}FAQ - Häufig gestellte Fragen{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-question-circle"></i>
+                Häufig gestellte Fragen
+            </h1>
+
+            <!-- Search -->
+            <div class="mb-4">
+                <form method="get" action="{{ path('site_faq') }}" class="row g-3">
+                    <div class="col-md-8">
+                        <input type="text" 
+                               name="search" 
+                               class="form-control" 
+                               placeholder="Suche in den FAQs..." 
+                               value="{{ searchTerm }}"
+                               autocomplete="off">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search"></i> Suchen
+                        </button>
+                        {% if searchTerm %}
+                            <a href="{{ path('site_faq') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Zurücksetzen
+                            </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+
+            {% if searchTerm %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    {{ faqs|length }} Ergebnis(se) für "<strong>{{ searchTerm }}</strong>"
+                </div>
+            {% endif %}
+
+            <!-- FAQ Accordion -->
+            {% if faqs %}
+                <div class="accordion" id="faqAccordion">
+                    {% for faq in faqs %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ faq.id }}">
+                                <button class="accordion-button collapsed" 
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#collapse{{ faq.id }}" 
+                                        aria-expanded="false" 
+                                        aria-controls="collapse{{ faq.id }}">
+                                    <i class="fas fa-question-circle me-2 text-primary"></i>
+                                    {{ faq.question }}
+                                </button>
+                            </h2>
+                            <div id="collapse{{ faq.id }}" 
+                                 class="accordion-collapse collapse" 
+                                 aria-labelledby="heading{{ faq.id }}" 
+                                 data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    {{ faq.answer|raw }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">
+                        {% if searchTerm %}
+                            Keine FAQs gefunden
+                        {% else %}
+                            Noch keine FAQs vorhanden
+                        {% endif %}
+                    </h4>
+                    {% if searchTerm %}
+                        <p class="text-muted">
+                            Versuchen Sie einen anderen Suchbegriff oder 
+                            <a href="{{ path('site_faq') }}">zeigen Sie alle FAQs an</a>.
+                        </p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if faqs %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-expand FAQ if URL contains hash
+    if (window.location.hash) {
+        const faqId = window.location.hash.substring(1);
+        const element = document.getElementById('collapse' + faqId);
+        if (element) {
+            const accordion = new bootstrap.Collapse(element, { show: true });
+        }
+    }
+    
+    // Update URL when FAQ is opened
+    document.querySelectorAll('.accordion-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const target = this.getAttribute('data-bs-target');
+            const faqId = target.replace('#collapse', '');
+            if (!this.classList.contains('collapsed')) {
+                history.pushState(null, null, '#' + faqId);
+            } else {
+                history.pushState(null, null, window.location.pathname + window.location.search);
+            }
+        });
+    });
+});
+</script>
+{% endif %}
+{% endblock %}
