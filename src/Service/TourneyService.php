@@ -358,7 +358,7 @@ class TourneyService extends OptimalService
 
     private function addTeam(Tourney $tourney, TourneyTeam $team): void
     {
-        if ($tourney->getStatus() != TourneyStage::Registration) {
+        if (!$tourney->getStatus()->canRegister()) {
             throw new ServiceException(ServiceException::CAUSE_IN_USE, 'Tourney registration is not open.');
         }
         if (!$tourney->hasSpotsLeft()) {
@@ -599,7 +599,7 @@ class TourneyService extends OptimalService
     /**
      * Fügt ein Team manuell zu einem Turnier hinzu (Admin-Funktion)
      */
-    public function addTeam(TourneyTeam $team): void
+    public function createTeam(TourneyTeam $team): void
     {
         $tourney = $team->getTourney();
         
@@ -627,6 +627,7 @@ class TourneyService extends OptimalService
             }
         }
 
+        $this->addTeam($tourney, $team);
         $this->em->persist($team);
         $this->em->flush();
     }

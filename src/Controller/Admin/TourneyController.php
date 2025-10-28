@@ -312,7 +312,7 @@ class TourneyController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             try {
-                $this->service->addTeam($team);
+                $this->service->createTeam($team);
                 $this->addFlash('success', 'Team wurde erfolgreich hinzugefügt.');
                 
                 if ($request->isXmlHttpRequest()) {
