@@ -595,4 +595,69 @@ class TourneyService extends OptimalService
         $this->repository->save($tourney);
         $this->em->flush();
     }
+
+    /**
+     * Fügt ein Team manuell zu einem Turnier hinzu (Admin-Funktion)
+     */
+    public function addTeam(TourneyTeam $team): void
+    {
+        $tourney = $team->getTourney();
+        
+        if (!$tourney->getStatus()->canRegister()) {
+            throw new ServiceException(ServiceException::CAUSE_IN_USE, 'Tourney registration is not open.');
+        }
+        
+        if (!$tourney->hasSpotsLeft()) {
+            throw new ServiceException(ServiceException::CAUSE_FULL, 'Tourney has no empty spots left');
+        }
+
+        // Validierung: Team-Name eindeutig pro Turnier
+        if ($team->getName()) {
+            $existingTeam = $this->repository->findTeamByName($tourney, $team->getName());
+            if ($existingTeam && $existingTeam->getId() !== $team->getId()) {
+                throw new ServiceException(ServiceException::CAUSE_EXIST, 'Team name already exists in this tourney.');
+            }
+        }
+
+        // Validierung: Spieler nicht bereits in einem anderen Team
+        foreach ($team->getMembers() as $member) {
+            $existingTeam = $this->repository->findTeamByGamer($tourney, $member->getGamer());
+            if ($existingTeam && $existingTeam->getId() !== $team->getId()) {
+                throw new ServiceException(ServiceException::CAUSE_EXIST, 'Player is already registered in another team.');
+            }
+        }
+
+        $this->em->persist($team);
+        $this->em->flush();
+    }
+
+    /**
+     * Aktualisiert ein bestehendes Team (Admin-Funktion)
+     */
+    public function updateTeam(TourneyTeam $team): void
+    {
+        $tourney = $team->getTourney();
+        
+        if (!$tourney->getStatus()->canRegister()) {
+            throw new ServiceException(ServiceException::CAUSE_IN_USE, 'Tourney registration is not open.');
+        }
+
+        // Validierung: Team-Name eindeutig pro Turnier
+        if ($team->getName()) {
+            $existingTeam = $this->repository->findTeamByName($tourney, $team->getName());
+            if ($existingTeam && $existingTeam->getId() !== $team->getId()) {
+                throw new ServiceException(ServiceException::CAUSE_EXIST, 'Team name already exists in this tourney.');
+            }
+        }
+
+        // Validierung: Spieler nicht bereits in einem anderen Team
+        foreach ($team->getMembers() as $member) {
+            $existingTeam = $this->repository->findTeamByGamer($tourney, $member->getGamer());
+            if ($existingTeam && $existingTeam->getId() !== $team->getId()) {
+                throw new ServiceException(ServiceException::CAUSE_EXIST, 'Player is already registered in another team.');
+            }
+        }
+
+        $this->em->flush();
+    }
 }
