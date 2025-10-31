@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block modalBody %}
-    {{ form_start(form, {'attr': {'id': 'tourney-team-form', 'data-tourney-type': tourney.type}}) }}
+    {{ form_start(form, {'attr': {'id': 'tourney-team-form', 'data-tourney-type': tourney.singlePlayer ? 'single' : 'team'}}) }}
     
     <div class="mb-3">
         {{ form_label(form.name) }}

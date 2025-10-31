@@ -8,6 +8,8 @@ use App\Form\UserSelectType;
 use App\Service\TicketService;
 use App\Service\TicketState;
 use App\Service\UserService;
+use App\Service\SeatmapService;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Ramsey\Uuid\UuidInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -24,12 +26,74 @@ class PaymentController extends AbstractController
 {
     private readonly TicketService $ticketService;
     private readonly UserService $userService;
+    private readonly SeatmapService $seatmapService;
 
     public function __construct(TicketService $ticketService,
-                                UserService   $userService)
+                                UserService   $userService,
+                                SeatmapService $seatmapService)
     {
         $this->ticketService = $ticketService;
         $this->userService = $userService;
+        $this->seatmapService = $seatmapService;
+    }
+
+    #[Route(path: '/quick-checkin', name: '_quick_checkin', methods: ['GET'])]
+    public function quickCheckin(): Response
+    {
+        return $this->render('admin/payment/checkin.html.twig');
+    }
+
+    #[Route(path: '/quick-checkin/find', name: '_quick_checkin_find', methods: ['POST'])]
+    public function quickCheckinFind(Request $request): JsonResponse
+    {
+        $code = $request->request->get('code', null);
+        if (empty($code)) {
+            return new JsonResponse(['ok' => false, 'error' => 'missing_code'], 400);
+        }
+
+        $ticket = $this->ticketService->getTicketCode($code);
+        if (is_null($ticket)) {
+            return new JsonResponse(['ok' => false, 'error' => 'not_found'], 404);
+        }
+
+        $user = $this->ticketService->userByTicket($ticket);
+        $userData = null;
+        $seats = [];
+        if (!is_null($user)) {
+            $userData = $this->userService->user2Array($user);
+            $userSeats = $this->seatmapService->getUserSeats($user);
+            foreach ($userSeats as $s) {
+                $seats[] = $s->generateSeatName();
+            }
+        }
+
+        return new JsonResponse([
+            'ok' => true,
+            'ticket' => [
+                'code' => $ticket->getCode(),
+                'state' => $ticket->getState()?->name,
+                'redeemer' => $userData,
+                'seats' => $seats,
+            ],
+        ]);
+    }
+
+    #[Route(path: '/quick-checkin/punch', name: '_quick_checkin_punch', methods: ['POST'])]
+    public function quickCheckinPunch(Request $request): JsonResponse
+    {
+        $code = $request->request->get('code', null);
+        if (empty($code)) {
+            return new JsonResponse(['ok' => false, 'error' => 'missing_code'], 400);
+        }
+        try {
+            $ok = $this->ticketService->punchTicketCode($code);
+        } catch (\Throwable $e) {
+            return new JsonResponse(['ok' => false, 'error' => 'exception', 'message' => $e->getMessage()], 500);
+        }
+        if (!$ok) {
+            return new JsonResponse(['ok' => false, 'error' => 'cannot_punch'], 409);
+        }
+        return new JsonResponse(['ok' => true]);
     }
 
     private function createTicketCreateForm(string $action = "", bool $forceUser = false): FormInterface
