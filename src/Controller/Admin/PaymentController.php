@@ -21,7 +21,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[IsGranted('ROLE_ADMIN_PAYMENT')]
-#[Route(path: '/payment', name: 'payment')]
+#[Route(path: '/payment', name: 'admin_payment')]
 class PaymentController extends AbstractController
 {
     private readonly TicketService $ticketService;
@@ -46,6 +46,11 @@ class PaymentController extends AbstractController
     #[Route(path: '/quick-checkin/find', name: '_quick_checkin_find', methods: ['POST'])]
     public function quickCheckinFind(Request $request): JsonResponse
     {
+        $csrf = (string)$request->headers->get('X-CSRF-TOKEN');
+        if (!$this->isCsrfTokenValid('quick_checkin', $csrf)) {
+            return new JsonResponse(['ok' => false, 'error' => 'csrf'], 419);
+        }
+
         $code = $request->request->get('code', null);
         if (empty($code)) {
             return new JsonResponse(['ok' => false, 'error' => 'missing_code'], 400);
@@ -81,6 +86,11 @@ class PaymentController extends AbstractController
     #[Route(path: '/quick-checkin/punch', name: '_quick_checkin_punch', methods: ['POST'])]
     public function quickCheckinPunch(Request $request): JsonResponse
     {
+        $csrf = (string)$request->headers->get('X-CSRF-TOKEN');
+        if (!$this->isCsrfTokenValid('quick_checkin', $csrf)) {
+            return new JsonResponse(['ok' => false, 'error' => 'csrf'], 419);
+        }
+
         $code = $request->request->get('code', null);
         if (empty($code)) {
             return new JsonResponse(['ok' => false, 'error' => 'missing_code'], 400);
