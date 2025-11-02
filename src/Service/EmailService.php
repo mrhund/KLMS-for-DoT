@@ -269,11 +269,13 @@ class EmailService
     private function buildRecipientData(?EmailRecipient $recipient): array
     {
         $data = $recipient?->getDataArray() ?? [];
-        $data['ticket-qr-code'] = '';
+    $data['ticket-code'] = '';
+    $data['ticket-qr-code'] = '';
 
         if ($recipient?->getUuid()) {
             $ticket = $this->ticketService->getTicketUser($recipient->getUuid());
             if ($ticket && $ticket->getCode()) {
+                $data['ticket-code'] = $ticket->getCode();
                 $data['ticket-qr-code'] = $this->generateTicketQrCodeHtml($ticket->getCode());
             }
         }
