@@ -92,9 +92,6 @@ async function showModal(url) {
     }
 }
 
-// Start-Button Handler
-document.getElementById('start-btn')?.addEventListener('click', () => scanner?.start());
-
 // Automatisch starten
 document.readyState === 'loading'
     ? document.addEventListener('DOMContentLoaded', initScanner)

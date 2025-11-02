@@ -9,19 +9,19 @@
         {% set dateformat = "d.m.Y H:i" %}
         {% set status = ticket.state %}
         {% set statusLabels = {
-            'NEW': 'Neu',
-            'REDEEMED': 'Eingelöst',
-            'PUNCHED': 'Check-in abgeschlossen'
+            'NEW': 'Ohne User',
+            'REDEEMED': 'Zugeordnet',
+            'PUNCHED': 'Checked-in'
         } %}
         {% set statusBadges = {
-            'NEW': 'badge-secondary',
-            'REDEEMED': 'badge-warning',
-            'PUNCHED': 'badge-success'
+            'NEW': 'badge-danger',
+            'REDEEMED': 'badge-success',
+            'PUNCHED': 'badge-warning'
         } %}
         <div class="container-fluid">
             <div class="row">
                 <div class="col-4 mr-2">
-                    <i class="fa fa-ticket fa-7x"></i>
+                    <i class="fa fa-ticket" style="font-size: clamp(3rem, 10vw, 7rem);"></i>
                 </div>
                 <div class="col">
                     <p>
@@ -70,7 +70,7 @@
                     {% if img is not empty %}
                         <img src="{{ img | imagine_filter('user_img') }}" alt="Image"/>
                     {% else %}
-                        <i class="far fa-user-circle fa-8x"></i>
+                        <i class="far fa-user-circle" style="font-size: clamp(3rem, 12vw, 8rem);"></i>
                     {% endif %}
                 </div>
                 <div class="col">
