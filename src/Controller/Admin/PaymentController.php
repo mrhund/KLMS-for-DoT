@@ -207,7 +207,8 @@ class PaymentController extends AbstractController
     {
         $ticket = $this->ticketService->getTicketCode($code);
         if (is_null($ticket)) {
-            throw $this->createNotFoundException('Ticket not found');
+            $this->addFlash('error', sprintf('Kein Ticket mit dem Code "%s" gefunden.', $code));
+            return $this->redirectToRoute('admin_payment_quick_checkin');
         }
 
         $form = $this->createTicketModificationForm($ticket, 'admin_payment_quick_checkin');
