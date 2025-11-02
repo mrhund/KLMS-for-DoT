@@ -10,7 +10,7 @@ use App\Messenger\MailingHookNotification;
 use App\Service\GroupService;
 use App\Service\TicketService;
 use Doctrine\ORM\EntityManagerInterface;
-use Endroid\QrCode\Builder\Builder as QrCodeBuilder;
+use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\SvgWriter;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -286,12 +286,11 @@ class EmailService
     private function generateTicketQrCodeHtml(string $code): string
     {
         try {
-            $result = QrCodeBuilder::create()
-                ->writer(new SvgWriter())
-                ->data($code)
-                ->size(200)
-                ->margin(8)
-                ->build();
+            $qrCode = QrCode::create($code)
+                ->setSize(200)
+                ->setMargin(8);
+
+            $result = (new SvgWriter())->write($qrCode);
 
             $escapedCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
