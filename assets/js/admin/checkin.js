@@ -1,148 +1,101 @@
 import QrScanner from 'qr-scanner';
+import 'bootstrap/js/dist/modal';
 
-// Use import.meta.url so Encore can resolve the worker path
+// QR-Scanner Worker-Pfad setzen
 QrScanner.WORKER_PATH = new URL('qr-scanner/qr-scanner-worker.min.js', import.meta.url).toString();
 
-const els = {
-    video: document.getElementById('qr-video'),
-    startBtn: document.getElementById('start-btn'),
-    deviceSelect: document.getElementById('device-select'),
-    result: document.getElementById('result'),
-    error: document.getElementById('result-msg')
-};
+// DOM-Elemente
+const video = document.getElementById('qr-video');
+const deviceSelect = document.getElementById('device-select');
 
+// Scanner-State
 let scanner;
-let currentDeviceId = null;
-let lastCode = null;
-// fallback template used when no data-show-url-template is present on the page
-// matches controller class route '/payment' + '/code/{code}'
-let SHOW_URL_TEMPLATE = '/payment/code/CODE';
+let lastCode;
 
-function showAlert(msg, type = 'danger') {
-    const area = document.getElementById('alert-area');
-    area.innerHTML = `<div class="alert alert-${type}" role="alert">${msg}</div>`;
-    setTimeout(() => area.innerHTML = '', 4000);
-}
-
-async function listCameras() {
-    try {
-        const devices = await QrScanner.listCameras(true);
-        console.debug('checkin: listCameras ->', devices);
-        if (!els.deviceSelect) return;
-        els.deviceSelect.innerHTML = '';
-        devices.forEach(d => {
-            const opt = document.createElement('option');
-            opt.value = d.id;
-            opt.textContent = d.label || `Kamera ${els.deviceSelect.length + 1}`;
-            els.deviceSelect.appendChild(opt);
-        });
-        const back = devices.find(d => /back|rück|rear|environment/i.test(d.label || '')) || devices.find(d => d.facingMode === 'environment');
-        currentDeviceId = (back && back.id) || (devices[0] && devices[0].id) || null;
-        if (currentDeviceId && els.deviceSelect) els.deviceSelect.value = currentDeviceId;
-        if (els.deviceSelect) els.deviceSelect.disabled = devices.length < 2;
-    } catch (e) {
-        console.warn('listCameras failed', e);
-    }
-}
-
+// Scanner initialisieren und starten
 async function initScanner() {
-    if (!els.video) return;
-    scanner = new QrScanner(els.video, onDecode, {
+    if (!video) return;
+    
+    // Scanner erstellen
+    scanner = new QrScanner(video, handleCode, {
         highlightScanRegion: true,
         highlightCodeOutline: true,
         preferredCamera: 'environment'
     });
 
-    console.debug('checkin: scanner initialized', { scanner });
-
-    await listCameras();
-}
-
-// stop scanning safely
-async function stopScan() {
-    if (!scanner) return;
-    try {
-        if (scanner.isScanning()) await scanner.stop();
-        console.debug('checkin: scanner stopped');
-    } catch (e) {
-        // ignore
+    // Kamera-Auswahl
+    const cameras = await QrScanner.listCameras(true);
+    if (deviceSelect && cameras.length > 1) {
+        deviceSelect.innerHTML = cameras
+            .map(cam => `<option value="${cam.id}">${cam.label || 'Kamera'}</option>`)
+            .join('');
+        deviceSelect.onchange = () => scanner.setCamera(deviceSelect.value);
+        deviceSelect.disabled = false;
     }
-    if (els.startBtn) els.startBtn.disabled = false;
-    if (els.stopBtn) els.stopBtn.disabled = true;
+
+    scanner.start();
 }
 
-async function startScan() {
-    if (!scanner) return;
+// QR-Code verarbeiten
+async function handleCode(result) {
+    const code = result?.data || result;
+    if (!code || code === lastCode) return;
+    
+    lastCode = code;
+    scanner.stop();
+
     try {
-        document.getElementById('scanner-fallback')?.classList.add('d-none');
-        await scanner.start();
-        console.debug('checkin: scanner started');
-        if (currentDeviceId) await scanner.setCamera(currentDeviceId);
-        if (els.startBtn) els.startBtn.disabled = true;
-        if (els.stopBtn) els.stopBtn.disabled = false;
-    } catch (e) {
-        console.error('checkin: startScan failed', e);
-        document.getElementById('scanner-fallback')?.classList.remove('d-none');
+        // URL aus Template erstellen
+        const template = document.getElementById('checkin-root')?.dataset?.showUrlTemplate 
+            || '/payment/code/CODE';
+        const url = template.replace('CODE', encodeURIComponent(code));
+        
+        // Modal öffnen
+        await showModal(url);
+    } catch {
+        lastCode = null;
+        scanner.start();
     }
 }
 
-async function onDecode(result) {
-    const text = result?.data || result;
-    if (!text) return;
-    // prevent double handling
-    if (text === lastCode) return;
-    lastCode = text;
-    stopScan();
-    console.debug('checkin: onDecode ->', text);
+// Modal anzeigen
+async function showModal(url) {
     try {
-        const root = document.getElementById('checkin-root');
-        const template = root?.dataset?.showUrlTemplate || SHOW_URL_TEMPLATE;
-        // insert the scanned code into the URL template and open the existing show-modal
-        const url = template.replace('CODE', encodeURIComponent(String(text)));
-        console.debug('checkin: opening url', url);
-        const a = document.createElement('a');
-        a.href = url;
-        a.setAttribute('data-toggle', 'ajaxModal');
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+        const res = await fetch(url);
+        if (!res.ok) throw new Error();
 
-        // resume scanning when modal closed
-        if (window.jQuery) {
-            $(document).one('hidden.bs.modal', '#ajaxModal .modal', function() {
-                lastCode = null;
-                if (els.result) els.result.innerHTML = '';
-                if (els.error) els.error.textContent = '';
-                startScan();
-            });
-        } else {
-            // fallback: resume after short delay
-            setTimeout(() => { lastCode = null; startScan(); }, 2000);
+        const container = document.querySelector('#ajaxModal') || 
+            document.body.appendChild(document.createElement('div'));
+        container.id = 'ajaxModal';
+        container.innerHTML = await res.text();
+
+        const modalElement = container.querySelector('.modal');
+        if (!modalElement) {
+            window.location.href = url;
+            return;
         }
-        return;
-    } catch (e) {
-        console.error(e);
-        showAlert('Server-Fehler');
-        setTimeout(() => { lastCode = null; startScan(); }, 1500);
+
+        const $ = window.jQuery;
+        if (!($ && $.fn?.modal)) {
+            window.location.href = url;
+            return;
+        }
+
+        const $modal = $(modalElement);
+        $modal.one('hidden.bs.modal', () => {
+            lastCode = null;
+            scanner?.start();
+        });
+        $modal.modal('show');
+    } catch {
+        window.location.href = url;
     }
 }
 
-function getCsrf() {
-    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-}
+// Start-Button Handler
+document.getElementById('start-btn')?.addEventListener('click', () => scanner?.start());
 
-// wire UI
-els.startBtn?.addEventListener('click', startScan);
-els.stopBtn?.addEventListener('click', stopScan);
-els.deviceSelect?.addEventListener('change', async (e) => {
-    currentDeviceId = e.target.value;
-    if (scanner && scanner.isScanning()) await scanner.setCamera(currentDeviceId);
-});
-
-// initialize scanner when DOM is ready
-if (document.readyState !== 'loading') {
-    initScanner().catch(e => console.warn('initScanner failed', e));
-} else {
-    document.addEventListener('DOMContentLoaded', () => initScanner().catch(e => console.warn('initScanner failed', e)));
-}
+// Automatisch starten
+document.readyState === 'loading'
+    ? document.addEventListener('DOMContentLoaded', initScanner)
+    : initScanner();

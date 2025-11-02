@@ -51,10 +51,13 @@ class PaymentController extends AbstractController
         return $form->getForm();
     }
 
-    private function createTicketModificationForm(Ticket $ticket): FormInterface
+    private function createTicketModificationForm(Ticket $ticket, string $redirectRoute = 'admin_payment'): FormInterface
     {
         $form = $this->createFormBuilder()
-            ->setAction($this->generateUrl('admin_payment_update', ['id' => $ticket->getId()]));
+            ->setAction($this->generateUrl('admin_payment_update', [
+                'id' => $ticket->getId(),
+                'redirect' => $redirectRoute,
+            ]));
         $can_delete_ticket = empty($ticket->getShopOrderPosition());
         switch ($ticket->getState()) {
             case TicketState::NEW:
@@ -138,7 +141,8 @@ class PaymentController extends AbstractController
     #[Route(path: '/{id}', name: '_update', methods: ['POST'])]
     public function update(Request $request, Ticket $ticket): Response
     {
-        $form = $this->createTicketModificationForm($ticket);
+        $redirectRoute = $request->query->get('redirect', 'admin_payment');
+        $form = $this->createTicketModificationForm($ticket, $redirectRoute);
         $form->handleRequest($request);
         $id = $ticket->getId();
         $error = "";
@@ -169,11 +173,11 @@ class PaymentController extends AbstractController
                         break;
                     default:
                         $this->addFlash('error', "Aktion konnte nicht durchgeführt werden");
-                        return $this->redirectToRoute('admin_payment');
+                        return $this->redirectToRoute($redirectRoute);
                 }
             } catch (TicketLivecycleException $exception) {
                 $this->addFlash('error', "Aktion konnte nicht durchgeführt werden ({$exception->getMessage()}).");
-                return $this->redirectToRoute('admin_payment');
+                return $this->redirectToRoute($redirectRoute);
             }
             if (!empty($error)) {
                 $this->addFlash('error', $error);
@@ -182,13 +186,13 @@ class PaymentController extends AbstractController
             }
         }
 
-        return $this->redirectToRoute('admin_payment');
+        return $this->redirectToRoute($redirectRoute);
     }
 
     #[Route(path: '/{id}', name: '_show', methods: ['GET'])]
     public function show(Request $request, Ticket $ticket): Response
     {
-        $form = $this->createTicketModificationForm($ticket);
+        $form = $this->createTicketModificationForm($ticket, 'admin_payment');
         $user = $this->ticketService->userByTicket($ticket);
 
         return $this->render('admin/payment/show.html.twig', [
@@ -206,7 +210,7 @@ class PaymentController extends AbstractController
             throw $this->createNotFoundException('Ticket not found');
         }
 
-        $form = $this->createTicketModificationForm($ticket);
+        $form = $this->createTicketModificationForm($ticket, 'admin_payment_quick_checkin');
         $user = $this->ticketService->userByTicket($ticket);
 
         return $this->render('admin/payment/show.html.twig', [
@@ -215,6 +219,5 @@ class PaymentController extends AbstractController
             'form' => $form->createView(),
         ]);
     }
-
 
 }

@@ -7,6 +7,17 @@
     {% block modalBody %}
         {{ form_start(form) }}
         {% set dateformat = "d.m.Y H:i" %}
+        {% set status = ticket.state %}
+        {% set statusLabels = {
+            'NEW': 'Neu',
+            'REDEEMED': 'Eingelöst',
+            'PUNCHED': 'Check-in abgeschlossen'
+        } %}
+        {% set statusBadges = {
+            'NEW': 'badge-secondary',
+            'REDEEMED': 'badge-warning',
+            'PUNCHED': 'badge-success'
+        } %}
         <div class="container-fluid">
             <div class="row">
                 <div class="col-4 mr-2">
@@ -35,6 +46,17 @@
                             <span class="d-inline-block">{{ ticket.redeemedAt | date(dateformat) }}</span>
                         {% else %}
                             <span class="d-inline-block text-muted">nicht eingelöst</span>
+                        {% endif %}
+                    </p>
+                    <p>
+                        <i class="fas fa-info-circle fa-fw mr-2" title="Status"></i>
+                        {% if status is not null %}
+                            {% set key = status.name %}
+                            <span class="badge {{ statusBadges[key]|default('badge-light') }}">
+                                {{ statusLabels[key]|default(key) }}
+                            </span>
+                        {% else %}
+                            <span class="d-inline-block text-muted">Status unbekannt</span>
                         {% endif %}
                     </p>
                 </div>
