@@ -11,7 +11,7 @@ use App\Service\GroupService;
 use App\Service\TicketService;
 use Doctrine\ORM\EntityManagerInterface;
 use Endroid\QrCode\QrCode;
-use Endroid\QrCode\Writer\SvgWriter;
+use Endroid\QrCode\Writer\PngWriter;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -286,15 +286,30 @@ class EmailService
     private function generateTicketQrCodeHtml(string $code): string
     {
         try {
-            $qrCode = QrCode::create($code)
-                ->setSize(200)
-                ->setMargin(8);
+            $size = 240;
 
-            $result = (new SvgWriter())->write($qrCode);
+            $qrCode = new QrCode(
+                data: $code,
+                encoding: new Encoding('UTF-8'),
+                errorCorrectionLevel: new ErrorCorrectionLevelLow(),
+                size: $size,
+                margin: 10,
+                roundBlockSizeMode: new RoundBlockSizeModeMargin(),
+                foregroundColor: new Color(0, 0, 0),
+                backgroundColor: new Color(255, 255, 255)
+            );
+
+            $writer = new PngWriter();
+            $result = $writer->write($qrCode);
 
             $escapedCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-            return sprintf('<div class="ticket-qr" title="Ticket-Code %s">%s</div>', $escapedCode, $result->getString());
+            return sprintf(
+                '<img src="%s" alt="Ticket QR-Code" title="Ticket-Code %s" style="max-width:%dpx;height:auto;" />',
+                $result->getDataUri(),
+                $escapedCode,
+                $size
+            );
         } catch (\Throwable $exception) {
             $this->logger->error('Failed to generate ticket QR code', ['exception' => $exception]);
 
