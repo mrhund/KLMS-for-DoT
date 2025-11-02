@@ -21,7 +21,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[IsGranted('ROLE_ADMIN_PAYMENT')]
-#[Route(path: '/payment', name: 'admin_payment')]
+#[Route(path: '/payment', name: 'payment')]
 class PaymentController extends AbstractController
 {
     private readonly TicketService $ticketService;
@@ -35,75 +35,6 @@ class PaymentController extends AbstractController
         $this->ticketService = $ticketService;
         $this->userService = $userService;
         $this->seatmapService = $seatmapService;
-    }
-
-    #[Route(path: '/quick-checkin', name: '_quick_checkin', methods: ['GET'])]
-    public function quickCheckin(): Response
-    {
-        return $this->render('admin/payment/checkin.html.twig');
-    }
-
-    #[Route(path: '/quick-checkin/find', name: '_quick_checkin_find', methods: ['POST'])]
-    public function quickCheckinFind(Request $request): JsonResponse
-    {
-        $csrf = (string)$request->headers->get('X-CSRF-TOKEN');
-        if (!$this->isCsrfTokenValid('quick_checkin', $csrf)) {
-            return new JsonResponse(['ok' => false, 'error' => 'csrf'], 419);
-        }
-
-        $code = $request->request->get('code', null);
-        if (empty($code)) {
-            return new JsonResponse(['ok' => false, 'error' => 'missing_code'], 400);
-        }
-
-        $ticket = $this->ticketService->getTicketCode($code);
-        if (is_null($ticket)) {
-            return new JsonResponse(['ok' => false, 'error' => 'not_found'], 404);
-        }
-
-        $user = $this->ticketService->userByTicket($ticket);
-        $userData = null;
-        $seats = [];
-        if (!is_null($user)) {
-            $userData = $this->userService->user2Array($user);
-            $userSeats = $this->seatmapService->getUserSeats($user);
-            foreach ($userSeats as $s) {
-                $seats[] = $s->generateSeatName();
-            }
-        }
-
-        return new JsonResponse([
-            'ok' => true,
-            'ticket' => [
-                'code' => $ticket->getCode(),
-                'state' => $ticket->getState()?->name,
-                'redeemer' => $userData,
-                'seats' => $seats,
-            ],
-        ]);
-    }
-
-    #[Route(path: '/quick-checkin/punch', name: '_quick_checkin_punch', methods: ['POST'])]
-    public function quickCheckinPunch(Request $request): JsonResponse
-    {
-        $csrf = (string)$request->headers->get('X-CSRF-TOKEN');
-        if (!$this->isCsrfTokenValid('quick_checkin', $csrf)) {
-            return new JsonResponse(['ok' => false, 'error' => 'csrf'], 419);
-        }
-
-        $code = $request->request->get('code', null);
-        if (empty($code)) {
-            return new JsonResponse(['ok' => false, 'error' => 'missing_code'], 400);
-        }
-        try {
-            $ok = $this->ticketService->punchTicketCode($code);
-        } catch (\Throwable $e) {
-            return new JsonResponse(['ok' => false, 'error' => 'exception', 'message' => $e->getMessage()], 500);
-        }
-        if (!$ok) {
-            return new JsonResponse(['ok' => false, 'error' => 'cannot_punch'], 409);
-        }
-        return new JsonResponse(['ok' => true]);
     }
 
     private function createTicketCreateForm(string $action = "", bool $forceUser = false): FormInterface
@@ -259,5 +190,29 @@ class PaymentController extends AbstractController
             'ticket' => $ticket,
             'form' => $form->createView(),
         ]);
+    }
+
+    #[Route(path: '/code/{code}', name: '_show_by_code', methods: ['GET'])]
+    public function showFromCode(Request $request, string $code): Response
+    {
+        $ticket = $this->ticketService->getTicketCode($code);
+        if (is_null($ticket)) {
+            throw $this->createNotFoundException('Ticket not found');
+        }
+
+        $form = $this->createTicketModificationForm($ticket);
+        $user = $this->ticketService->userByTicket($ticket);
+
+        return $this->render('admin/payment/show.html.twig', [
+            'user' => $user,
+            'ticket' => $ticket,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route(path: '/quick-checkin', name: '_quick_checkin', methods: ['GET'])]
+    public function quickCheckin(): Response
+    {
+        return $this->render('admin/payment/checkin.html.twig');
     }
 }

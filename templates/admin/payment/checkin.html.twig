@@ -3,9 +3,10 @@
 {% block title %}Quick Check-In{% endblock %}
 
 {% block body %}
-<div class="container py-3">
+<div id="checkin-root" class="container py-3"
+    data-show-url-template="{{ path('payment_show_by_code', {'code': 'CODE'}) }}">
     <h1 class="h3">Quick Check-In</h1>
-    <p class="text-muted">Scanne QR-Codes mit dem Ticketcode (nur Code im QR). Für mobile Geräte optimiert.</p>
+    <p class="text-muted">Scanne QR-Codes mit dem Ticketcode. Für mobile Geräte optimiert.</p>
 
     <div class="card mb-3">
         <div class="card-body text-center">
@@ -15,35 +16,9 @@
                     <label for="device-select" class="mb-0">Kamera:</label>
                     <select id="device-select" class="form-select form-select-sm" style="width:auto"></select>
                     <button id="start-btn" class="btn btn-sm btn-outline-primary">Start</button>
-                    <button id="stop-btn" class="btn btn-sm btn-outline-secondary" disabled>Stop</button>
-                    <button id="torch-btn" class="btn btn-sm btn-outline-dark" hidden>Licht</button>
-                </div>
-                <div id="scanner-fallback" class="mt-2 d-none">
-                    <input id="manual-code" class="form-control" placeholder="Ticket-Code eingeben" />
-                    <button id="manual-submit" class="btn btn-primary mt-2">Suchen</button>
-                </div>
-                <div class="mt-2">
-                    <label class="form-label">QR aus Bilddatei:</label>
-                    <input id="file-input" type="file" accept="image/*" class="form-control form-control-sm" />
                 </div>
         </div>
     </div>
-
-    <div id="result" class="card d-none mb-3">
-        <div class="card-body">
-            <h5 id="result-code"></h5>
-            <p id="result-state" class="mb-1"></p>
-            <div id="result-user" class="mb-2"></div>
-            <div id="result-seats" class="mb-2"></div>
-            <div id="result-msg" class="text-danger"></div>
-            <div class="d-flex gap-2">
-                <button id="checkin-btn" class="btn btn-success">Check-In</button>
-                <button id="scan-next-btn" class="btn btn-outline-secondary">Nächster Scan</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="alert-area"></div>
 </div>
 {% endblock %}
 
