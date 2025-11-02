@@ -1,5 +1,9 @@
 
-{% for label, messages in app.flashes(['success', 'info', 'warning', 'danger', 'error']) %}
+{% set flashMessages = (app.request is defined and app.request is not null and app.request.isXmlHttpRequest)
+    ? {}
+    : app.flashes(['success', 'info', 'warning', 'danger', 'error']) %}
+
+{% for label, messages in flashMessages %}
     {% for message in messages %}
         {% set bootstrapLabel = label == 'error' ? 'danger' : label %}
         <div class="alert alert-{{ bootstrapLabel }} alert-dismissible fade show d-block">
