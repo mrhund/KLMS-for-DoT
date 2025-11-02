@@ -27,6 +27,7 @@ function showAlert(msg, type = 'danger') {
 async function listCameras() {
     try {
         const devices = await QrScanner.listCameras(true);
+        console.debug('checkin: listCameras ->', devices);
         if (!els.deviceSelect) return;
         els.deviceSelect.innerHTML = '';
         devices.forEach(d => {
@@ -52,7 +53,22 @@ async function initScanner() {
         preferredCamera: 'environment'
     });
 
+    console.debug('checkin: scanner initialized', { scanner });
+
     await listCameras();
+}
+
+// stop scanning safely
+async function stopScan() {
+    if (!scanner) return;
+    try {
+        if (scanner.isScanning()) await scanner.stop();
+        console.debug('checkin: scanner stopped');
+    } catch (e) {
+        // ignore
+    }
+    if (els.startBtn) els.startBtn.disabled = false;
+    if (els.stopBtn) els.stopBtn.disabled = true;
 }
 
 async function startScan() {
@@ -60,11 +76,12 @@ async function startScan() {
     try {
         document.getElementById('scanner-fallback')?.classList.add('d-none');
         await scanner.start();
+        console.debug('checkin: scanner started');
         if (currentDeviceId) await scanner.setCamera(currentDeviceId);
         if (els.startBtn) els.startBtn.disabled = true;
         if (els.stopBtn) els.stopBtn.disabled = false;
     } catch (e) {
-        console.error('startScan', e);
+        console.error('checkin: startScan failed', e);
         document.getElementById('scanner-fallback')?.classList.remove('d-none');
     }
 }
@@ -76,11 +93,13 @@ async function onDecode(result) {
     if (text === lastCode) return;
     lastCode = text;
     stopScan();
+    console.debug('checkin: onDecode ->', text);
     try {
         const root = document.getElementById('checkin-root');
         const template = root?.dataset?.showUrlTemplate || SHOW_URL_TEMPLATE;
         // insert the scanned code into the URL template and open the existing show-modal
         const url = template.replace('CODE', encodeURIComponent(String(text)));
+        console.debug('checkin: opening url', url);
         const a = document.createElement('a');
         a.href = url;
         a.setAttribute('data-toggle', 'ajaxModal');
@@ -113,9 +132,6 @@ function getCsrf() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 }
 
-
-
-
 // wire UI
 els.startBtn?.addEventListener('click', startScan);
 els.stopBtn?.addEventListener('click', stopScan);
@@ -123,3 +139,10 @@ els.deviceSelect?.addEventListener('change', async (e) => {
     currentDeviceId = e.target.value;
     if (scanner && scanner.isScanning()) await scanner.setCamera(currentDeviceId);
 });
+
+// initialize scanner when DOM is ready
+if (document.readyState !== 'loading') {
+    initScanner().catch(e => console.warn('initScanner failed', e));
+} else {
+    document.addEventListener('DOMContentLoaded', () => initScanner().catch(e => console.warn('initScanner failed', e)));
+}

@@ -37,6 +37,12 @@ class PaymentController extends AbstractController
         $this->seatmapService = $seatmapService;
     }
 
+    #[Route(path: '/quick-checkin', name: '_quick_checkin', methods: ['GET'])]
+    public function quickCheckin(): Response
+    {
+        return $this->render('admin/payment/checkin.html.twig');
+    }
+
     private function createTicketCreateForm(string $action = "", bool $forceUser = false): FormInterface
     {
         $form = $this->createFormBuilder();
@@ -210,9 +216,5 @@ class PaymentController extends AbstractController
         ]);
     }
 
-    #[Route(path: '/quick-checkin', name: '_quick_checkin', methods: ['GET'])]
-    public function quickCheckin(): Response
-    {
-        return $this->render('admin/payment/checkin.html.twig');
-    }
+
 }
