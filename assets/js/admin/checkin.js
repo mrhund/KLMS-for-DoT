@@ -63,8 +63,8 @@ async function showModal(url) {
     try {
         const res = await fetch(url);
         if (!res.ok) throw new Error();
-    
-            if (res.redirected) {
+
+        if (res.redirected) {
             window.location.href = res.url;
             return;
         }
