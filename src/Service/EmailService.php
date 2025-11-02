@@ -10,7 +10,7 @@ use App\Messenger\MailingHookNotification;
 use App\Service\GroupService;
 use App\Service\TicketService;
 use Doctrine\ORM\EntityManagerInterface;
-use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Builder\Builder as QrCodeBuilder;
 use Endroid\QrCode\Writer\SvgWriter;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -23,6 +23,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\DelayStamp;
 use Symfony\Component\Mime;
 use Twig\Environment;
+use function htmlspecialchars;
 
 class EmailService
 {
@@ -285,14 +286,19 @@ class EmailService
     private function generateTicketQrCodeHtml(string $code): string
     {
         try {
-            $qrCode = QrCode::create($code)
-                ->setSize(200)
-                ->setMargin(8);
+            $result = QrCodeBuilder::create()
+                ->writer(new SvgWriter())
+                ->data($code)
+                ->size(200)
+                ->margin(8)
+                ->build();
 
-            $result = (new SvgWriter())->write($qrCode);
+            $escapedCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-            return sprintf('<div class="ticket-qr">%s</div>', $result->getString());
-        } catch (\Throwable) {
+            return sprintf('<div class="ticket-qr" title="Ticket-Code %s">%s</div>', $escapedCode, $result->getString());
+        } catch (\Throwable $exception) {
+            $this->logger->error('Failed to generate ticket QR code', ['exception' => $exception]);
+
             return '';
         }
     }
