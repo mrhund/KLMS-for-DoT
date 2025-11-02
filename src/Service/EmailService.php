@@ -10,11 +10,7 @@ use App\Messenger\MailingHookNotification;
 use App\Service\GroupService;
 use App\Service\TicketService;
 use Doctrine\ORM\EntityManagerInterface;
-use Endroid\QrCode\Color\Color;
-use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
 use Endroid\QrCode\QrCode;
-use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\Writer\PngWriter;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -273,8 +269,8 @@ class EmailService
     private function buildRecipientData(?EmailRecipient $recipient): array
     {
         $data = $recipient?->getDataArray() ?? [];
-    $data['ticket-code'] = '';
-    $data['ticket-qr-code'] = '';
+        $data['ticket-code'] = '';
+        $data['ticket-qr-code'] = '';
 
         if ($recipient?->getUuid()) {
             $ticket = $this->ticketService->getTicketUser($recipient->getUuid());
@@ -294,13 +290,13 @@ class EmailService
 
             $qrCode = new QrCode(
                 data: $code,
-                encoding: new Encoding('UTF-8'),
-                errorCorrectionLevel: new ErrorCorrectionLevelLow(),
+                encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
+                errorCorrectionLevel: new \Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow(),
                 size: $size,
                 margin: 10,
-                roundBlockSizeMode: new RoundBlockSizeModeMargin(),
-                foregroundColor: new Color(0, 0, 0),
-                backgroundColor: new Color(255, 255, 255)
+                roundBlockSizeMode: new \Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin(),
+                foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
+                backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
             );
 
             $writer = new PngWriter();
