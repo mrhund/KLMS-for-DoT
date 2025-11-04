@@ -290,13 +290,8 @@ class EmailService
 
             $qrCode = new QrCode(
                 data: $code,
-                encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
-                errorCorrectionLevel: new \Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow(),
                 size: $size,
-                margin: 10,
-                roundBlockSizeMode: new \Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin(),
-                foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
-                backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
+                margin: 10
             );
 
             $writer = new PngWriter();
