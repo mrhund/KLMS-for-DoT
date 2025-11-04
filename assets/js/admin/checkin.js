@@ -26,10 +26,16 @@ async function initScanner() {
     // Kamera-Auswahl
     const cameras = await QrScanner.listCameras(true);
     if (deviceSelect && cameras.length > 1) {
-        deviceSelect.innerHTML = cameras
-            .map(cam => `<option value="${cam.id}">${cam.label || 'Kamera'}</option>`)
-            .join('');
-        deviceSelect.onchange = () => scanner.setCamera(deviceSelect.value);
+        const options = ['<option value=""></option>']
+            .concat(cameras.map(cam => `<option value="${cam.id}">${cam.label || 'Kamera'}</option>`));
+        deviceSelect.innerHTML = options.join('');
+        deviceSelect.onchange = () => {
+            const cameraId = deviceSelect.value;
+            if (!cameraId) {
+                return;
+            }
+            scanner.setCamera(cameraId);
+        };
         deviceSelect.disabled = false;
     }
 
