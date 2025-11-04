@@ -300,7 +300,7 @@ class EmailService
             $escapedCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
             return sprintf(
-                '<img src="%s" alt="Ticket QR-Code" title="Ticket-Code %s" style="max-width:%dpx;height:auto;" />',
+                '<img src="%s" alt="Ticket QR-Code" class="mt-2" title="Ticket-Code %s" style="max-width:%dpx;height:auto;" />',
                 $result->getDataUri(),
                 $escapedCode,
                 $size
