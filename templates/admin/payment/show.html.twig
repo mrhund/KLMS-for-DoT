@@ -44,8 +44,6 @@
                         <i class="fas fa-money-check fa-fw mr-2" title="Eingelöst"></i>
                         {% if ticket.redeemedAt is not empty %}
                             <span class="d-inline-block">{{ ticket.redeemedAt | date(dateformat) }}</span>
-                        {% else %}
-                            <span class="d-inline-block text-muted">nicht eingelöst</span>
                         {% endif %}
                     </p>
                     <p>
