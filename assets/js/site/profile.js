@@ -1,4 +1,5 @@
 import Cropper from 'cropperjs';
+import 'cropperjs/dist/cropper.css';
 import '../../css/site/profile.scss';
 
 const MAX_CROP_WIDTH = 700;
