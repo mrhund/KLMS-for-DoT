@@ -168,7 +168,7 @@ class UserController extends AbstractController
     {
     $user = $this->requireDomainUser();
 
-        $form = $this->createForm(UserType::class, $user);
+    $form = $this->createForm(UserType::class, $user, ['with_image' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
