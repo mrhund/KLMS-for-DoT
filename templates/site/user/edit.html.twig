@@ -13,8 +13,65 @@
                     <a class="btn btn-outline-primary" href="{{ path('user_profile_edit_pw') }}"><i class="fas fa-user-edit"></i> Passwort ändern</a>
                 </div>
                 {% if form.image is defined %}
-                    <div class="mb-4">
-                        {{ form_row(form.image.imageFile) }}
+                    {% set currentImage = '' %}
+                    {% if form.image.vars.data is not null %}
+                        {% set currentImage = vich_uploader_asset(form.image.vars.data, 'imageFile') %}
+                    {% endif %}
+                    {% if currentImage is empty %}
+                        {% set fallbackImage = user | user_image %}
+                        {% set currentImage = fallbackImage is not empty ? fallbackImage : '' %}
+                    {% endif %}
+                    {% set hasImage = currentImage is not empty %}
+                    <div class="mb-4" data-profile-image-field>
+                        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                            <div class="text-center mr-md-3 mb-3 mb-md-0">
+                                <img id="profile-image-preview"
+                                     data-initial-src="{{ hasImage ? currentImage : '' }}"
+                                     data-has-image="{{ hasImage ? '1' : '0' }}"
+                                     class="rounded-circle border"
+                                     style="width: 160px; height: 160px; object-fit: cover;{{ hasImage ? '' : ' display:none;' }}"
+                                     alt="Profilbild Vorschau">
+                                <div id="profile-image-placeholder"
+                                     class="rounded-circle border d-flex align-items-center justify-content-center"
+                                     style="width: 160px; height: 160px; {{ hasImage ? 'display:none;' : '' }}">
+                                    <i class="fas fa-user fa-3x text-muted"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="d-block font-weight-bold">{{ form_label(form.image.imageFile.file) }}</label>
+                                <button type="button" class="btn btn-outline-primary mb-2 js-profile-image-select">
+                                    <i class="fas fa-image"></i>
+                                    Neues Bild auswählen
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-danger mb-2 js-profile-image-remove"
+                                        {% if not hasImage %}style="display:none;"{% endif %}>
+                                    <i class="fas fa-trash-alt"></i>
+                                    Bild entfernen
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="profile-image-cropper" class="mt-3" style="display:none;">
+                            <div class="bg-dark p-2 rounded">
+                                <img id="profile-image-crop" class="img-fluid" alt="Profilbild zuschneiden">
+                            </div>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-primary mr-2 js-profile-image-crop-save">
+                                    <i class="fas fa-crop"></i>
+                                    Zuschnitt übernehmen
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary js-profile-image-crop-cancel">
+                                    Abbrechen
+                                </button>
+                            </div>
+                        </div>
+
+                        {{ form_widget(form.image.imageFile.file, {'attr': {'class': 'd-none js-profile-image-input', 'accept': 'image/*'}}) }}
+                        {% if form.image.imageFile.delete is defined %}
+                            {{ form_widget(form.image.imageFile.delete, {'attr': {'class': 'd-none js-profile-image-delete'}}) }}
+                        {% endif %}
+                        {{ form_errors(form.image.imageFile.file) }}
                     </div>
                 {% endif %}
                 <h2 class="h4 pt-3">Persönliche Informationen</h2>
@@ -67,4 +124,204 @@
             {% endblock %}
         {% endembed  %}
     </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.css">
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const container = document.querySelector('[data-profile-image-field]');
+            if (!container) {
+                return;
+            }
+
+            const fileInput = container.querySelector('.js-profile-image-input');
+            const selectButton = container.querySelector('.js-profile-image-select');
+            const removeButton = container.querySelector('.js-profile-image-remove');
+            const deleteField = container.querySelector('.js-profile-image-delete');
+            const previewImage = container.querySelector('#profile-image-preview');
+            const placeholder = container.querySelector('#profile-image-placeholder');
+            const cropperWrapper = container.querySelector('#profile-image-cropper');
+            const cropperImage = container.querySelector('#profile-image-crop');
+            const cropSave = container.querySelector('.js-profile-image-crop-save');
+            const cropCancel = container.querySelector('.js-profile-image-crop-cancel');
+
+            if (!fileInput || !previewImage || !placeholder) {
+                return;
+            }
+
+            let cropper = null;
+            let generatedObjectUrl = null;
+
+            const setDeleteField = (state) => {
+                if (!deleteField) {
+                    return;
+                }
+                if (deleteField.type === 'checkbox') {
+                    deleteField.checked = state;
+                } else {
+                    deleteField.value = state ? '1' : '';
+                }
+            };
+
+            const revokeGeneratedUrl = () => {
+                if (generatedObjectUrl) {
+                    URL.revokeObjectURL(generatedObjectUrl);
+                    generatedObjectUrl = null;
+                }
+            };
+
+            const updatePreview = (src, markAsInitial = false, isGenerated = false) => {
+                if (isGenerated) {
+                    revokeGeneratedUrl();
+                    generatedObjectUrl = src;
+                } else if (!src) {
+                    revokeGeneratedUrl();
+                }
+
+                if (src) {
+                    previewImage.src = src;
+                    previewImage.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    if (removeButton) {
+                        removeButton.style.display = '';
+                    }
+                } else {
+                    previewImage.removeAttribute('src');
+                    previewImage.style.display = 'none';
+                    placeholder.style.display = '';
+                    if (removeButton) {
+                        removeButton.style.display = 'none';
+                    }
+                }
+
+                if (markAsInitial) {
+                    previewImage.dataset.initialSrc = src || '';
+                    previewImage.dataset.hasImage = src ? '1' : '0';
+                }
+            };
+
+            const closeCropper = () => {
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
+                if (cropperWrapper) {
+                    cropperWrapper.style.display = 'none';
+                }
+            };
+
+            const initialSrc = previewImage.dataset.initialSrc || '';
+            if (previewImage.dataset.hasImage === '1' && initialSrc) {
+                updatePreview(initialSrc, false);
+            } else {
+                updatePreview('', false);
+            }
+
+            if (selectButton) {
+                selectButton.addEventListener('click', () => fileInput.click());
+            }
+
+            if (removeButton) {
+                removeButton.addEventListener('click', () => {
+                    fileInput.value = '';
+                    setDeleteField(true);
+                    updatePreview('', true);
+                    closeCropper();
+                });
+            }
+
+            if (cropCancel) {
+                cropCancel.addEventListener('click', () => {
+                    fileInput.value = '';
+                    closeCropper();
+                    const restored = previewImage.dataset.initialSrc || '';
+                    updatePreview(restored, false);
+                });
+            }
+
+            if (cropSave) {
+                cropSave.addEventListener('click', () => {
+                    if (!cropper) {
+                        return;
+                    }
+
+                    const canvas = cropper.getCroppedCanvas({
+                        width: 600,
+                        height: 600,
+                        imageSmoothingQuality: 'high',
+                    });
+
+                    if (!canvas) {
+                        return;
+                    }
+
+                    setDeleteField(false);
+
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            return;
+                        }
+
+                        const originalFile = fileInput.files[0];
+                        const fileName = originalFile ? originalFile.name : 'profilbild.jpg';
+                        const croppedFile = new File([blob], fileName, { type: blob.type, lastModified: Date.now() });
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(croppedFile);
+                        fileInput.files = dataTransfer.files;
+
+                        const objectUrl = URL.createObjectURL(croppedFile);
+                        updatePreview(objectUrl, true, true);
+                        closeCropper();
+                    }, 'image/jpeg');
+                });
+            }
+
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) {
+                    return;
+                }
+
+                setDeleteField(false);
+
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const result = ev.target ? ev.target.result : null;
+                    if (!result) {
+                        return;
+                    }
+
+                    if (typeof Cropper === 'undefined') {
+                        updatePreview(result, true);
+                        return;
+                    }
+
+                    if (cropperWrapper) {
+                        cropperWrapper.style.display = 'block';
+                    }
+                    cropperImage.src = result;
+                    if (cropper) {
+                        cropper.destroy();
+                    }
+                    cropper = new Cropper(cropperImage, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        autoCropArea: 1,
+                        movable: true,
+                        zoomable: true,
+                        rotatable: false,
+                        scalable: false,
+                    });
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
 {% endblock %}
