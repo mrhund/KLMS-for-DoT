@@ -1,5 +1,4 @@
 import Cropper from 'cropperjs';
-import 'cropperjs/dist/cropper.css';
 
 const MAX_CROP_WIDTH = 700;
 const MAX_CROP_HEIGHT = 500;

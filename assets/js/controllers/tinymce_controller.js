@@ -5,7 +5,6 @@ import tinymce from 'tinymce/tinymce';
 import 'tinymce/icons/default';
 import 'tinymce/themes/silver';
 
-import 'tinymce/plugins/paste';
 import 'tinymce/plugins/link';
 import 'tinymce/plugins/image';
 import 'tinymce/plugins/table';
@@ -18,7 +17,6 @@ import 'tinymce/plugins/media';
 import 'tinymce/plugins/advlist';
 import 'tinymce/plugins/importcss';
 import 'tinymce/plugins/searchreplace';
-import 'tinymce/plugins/hr';
 
 export default class extends Controller {
     static values = {
@@ -32,7 +30,7 @@ export default class extends Controller {
             plugins: [
                 'advlist lists link image anchor',
                 'code fullscreen',
-                'media table importcss searchreplace hr'
+                'media table importcss searchreplace'
             ],
             toolbar: 'undo redo | formatselect | ' +
                 'bold italic backcolor | alignleft aligncenter ' +
