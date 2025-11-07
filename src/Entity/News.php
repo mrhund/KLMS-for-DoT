@@ -46,7 +46,7 @@ class News implements HistoryAwareEntity
     #[ORM\Embedded(class: 'Vich\UploaderBundle\Entity\File')]
     private EmbeddedFile $image;
 
-    #[ORM\OneToMany(mappedBy: 'news', targetEntity: NewsComment::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'news', targetEntity: NewsComment::class, orphanRemoval: true, fetch: 'EXTRA_LAZY')]
     #[ORM\OrderBy(['created' => 'ASC'])]
     private Collection $comments;
 
