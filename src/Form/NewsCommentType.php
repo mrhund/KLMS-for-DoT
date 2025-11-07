@@ -15,7 +15,8 @@ class NewsCommentType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->add('content', TextareaType::class, [
-            'label' => 'Kommentar',
+            'label' => '<i class="fas fa-plus"></i> Neuen Kommentar erstellen',
+            'label_html' => true,
             'attr' => [
                 'rows' => 4,
                 'placeholder' => 'Teile deine Gedanken mit der Community...',
