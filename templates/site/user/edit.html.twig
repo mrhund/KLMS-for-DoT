@@ -115,15 +115,17 @@
             <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
                 <div class="modal-content bg-white text-body">
                     <div class="modal-header border-0">
-                        <h5 class="modal-title" id="profileImageCropModalLabel"><i class="fas fa-crop"></i> Bild zuschneiden</h5>
+                        <h5 class="modal-title text-body" id="profileImageCropModalLabel"><i class="fas fa-crop"></i> Bild zuschneiden</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Schließen">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                         <div class="modal-body" style="overflow: hidden;">
-                            <div class="bg-dark p-2 rounded text-center">
-                                <img id="profile-image-crop" class="img-fluid" style="max-height: 500px; width: auto;" alt="Profilbild zuschneiden">
-                        </div>
+                            <div class="bg-dark p-2 rounded d-flex justify-content-center">
+                                <div class="mx-auto" style="width: 100%; max-width: 100%; max-height: 500px; overflow: hidden;">
+                                    <img id="profile-image-crop" class="img-fluid" style="max-width: 100%; max-height: 100%; width: auto;" alt="Profilbild zuschneiden">
+                                </div>
+                            </div>
                     </div>
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-outline-secondary" id="profileImageCropCancel" data-dismiss="modal">Abbrechen</button>
@@ -172,23 +174,32 @@
             let cropInProgress = false;
             let cropConfirmed = false;
             const useJqueryModal = !!(window.jQuery && typeof window.jQuery.fn.modal === 'function');
+            const MAX_CROP_WIDTH = 700;
             const MAX_CROP_HEIGHT = 500;
 
-            const prepareImageDataUrl = (src, maxHeight) => {
+            const prepareImageDataUrl = (src, maxWidth, maxHeight) => {
                 return new Promise((resolve) => {
-                    if (!src || !maxHeight) {
+                    if (!src) {
                         resolve(src);
                         return;
                     }
 
                     const image = new Image();
                     image.onload = () => {
-                        if (!image.height || image.height <= maxHeight) {
+                        if (!image.width || !image.height) {
                             resolve(src);
                             return;
                         }
 
-                        const scale = maxHeight / image.height;
+                        const scaleWidth = maxWidth && image.width > maxWidth ? maxWidth / image.width : 1;
+                        const scaleHeight = maxHeight && image.height > maxHeight ? maxHeight / image.height : 1;
+                        const scale = Math.min(scaleWidth, scaleHeight);
+
+                        if (scale >= 1) {
+                            resolve(src);
+                            return;
+                        }
+
                         const canvas = document.createElement('canvas');
                         canvas.width = Math.round(image.width * scale);
                         canvas.height = Math.round(image.height * scale);
@@ -443,7 +454,7 @@
                         return;
                     }
 
-                    prepareImageDataUrl(result, MAX_CROP_HEIGHT).then((processedResult) => {
+                    prepareImageDataUrl(result, MAX_CROP_WIDTH, MAX_CROP_HEIGHT).then((processedResult) => {
                         if (typeof Cropper === 'undefined' || !modalElement) {
                             updatePreview(processedResult, true);
                             return;
