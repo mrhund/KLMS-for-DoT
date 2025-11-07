@@ -66,7 +66,7 @@ const initProfileImageEditor = () => {
     const cropCancel = document.getElementById('profileImageCropCancel');
     const modalCloseButton = modalElement ? modalElement.querySelector('.close') : null;
 
-    if (!fileInput || !previewImage || !placeholder) {
+    if (!fileInput || !previewImage) {
         return;
     }
 
@@ -109,14 +109,18 @@ const initProfileImageEditor = () => {
         if (src) {
             previewImage.src = src;
             previewImage.style.display = 'block';
-            placeholder.style.display = 'none';
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
             if (removeButton) {
                 removeButton.style.display = '';
             }
         } else {
             previewImage.removeAttribute('src');
             previewImage.style.display = 'none';
-            placeholder.style.display = '';
+            if (placeholder) {
+                placeholder.style.display = '';
+            }
             if (removeButton) {
                 removeButton.style.display = 'none';
             }
