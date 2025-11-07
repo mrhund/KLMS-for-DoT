@@ -109,31 +109,31 @@
             {% endblock %}
         {% endembed  %}
     </div>
-{% endblock %}
 
-{% if form.image is defined %}
-<div class="modal fade" id="profileImageCropModal" tabindex="-1" role="dialog" aria-labelledby="profileImageCropModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-    <div class="modal-content bg-dark text-light">
-            <div class="modal-header border-0">
-                <h5 class="modal-title" id="profileImageCropModalLabel"><i class="fas fa-crop"></i> Bild zuschneiden</h5>
-                <button type="button" class="close text-light" data-dismiss="modal" aria-label="Schließen">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="bg-dark p-2 rounded">
-                    <img id="profile-image-crop" class="img-fluid" alt="Profilbild zuschneiden">
+    {% if form.image is defined %}
+        <div class="modal fade" id="profileImageCropModal" tabindex="-1" role="dialog" aria-labelledby="profileImageCropModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                <div class="modal-content bg-dark text-light">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title" id="profileImageCropModalLabel"><i class="fas fa-crop"></i> Bild zuschneiden</h5>
+                        <button type="button" class="close text-light" data-dismiss="modal" aria-label="Schließen">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="bg-dark p-2 rounded">
+                            <img id="profile-image-crop" class="img-fluid" alt="Profilbild zuschneiden">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-outline-secondary" id="profileImageCropCancel" data-dismiss="modal">Abbrechen</button>
+                        <button type="button" class="btn btn-primary" id="profileImageCropSave"><i class="fas fa-check"></i> Zuschnitt übernehmen</button>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-outline-secondary" id="profileImageCropCancel" data-dismiss="modal">Abbrechen</button>
-                <button type="button" class="btn btn-primary" id="profileImageCropSave"><i class="fas fa-check"></i> Zuschnitt übernehmen</button>
-            </div>
         </div>
-    </div>
-</div>
-{% endif %}
+    {% endif %}
+{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
