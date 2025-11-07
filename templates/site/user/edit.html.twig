@@ -52,21 +52,6 @@
                             </div>
                         </div>
 
-                        <div id="profile-image-cropper" class="mt-3" style="display:none;">
-                            <div class="bg-dark p-2 rounded">
-                                <img id="profile-image-crop" class="img-fluid" alt="Profilbild zuschneiden">
-                            </div>
-                            <div class="mt-2">
-                                <button type="button" class="btn btn-primary mr-2 js-profile-image-crop-save">
-                                    <i class="fas fa-crop"></i>
-                                    Zuschnitt übernehmen
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary js-profile-image-crop-cancel">
-                                    Abbrechen
-                                </button>
-                            </div>
-                        </div>
-
                         {{ form_widget(form.image.imageFile.file, {'attr': {'class': 'd-none js-profile-image-input', 'accept': 'image/*'}}) }}
                         {% if form.image.imageFile.delete is defined %}
                             {{ form_widget(form.image.imageFile.delete, {'attr': {'class': 'd-none js-profile-image-delete'}}) }}
@@ -126,6 +111,30 @@
     </div>
 {% endblock %}
 
+{% if form.image is defined %}
+<div class="modal fade" id="profileImageCropModal" tabindex="-1" role="dialog" aria-labelledby="profileImageCropModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="profileImageCropModalLabel"><i class="fas fa-crop"></i> Bild zuschneiden</h5>
+                <button type="button" class="close text-light" data-dismiss="modal" aria-label="Schließen">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="bg-dark p-2 rounded">
+                    <img id="profile-image-crop" class="img-fluid" alt="Profilbild zuschneiden">
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" id="profileImageCropCancel" data-dismiss="modal">Abbrechen</button>
+                <button type="button" class="btn btn-primary" id="profileImageCropSave"><i class="fas fa-check"></i> Zuschnitt übernehmen</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 {% block stylesheets %}
     {{ parent() }}
     <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.css">
@@ -147,10 +156,11 @@
             const deleteField = container.querySelector('.js-profile-image-delete');
             const previewImage = container.querySelector('#profile-image-preview');
             const placeholder = container.querySelector('#profile-image-placeholder');
-            const cropperWrapper = container.querySelector('#profile-image-cropper');
-            const cropperImage = container.querySelector('#profile-image-crop');
-            const cropSave = container.querySelector('.js-profile-image-crop-save');
-            const cropCancel = container.querySelector('.js-profile-image-crop-cancel');
+            const modalElement = document.getElementById('profileImageCropModal');
+            const cropperImage = modalElement ? modalElement.querySelector('#profile-image-crop') : null;
+            const cropSave = document.getElementById('profileImageCropSave');
+            const cropCancel = document.getElementById('profileImageCropCancel');
+            const modalCloseButton = modalElement ? modalElement.querySelector('.close') : null;
 
             if (!fileInput || !previewImage || !placeholder) {
                 return;
@@ -158,6 +168,10 @@
 
             let cropper = null;
             let generatedObjectUrl = null;
+            let bootstrapModal = null;
+            let pendingDataUrl = null;
+            let cropInProgress = false;
+            let cropConfirmed = false;
 
             const setDeleteField = (state) => {
                 if (!deleteField) {
@@ -207,14 +221,97 @@
                 }
             };
 
-            const closeCropper = () => {
+            const initBootstrapModal = () => {
+                if (!modalElement || bootstrapModal || !window.bootstrap || !window.bootstrap.Modal) {
+                    return;
+                }
+                bootstrapModal = new window.bootstrap.Modal(modalElement, { backdrop: 'static' });
+            };
+
+            const showModal = () => {
+                if (!modalElement) {
+                    return;
+                }
+
+                initBootstrapModal();
+
+                if (bootstrapModal) {
+                    bootstrapModal.show();
+                } else if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+                    window.jQuery(modalElement).modal({ backdrop: 'static', keyboard: false, show: true });
+                } else {
+                    modalElement.classList.add('show');
+                    modalElement.style.display = 'block';
+                    modalElement.removeAttribute('aria-hidden');
+                    modalElement.setAttribute('aria-modal', 'true');
+                    document.body.classList.add('modal-open');
+                    document.body.style.overflow = 'hidden';
+                    initModalCropper();
+                }
+            };
+
+            const hideModal = () => {
+                if (!modalElement) {
+                    return;
+                }
+
+                if (bootstrapModal) {
+                    bootstrapModal.hide();
+                } else if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+                    window.jQuery(modalElement).modal('hide');
+                } else {
+                    modalElement.classList.remove('show');
+                    modalElement.style.display = 'none';
+                    modalElement.setAttribute('aria-hidden', 'true');
+                    modalElement.removeAttribute('aria-modal');
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('overflow');
+                    handleModalHidden();
+                }
+            };
+
+            const initModalCropper = () => {
+                if (!pendingDataUrl || !cropperImage) {
+                    return;
+                }
+
                 if (cropper) {
                     cropper.destroy();
                     cropper = null;
                 }
-                if (cropperWrapper) {
-                    cropperWrapper.style.display = 'none';
+
+                cropperImage.src = pendingDataUrl;
+                cropper = new Cropper(cropperImage, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    autoCropArea: 1,
+                    movable: true,
+                    zoomable: true,
+                    rotatable: false,
+                    scalable: false,
+                });
+            };
+
+            const teardownModalCropper = () => {
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
                 }
+                if (cropperImage) {
+                    cropperImage.removeAttribute('src');
+                }
+            };
+
+            const handleModalHidden = () => {
+                teardownModalCropper();
+                if (cropInProgress && !cropConfirmed) {
+                    fileInput.value = '';
+                    const restored = previewImage.dataset.initialSrc || '';
+                    updatePreview(restored, false);
+                }
+                cropInProgress = false;
+                cropConfirmed = false;
+                pendingDataUrl = null;
             };
 
             const initialSrc = previewImage.dataset.initialSrc || '';
@@ -222,6 +319,27 @@
                 updatePreview(initialSrc, false);
             } else {
                 updatePreview('', false);
+            }
+
+            if (modalElement) {
+                modalElement.addEventListener('shown.bs.modal', initModalCropper);
+                modalElement.addEventListener('hidden.bs.modal', handleModalHidden);
+            }
+
+            if (modalCloseButton) {
+                modalCloseButton.addEventListener('click', () => {
+                    if (!bootstrapModal && !(window.jQuery && typeof window.jQuery.fn.modal === 'function')) {
+                        hideModal();
+                    }
+                });
+            }
+
+            if (cropCancel) {
+                cropCancel.addEventListener('click', () => {
+                    if (!bootstrapModal && !(window.jQuery && typeof window.jQuery.fn.modal === 'function')) {
+                        hideModal();
+                    }
+                });
             }
 
             if (selectButton) {
@@ -233,16 +351,9 @@
                     fileInput.value = '';
                     setDeleteField(true);
                     updatePreview('', true);
-                    closeCropper();
-                });
-            }
-
-            if (cropCancel) {
-                cropCancel.addEventListener('click', () => {
-                    fileInput.value = '';
-                    closeCropper();
-                    const restored = previewImage.dataset.initialSrc || '';
-                    updatePreview(restored, false);
+                    if (cropInProgress) {
+                        hideModal();
+                    }
                 });
             }
 
@@ -278,7 +389,9 @@
 
                         const objectUrl = URL.createObjectURL(croppedFile);
                         updatePreview(objectUrl, true, true);
-                        closeCropper();
+                        cropConfirmed = true;
+                        cropInProgress = false;
+                        hideModal();
                     }, 'image/jpeg');
                 });
             }
@@ -290,6 +403,9 @@
                 }
 
                 setDeleteField(false);
+                cropInProgress = false;
+                cropConfirmed = false;
+                pendingDataUrl = null;
 
                 const reader = new FileReader();
                 reader.onload = (ev) => {
@@ -298,27 +414,14 @@
                         return;
                     }
 
-                    if (typeof Cropper === 'undefined') {
+                    if (typeof Cropper === 'undefined' || !modalElement) {
                         updatePreview(result, true);
                         return;
                     }
 
-                    if (cropperWrapper) {
-                        cropperWrapper.style.display = 'block';
-                    }
-                    cropperImage.src = result;
-                    if (cropper) {
-                        cropper.destroy();
-                    }
-                    cropper = new Cropper(cropperImage, {
-                        aspectRatio: 1,
-                        viewMode: 1,
-                        autoCropArea: 1,
-                        movable: true,
-                        zoomable: true,
-                        rotatable: false,
-                        scalable: false,
-                    });
+                    pendingDataUrl = result;
+                    cropInProgress = true;
+                    showModal();
                 };
                 reader.readAsDataURL(file);
             });
