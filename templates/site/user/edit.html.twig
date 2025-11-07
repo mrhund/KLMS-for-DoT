@@ -172,6 +172,43 @@
             let cropInProgress = false;
             let cropConfirmed = false;
             const useJqueryModal = !!(window.jQuery && typeof window.jQuery.fn.modal === 'function');
+            const MAX_CROP_HEIGHT = 500;
+
+            const prepareImageDataUrl = (src, maxHeight) => {
+                return new Promise((resolve) => {
+                    if (!src || !maxHeight) {
+                        resolve(src);
+                        return;
+                    }
+
+                    const image = new Image();
+                    image.onload = () => {
+                        if (!image.height || image.height <= maxHeight) {
+                            resolve(src);
+                            return;
+                        }
+
+                        const scale = maxHeight / image.height;
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.round(image.width * scale);
+                        canvas.height = Math.round(image.height * scale);
+                        const context = canvas.getContext('2d');
+                        if (!context) {
+                            resolve(src);
+                            return;
+                        }
+
+                        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+                        const mimeMatch = /^data:(.*?);/.exec(src);
+                        const mimeType = mimeMatch && mimeMatch[1] ? mimeMatch[1] : 'image/jpeg';
+                        const quality = mimeType === 'image/jpeg' ? 0.92 : undefined;
+                        resolve(canvas.toDataURL(mimeType, quality));
+                    };
+                    image.onerror = () => resolve(src);
+                    image.src = src;
+                });
+            };
 
             const setDeleteField = (state) => {
                 if (!deleteField) {
@@ -406,14 +443,16 @@
                         return;
                     }
 
-                    if (typeof Cropper === 'undefined' || !modalElement) {
-                        updatePreview(result, true);
-                        return;
-                    }
+                    prepareImageDataUrl(result, MAX_CROP_HEIGHT).then((processedResult) => {
+                        if (typeof Cropper === 'undefined' || !modalElement) {
+                            updatePreview(processedResult, true);
+                            return;
+                        }
 
-                    pendingDataUrl = result;
-                    cropInProgress = true;
-                    showModal();
+                        pendingDataUrl = processedResult;
+                        cropInProgress = true;
+                        showModal();
+                    });
                 };
                 reader.readAsDataURL(file);
             });
