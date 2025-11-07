@@ -168,10 +168,10 @@
 
             let cropper = null;
             let generatedObjectUrl = null;
-            let bootstrapModal = null;
             let pendingDataUrl = null;
             let cropInProgress = false;
             let cropConfirmed = false;
+            const useJqueryModal = !!(window.jQuery && typeof window.jQuery.fn.modal === 'function');
 
             const setDeleteField = (state) => {
                 if (!deleteField) {
@@ -221,23 +221,12 @@
                 }
             };
 
-            const initBootstrapModal = () => {
-                if (!modalElement || bootstrapModal || !window.bootstrap || !window.bootstrap.Modal) {
-                    return;
-                }
-                bootstrapModal = new window.bootstrap.Modal(modalElement, { backdrop: 'static' });
-            };
-
             const showModal = () => {
                 if (!modalElement) {
                     return;
                 }
 
-                initBootstrapModal();
-
-                if (bootstrapModal) {
-                    bootstrapModal.show();
-                } else if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+                if (useJqueryModal) {
                     window.jQuery(modalElement).modal({ backdrop: 'static', keyboard: false, show: true });
                 } else {
                     modalElement.classList.add('show');
@@ -255,9 +244,7 @@
                     return;
                 }
 
-                if (bootstrapModal) {
-                    bootstrapModal.hide();
-                } else if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+                if (useJqueryModal) {
                     window.jQuery(modalElement).modal('hide');
                 } else {
                     modalElement.classList.remove('show');
@@ -322,13 +309,18 @@
             }
 
             if (modalElement) {
-                modalElement.addEventListener('shown.bs.modal', initModalCropper);
-                modalElement.addEventListener('hidden.bs.modal', handleModalHidden);
+                if (useJqueryModal) {
+                    window.jQuery(modalElement).on('shown.bs.modal', initModalCropper);
+                    window.jQuery(modalElement).on('hidden.bs.modal', handleModalHidden);
+                } else {
+                    modalElement.addEventListener('shown.bs.modal', initModalCropper);
+                    modalElement.addEventListener('hidden.bs.modal', handleModalHidden);
+                }
             }
 
             if (modalCloseButton) {
                 modalCloseButton.addEventListener('click', () => {
-                    if (!bootstrapModal && !(window.jQuery && typeof window.jQuery.fn.modal === 'function')) {
+                    if (!useJqueryModal) {
                         hideModal();
                     }
                 });
@@ -336,7 +328,7 @@
 
             if (cropCancel) {
                 cropCancel.addEventListener('click', () => {
-                    if (!bootstrapModal && !(window.jQuery && typeof window.jQuery.fn.modal === 'function')) {
+                    if (!useJqueryModal) {
                         hideModal();
                     }
                 });
