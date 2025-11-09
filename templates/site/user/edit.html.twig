@@ -5,13 +5,8 @@
 {% block main %}
     {% set user = form.vars.data %}
     <div class="container">
-        {% embed "site/components/cards/skeletons/cardProfile.html.twig"  with { cardImg: user | user_image, 'cardSymbol': 'fas fas fa-user-circle fa-9x'} %}
-            {% block cardBody %}
-                <h1 class="h3 card-title mb-4">Profil bearbeiten</h1>
-                {{ form_start(form) }}
-                <div class="float-right">
-                    <a class="btn btn-outline-primary" href="{{ path('user_profile_edit_pw') }}"><i class="fas fa-user-edit"></i> Passwort ändern</a>
-                </div>
+        {% embed "site/components/cards/skeletons/cardProfile.html.twig" %}
+            {% block cardImage %}
                 {% if form.image is defined %}
                     {% set currentImage = '' %}
                     {% if form.image.vars.data is not null %}
@@ -22,35 +17,22 @@
                         {% set currentImage = fallbackImage is not empty ? fallbackImage : '' %}
                     {% endif %}
                     {% set hasImage = currentImage is not empty %}
-                    <div class="mb-4" data-profile-image-field>
-                        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                            <div class="text-center mr-md-3 mb-3 mb-md-0">
-                                <img id="profile-image-preview"
-                                     data-initial-src="{{ hasImage ? currentImage : '' }}"
-                                     data-has-image="{{ hasImage ? '1' : '0' }}"
-                                     class="rounded-circle border"
-                                     style="width: 200px; height: 200px; object-fit: cover;{{ hasImage ? '' : ' display:none;' }}"
-                                     alt="Profilbild Vorschau">
-                                <!--<div id="profile-image-placeholder"
-                                     class="rounded-circle border d-flex align-items-center justify-content-center"
-                                     style="width: 200px; height: 200px; {{ hasImage ? 'display:none;' : '' }}">
-                                    <i class="fas fa-user fa-3x text-muted"></i>
-                                </div>-->
-                            </div>
-                            <div>
-                                <label class="d-block font-weight-bold">{{ form_label(form.image.imageFile.file) }}</label>
-                                <button type="button" class="btn btn-outline-primary mb-2 js-profile-image-select">
-                                    <i class="fas fa-image"></i>
-                                    Neues Bild auswählen
-                                </button>
-                                <button type="button"
-                                        class="btn btn-outline-danger mb-2 js-profile-image-remove"
-                                        {% if not hasImage %}style="display:none;"{% endif %}>
-                                    <i class="fas fa-trash-alt"></i>
-                                    Bild entfernen
-                                </button>
-                            </div>
-                        </div>
+                    <div class="d-flex flex-column align-items-center" data-profile-image-field>
+                        <img id="profile-image-preview"
+                             data-initial-src="{{ hasImage ? currentImage : '' }}"
+                             data-has-image="{{ hasImage ? '1' : '0' }}"
+                             class="rounded-circle border mb-3"
+                             style="width: 150px; height: 150px; object-fit: cover;{{ hasImage ? '' : ' display:none;' }}"
+                             alt="Profilbild Vorschau">
+                        
+                        <button type="button" class="btn btn-sm btn-outline-light mb-2 js-profile-image-select">
+                            <i class="fas fa-image"></i> Bild ändern
+                        </button>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger js-profile-image-remove"
+                                {% if not hasImage %}style="display:none;"{% endif %}>
+                            <i class="fas fa-trash-alt"></i> Entfernen
+                        </button>
 
                         {{ form_widget(form.image.imageFile.file, {'attr': {'class': 'd-none js-profile-image-input', 'accept': 'image/*'}}) }}
                         {% if form.image.imageFile.delete is defined %}
@@ -58,7 +40,17 @@
                         {% endif %}
                         {{ form_errors(form.image.imageFile.file) }}
                     </div>
+                {% else %}
+                    {{ parent() }}
                 {% endif %}
+            {% endblock %}
+            {% block cardBody %}
+                <h1 class="h3 card-title mb-4">Profil bearbeiten</h1>
+                {{ form_start(form) }}
+                <div class="float-right">
+                    <a class="btn btn-outline-primary" href="{{ path('user_profile_edit_pw') }}"><i class="fas fa-user-edit"></i> Passwort ändern</a>
+                </div>
+                
                 <h2 class="h4 pt-3">Persönliche Informationen</h2>
                 {{ form_row(form.nickname, {'input_group_prepend' : '<i class="fas fa-headset"></i>'}) }}
                 <div class="row">

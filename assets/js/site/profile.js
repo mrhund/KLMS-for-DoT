@@ -1,341 +1,199 @@
 import 'cropperjs';
 import '../../css/site/profile.scss';
 
-const MAX_CROP_WIDTH = 1600;
-const MAX_CROP_HEIGHT = 1200;
+const MAX_IMAGE_SIZE = { width: 1600, height: 1200 };
+const CROP_OUTPUT_SIZE = 200;
 
-const prepareImageDataUrl = (src, maxWidth, maxHeight) => {
-    return new Promise((resolve) => {
-        if (!src) {
-            resolve(src);
-            return;
-        }
+// Scale down large images before cropping
+const scaleImage = (src, maxWidth, maxHeight) => new Promise((resolve) => {
+    if (!src) return resolve(src);
 
-        const image = new Image();
-        image.onload = () => {
-            if (!image.width || !image.height) {
-                resolve(src);
-                return;
-            }
+    const img = new Image();
+    img.onload = () => {
+        const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+        if (scale >= 1) return resolve(src);
 
-            const scaleWidth = maxWidth && image.width > maxWidth ? maxWidth / image.width : 1;
-            const scaleHeight = maxHeight && image.height > maxHeight ? maxHeight / image.height : 1;
-            const scale = Math.min(scaleWidth, scaleHeight);
+        const canvas = Object.assign(document.createElement('canvas'), {
+            width: Math.round(img.width * scale),
+            height: Math.round(img.height * scale)
+        });
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(src);
 
-            if (scale >= 1) {
-                resolve(src);
-                return;
-            }
-
-            const canvas = document.createElement('canvas');
-            canvas.width = Math.round(image.width * scale);
-            canvas.height = Math.round(image.height * scale);
-            const context = canvas.getContext('2d');
-
-            if (!context) {
-                resolve(src);
-                return;
-            }
-
-            context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-            const mimeMatch = /^data:(.*?);/.exec(src);
-            const mimeType = mimeMatch && mimeMatch[1] ? mimeMatch[1] : 'image/jpeg';
-            const quality = mimeType === 'image/jpeg' ? 0.92 : undefined;
-            resolve(canvas.toDataURL(mimeType, quality));
-        };
-        image.onerror = () => resolve(src);
-        image.src = src;
-    });
-};
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        const mimeType = src.match(/^data:(.*?);/)?.[1] || 'image/jpeg';
+        resolve(canvas.toDataURL(mimeType, mimeType === 'image/jpeg' ? 0.92 : undefined));
+    };
+    img.onerror = () => resolve(src);
+    img.src = src;
+});
 
 const initProfileImageEditor = () => {
     const container = document.querySelector('[data-profile-image-field]');
-    if (!container) {
-        return;
-    }
+    if (!container) return;
 
-    const fileInput = container.querySelector('.js-profile-image-input');
-    const selectButton = container.querySelector('.js-profile-image-select');
-    const removeButton = container.querySelector('.js-profile-image-remove');
-    const deleteField = container.querySelector('.js-profile-image-delete');
-    const previewImage = container.querySelector('#profile-image-preview');
-    const placeholder = container.querySelector('#profile-image-placeholder');
-    const modalElement = document.getElementById('profileImageCropModal');
-    const cropperCanvas = modalElement ? modalElement.querySelector('cropper-canvas') : null;
-    const cropperImage = cropperCanvas ? cropperCanvas.querySelector('cropper-image') : null;
-    const cropperSelection = cropperCanvas ? cropperCanvas.querySelector('cropper-selection') : null;
-    const cropSave = document.getElementById('profileImageCropSave');
-    const cropCancel = document.getElementById('profileImageCropCancel');
-    const modalCloseButton = modalElement ? modalElement.querySelector('.close') : null;
-
-    if (!fileInput || !previewImage) {
-        return;
-    }
-    let generatedObjectUrl = null;
-    let pendingDataUrl = null;
-    let cropInProgress = false;
-    let cropConfirmed = false;
-    const useJqueryModal = !!(window.jQuery && typeof window.jQuery.fn.modal === 'function');
-
-    const setDeleteField = (state) => {
-        if (!deleteField) {
-            return;
-        }
-
-        if (deleteField.type === 'checkbox') {
-            deleteField.checked = state;
-        } else {
-            deleteField.value = state ? '1' : '';
-        }
+    // DOM elements
+    const elements = {
+        fileInput: container.querySelector('.js-profile-image-input'),
+        selectButton: container.querySelector('.js-profile-image-select'),
+        removeButton: container.querySelector('.js-profile-image-remove'),
+        deleteField: container.querySelector('.js-profile-image-delete'),
+        preview: container.querySelector('#profile-image-preview'),
+        modal: document.getElementById('profileImageCropModal'),
+        cropSave: document.getElementById('profileImageCropSave')
     };
 
-    const revokeGeneratedUrl = () => {
-        if (generatedObjectUrl) {
-            URL.revokeObjectURL(generatedObjectUrl);
-            generatedObjectUrl = null;
-        }
+    const cropper = {
+        canvas: elements.modal?.querySelector('cropper-canvas'),
+        get image() { return this.canvas?.querySelector('cropper-image'); },
+        get selection() { return this.canvas?.querySelector('cropper-selection'); }
     };
 
-    const updatePreview = (src, markAsInitial = false, isGenerated = false) => {
-        if (isGenerated) {
-            revokeGeneratedUrl();
-            generatedObjectUrl = src;
-        } else if (!src) {
-            revokeGeneratedUrl();
-        }
+    if (!elements.fileInput || !elements.preview || !elements.modal) return;
 
-        if (src) {
-            previewImage.src = src;
-            previewImage.style.display = 'block';
-            if (placeholder) {
-                placeholder.style.display = 'none';
-            }
-            if (removeButton) {
-                removeButton.style.display = '';
-            }
-        } else {
-            previewImage.removeAttribute('src');
-            previewImage.style.display = 'none';
-            if (placeholder) {
-                placeholder.style.display = '';
-            }
-            if (removeButton) {
-                removeButton.style.display = 'none';
-            }
-        }
+    // State
+    let objectUrl = null;
+    let pendingImage = null;
+    let isCropping = false;
+
+    // Helpers
+    const setDelete = (state) => {
+        if (!elements.deleteField) return;
+        const prop = elements.deleteField.type === 'checkbox' ? 'checked' : 'value';
+        elements.deleteField[prop] = state ? (prop === 'checked' ? true : '1') : (prop === 'checked' ? false : '');
+    };
+
+    const updatePreview = (src, markAsInitial = false) => {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        objectUrl = src?.startsWith('blob:') ? src : null;
+
+        Object.assign(elements.preview, { src: src || '' });
+        elements.preview.style.display = src ? 'block' : 'none';
+        if (elements.removeButton) elements.removeButton.style.display = src ? '' : 'none';
 
         if (markAsInitial) {
-            previewImage.dataset.initialSrc = src || '';
-            previewImage.dataset.hasImage = src ? '1' : '0';
+            Object.assign(elements.preview.dataset, {
+                initialSrc: src || '',
+                hasImage: src ? '1' : '0'
+            });
         }
     };
 
-    const initModalCropper = () => {
-        if (!pendingDataUrl || !cropperImage || !cropperSelection) {
-            return;
-        }
+    // Initialize cropper selection
+    const initCropper = () => {
+        if (!pendingImage || !cropper.image || !cropper.selection || !cropper.canvas) return;
 
-        cropperImage.src = pendingDataUrl;
-        cropperSelection.x = 0;
-        cropperSelection.y = 0;
-        cropperSelection.width = 0;
-        cropperSelection.height = 0;
-        cropperSelection.aspectRatio = 1;
-    };
-
-    const teardownModalCropper = () => {
-        if (cropperImage) {
-            cropperImage.removeAttribute('src');
-        }
-        if (cropperSelection) {
-            cropperSelection.x = 0;
-            cropperSelection.y = 0;
-            cropperSelection.width = 0;
-            cropperSelection.height = 0;
-        }
-    };
-
-    const handleModalHidden = () => {
-        teardownModalCropper();
-        if (cropInProgress && !cropConfirmed) {
-            fileInput.value = '';
-            const restored = previewImage.dataset.initialSrc || '';
-            updatePreview(restored, false);
-        }
-        cropInProgress = false;
-        cropConfirmed = false;
-        pendingDataUrl = null;
-    };
-
-    const showModal = () => {
-        if (!modalElement) {
-            return;
-        }
-
-        if (useJqueryModal) {
-            window.jQuery(modalElement).modal({ backdrop: 'static', keyboard: false, show: true });
-        } else {
-            modalElement.classList.add('show');
-            modalElement.style.display = 'block';
-            modalElement.removeAttribute('aria-hidden');
-            modalElement.setAttribute('aria-modal', 'true');
-            document.body.classList.add('modal-open');
-            document.body.style.overflow = 'hidden';
-            initModalCropper();
-        }
-    };
-
-    const hideModal = () => {
-        if (!modalElement) {
-            return;
-        }
-
-        if (useJqueryModal) {
-            window.jQuery(modalElement).modal('hide');
-        } else {
-            modalElement.classList.remove('show');
-            modalElement.style.display = 'none';
-            modalElement.setAttribute('aria-hidden', 'true');
-            modalElement.removeAttribute('aria-modal');
-            document.body.classList.remove('modal-open');
-            document.body.style.removeProperty('overflow');
-            handleModalHidden();
-        }
-    };
-
-    const initialSrc = previewImage.dataset.initialSrc || '';
-    if (previewImage.dataset.hasImage === '1' && initialSrc) {
-        updatePreview(initialSrc, false);
-    } else {
-        updatePreview('', false);
-    }
-
-    if (modalElement) {
-        if (useJqueryModal) {
-            window.jQuery(modalElement).on('shown.bs.modal', initModalCropper);
-            window.jQuery(modalElement).on('hidden.bs.modal', handleModalHidden);
-        } else {
-            modalElement.addEventListener('shown.bs.modal', initModalCropper);
-            modalElement.addEventListener('hidden.bs.modal', handleModalHidden);
-        }
-    }
-
-    if (modalCloseButton) {
-        modalCloseButton.addEventListener('click', () => {
-            if (!useJqueryModal) {
-                hideModal();
-            }
-        });
-    }
-
-    if (cropCancel) {
-        cropCancel.addEventListener('click', () => {
-            if (!useJqueryModal) {
-                hideModal();
-            }
-        });
-    }
-
-    if (selectButton) {
-        selectButton.addEventListener('click', () => fileInput.click());
-    }
-
-    if (removeButton) {
-        removeButton.addEventListener('click', () => {
-            fileInput.value = '';
-            setDeleteField(true);
-            updatePreview('', true);
-            if (cropInProgress) {
-                hideModal();
-            }
-        });
-    }
-
-    if (cropSave) {
-        cropSave.addEventListener('click', async () => {
-            if (!cropperSelection || !cropperCanvas) {
+        cropper.image.src = pendingImage;
+        
+        const centerSelection = () => {
+            const rect = cropper.canvas.getBoundingClientRect();
+            if (!rect.width || !rect.height) {
+                requestAnimationFrame(centerSelection);
                 return;
             }
 
-            try {
-                const canvas = await cropperSelection.$toCanvas({
-                    width: 200,
-                    height: 200,
-                    imageSmoothingQuality: 'high',
-                });
+            const size = Math.min(rect.width, rect.height) * 0.8;
+            Object.assign(cropper.selection, {
+                x: (rect.width - size) / 2,
+                y: (rect.height - size) / 2,
+                width: size,
+                height: size,
+                aspectRatio: 1
+            });
+        };
 
-                if (!canvas) {
-                    return;
-                }
+        requestAnimationFrame(() => requestAnimationFrame(centerSelection));
+    };
 
-                setDeleteField(false);
+    const resetCropper = () => {
+        cropper.image?.removeAttribute('src');
+        if (cropper.selection) Object.assign(cropper.selection, { x: 0, y: 0, width: 0, height: 0 });
+        if (isCropping) {
+            elements.fileInput.value = '';
+            updatePreview(elements.preview.dataset.initialSrc || '');
+        }
+        [isCropping, pendingImage] = [false, null];
+    };
 
-                canvas.toBlob((blob) => {
-                    if (!blob) {
-                        return;
-                    }
-
-                    const originalFile = fileInput.files[0];
-                    const fileName = originalFile ? originalFile.name : 'profilbild.jpg';
-                    const croppedFile = new File([blob], fileName, { type: blob.type, lastModified: Date.now() });
-                    const dataTransfer = new DataTransfer();
-                    dataTransfer.items.add(croppedFile);
-                    fileInput.files = dataTransfer.files;
-
-                    const objectUrl = URL.createObjectURL(croppedFile);
-                    updatePreview(objectUrl, true, true);
-                    cropConfirmed = true;
-                    cropInProgress = false;
-                    hideModal();
-                }, 'image/jpeg');
-            } catch (error) {
-                console.error('Cropping failed:', error);
-            }
-        });
+    // Initialize with existing image
+    const initialSrc = elements.preview.dataset.initialSrc || '';
+    if (elements.preview.dataset.hasImage === '1' && initialSrc) {
+        updatePreview(initialSrc);
     }
 
-    fileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (!file) {
-            return;
-        }
+    // Event: Modal shown/hidden
+    window.jQuery(elements.modal)
+        .on('shown.bs.modal', initCropper)
+        .on('hidden.bs.modal', resetCropper);
 
-        setDeleteField(false);
-        cropInProgress = false;
-        cropConfirmed = false;
-        pendingDataUrl = null;
+    // Event: Select image button
+    elements.selectButton?.addEventListener('click', () => elements.fileInput.click());
+
+    // Event: Remove image button
+    elements.removeButton?.addEventListener('click', () => {
+        elements.fileInput.value = '';
+        setDelete(true);
+        updatePreview('', true);
+    });
+
+    // Event: Save cropped image
+    elements.cropSave?.addEventListener('click', async () => {
+        if (!cropper.selection) return;
+
+        try {
+            const canvas = await cropper.selection.$toCanvas({
+                width: CROP_OUTPUT_SIZE,
+                height: CROP_OUTPUT_SIZE,
+                imageSmoothingQuality: 'high',
+            });
+
+            canvas?.toBlob((blob) => {
+                if (!blob) return;
+
+                const file = new File([blob], elements.fileInput.files[0]?.name || 'profilbild.jpg', { 
+                    type: blob.type, 
+                    lastModified: Date.now() 
+                });
+                
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                elements.fileInput.files = dt.files;
+
+                setDelete(false);
+                updatePreview(URL.createObjectURL(file), true);
+                [isCropping] = [false];
+                window.jQuery(elements.modal).modal('hide');
+            }, 'image/jpeg');
+        } catch (error) {
+            console.error('Cropping failed:', error);
+        }
+    });
+
+    // Event: File selected
+    elements.fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setDelete(false);
 
         const reader = new FileReader();
-        reader.onload = (ev) => {
-            const result = ev.target ? ev.target.result : null;
-            if (!result) {
-                return;
-            }
+        reader.onload = async (ev) => {
+            const dataUrl = ev.target?.result;
+            if (!dataUrl) return;
 
-            prepareImageDataUrl(result, MAX_CROP_WIDTH, MAX_CROP_HEIGHT).then((processedResult) => {
-                if (!cropperCanvas || !modalElement) {
-                    updatePreview(processedResult, true);
-                    return;
-                }
-
-                pendingDataUrl = processedResult;
-                cropInProgress = true;
-                showModal();
-            });
+            pendingImage = await scaleImage(dataUrl, MAX_IMAGE_SIZE.width, MAX_IMAGE_SIZE.height);
+            [isCropping] = [true];
+            window.jQuery(elements.modal).modal({ backdrop: 'static', keyboard: false });
         };
         reader.readAsDataURL(file);
     });
 };
 
-const bootstrapProfileImageEditor = () => {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initProfileImageEditor);
-    } else {
-        initProfileImageEditor();
-    }
-};
-
-bootstrapProfileImageEditor();
+// Initialize when DOM is ready
+document.readyState === 'loading' 
+    ? document.addEventListener('DOMContentLoaded', initProfileImageEditor)
+    : initProfileImageEditor();
 
 export default initProfileImageEditor;
