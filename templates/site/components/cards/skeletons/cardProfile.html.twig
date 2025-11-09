@@ -4,13 +4,13 @@
             <div class="d-flex flex-column align-items-center justify-content-start pt-3">
                 {% block cardImage %}
                     {% if cardImg is defined and cardImg is not empty %}
-                        <img src='{{ cardImg | imagine_filter('user_img') }}' class="img-fluid" style="max-width: 150px;" alt="Profilbild" />
+                        <img src='{{ cardImg | imagine_filter('user_img') }}' class="img-fluid rounded-circle border" style="max-width: 150px; width: 150px; height: 150px; object-fit: cover;" alt="Profilbild" />
                     {% elseif cardSymbol is defined and cardSymbol is not empty %}
                         <div class="my-3">
                             <i class="{{ cardSymbol }} text-white"></i>
                         </div>
                     {% else %}
-                        <i class="fas fa-user-circle fa-9x"></i>
+                        <i class="fas fa-user-circle" style="font-size: 150px;"></i>
                     {% endif %}
                 {% endblock %}
             </div>

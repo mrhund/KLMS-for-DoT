@@ -7,45 +7,18 @@
     <div class="container">
         {% embed "site/components/cards/skeletons/cardProfile.html.twig" %}
             {% block cardImage %}
-                {% if form.image is defined %}
-                    {% set currentImage = '' %}
-                    {% if form.image.vars.data is not null %}
-                        {% set currentImage = vich_uploader_asset(form.image.vars.data, 'imageFile') %}
-                    {% endif %}
-                    {% if currentImage is empty %}
-                        {% set fallbackImage = user | user_image %}
-                        {% set currentImage = fallbackImage is not empty ? fallbackImage : '' %}
-                    {% endif %}
-                    {% set hasImage = currentImage is not empty %}
-                    <div class="d-flex flex-column align-items-center" data-profile-image-field>
-                        <img id="profile-image-preview"
-                             data-initial-src="{{ hasImage ? currentImage : '' }}"
-                             data-has-image="{{ hasImage ? '1' : '0' }}"
-                             class="rounded-circle border mb-3"
-                             style="width: 150px; height: 150px; object-fit: cover;{{ hasImage ? '' : ' display:none;' }}"
-                             alt="Profilbild Vorschau">
-                        <i id="profile-image-placeholder" 
-                           class="fas fa-user-circle mb-3" 
-                           style="font-size: 150px;{{ hasImage ? ' display:none;' : '' }}"></i>
-                        
-                        <button type="button" class="btn btn-sm btn-outline-light mb-2 js-profile-image-select">
-                            <i class="fas fa-image"></i> Bild ändern
-                        </button>
-                        <button type="button"
-                                class="btn btn-sm btn-outline-danger js-profile-image-remove"
-                                {% if not hasImage %}style="display:none;"{% endif %}>
-                            <i class="fas fa-trash-alt"></i> Entfernen
-                        </button>
-                    </div>
-                {% else %}
-                    {{ parent() }}
-                {% endif %}
+                {% include 'site/components/profile/image_editor.html.twig' with {
+                    'form': form,
+                    'user': user
+                } %}
             {% endblock %}
+            
             {% block cardBody %}
                 <h1 class="h3 card-title mb-4">Profil bearbeiten</h1>
+                
                 {{ form_start(form) }}
                 
-                {# Render hidden image fields here inside the form #}
+                {# Hidden image form fields for VichUploader #}
                 {% if form.image is defined %}
                     <div class="d-none" id="profile-image-form-fields">
                         {{ form_row(form.image) }}
@@ -53,22 +26,26 @@
                 {% endif %}
                 
                 <div class="float-right">
-                    <a class="btn btn-outline-primary" href="{{ path('user_profile_edit_pw') }}"><i class="fas fa-user-edit"></i> Passwort ändern</a>
+                    <a class="btn btn-outline-primary" href="{{ path('user_profile_edit_pw') }}">
+                        <i class="fas fa-user-edit"></i> Passwort ändern
+                    </a>
                 </div>
                 
                 <h2 class="h4 pt-3">Persönliche Informationen</h2>
-                {{ form_row(form.nickname, {'input_group_prepend' : '<i class="fas fa-headset"></i>'}) }}
+                {{ form_row(form.nickname, {'input_group_prepend': '<i class="fas fa-headset"></i>'}) }}
+                
                 <div class="row">
                     <div class="col-md-6">
-                        {{ form_row(form.firstname, {'input_group_prepend' : '<i class="fas fa-signature"></i>'}) }}
+                        {{ form_row(form.firstname, {'input_group_prepend': '<i class="fas fa-signature"></i>'}) }}
                     </div>
                     <div class="col-md-6">
-                        {{ form_row(form.surname, {'input_group_prepend' : '<i class="fas fa-signature"></i>'}) }}
+                        {{ form_row(form.surname, {'input_group_prepend': '<i class="fas fa-signature"></i>'}) }}
                     </div>
                 </div>
-                {{ form_row(form.email, {'input_group_prepend' : '<i class="far fa-envelope"></i>'}) }}
-                {{ form_row(form.birthdate, {'input_group_prepend' : '<i class="fas fa-birthday-cake"></i>'}) }}
-                {{ form_row(form.gender, {'input_group_prepend' : '<i class="fas fa-venus-mars"></i>'}) }}
+                
+                {{ form_row(form.email, {'input_group_prepend': '<i class="far fa-envelope"></i>'}) }}
+                {{ form_row(form.birthdate, {'input_group_prepend': '<i class="fas fa-birthday-cake"></i>'}) }}
+                {{ form_row(form.gender, {'input_group_prepend': '<i class="fas fa-venus-mars"></i>'}) }}
 
                 {% if user.personalDataConfirmed %}
                     <span class="text-muted">Persönliche Daten wurden verifiziert und können nicht geändert werden.</span>
@@ -80,72 +57,40 @@
                 {{ form_row(form.infoMails) }}
 
                 <h2 class="h4 pt-3">Adresse</h2>
-                {{ form_row(form.street, {'input_group_prepend' : '<i class="fas fa-road"></i>'}) }}
+                {{ form_row(form.street, {'input_group_prepend': '<i class="fas fa-road"></i>'}) }}
+                
                 <div class="row">
                     <div class="col-md-4">
-                        {{ form_row(form.postcode, {'input_group_prepend' : '<i class="fas fa-map-marked-alt"></i>'}) }}
+                        {{ form_row(form.postcode, {'input_group_prepend': '<i class="fas fa-map-marked-alt"></i>'}) }}
                     </div>
                     <div class="col-md-8">
-                        {{ form_row(form.city, {'input_group_prepend' : '<i class="fas fa-city"></i>'}) }}
+                        {{ form_row(form.city, {'input_group_prepend': '<i class="fas fa-city"></i>'}) }}
                     </div>
                 </div>
-                {{ form_row(form.country, {'input_group_prepend' : '<i class="fas fa-globe-europe"></i>'}) }}
+                
+                {{ form_row(form.country, {'input_group_prepend': '<i class="fas fa-globe-europe"></i>'}) }}
 
                 <h2 class="h4 pt-3">Allgemeines</h2>
-                {{ form_row(form.statements, {'input_group_prepend' : '<i class="far fa-comment-dots"></i>'}) }}
-                {{ form_row(form.phone, {'input_group_prepend' : '<i class="fas fa-mobile-alt"></i>'}) }}
-                {{ form_row(form.steamAccount, {'input_group_prepend' : '<i class="fab fa-discord"></i>'}) }}
-                {{ form_row(form.website, {'input_group_prepend' : '<i class="fas fa-globe"></i>'}) }}
-                {{ form_row(form.hardware, {'input_group_prepend' : '<i class="fas fa-desktop"></i>'}) }}
+                {{ form_row(form.statements, {'input_group_prepend': '<i class="far fa-comment-dots"></i>'}) }}
+                {{ form_row(form.phone, {'input_group_prepend': '<i class="fas fa-mobile-alt"></i>'}) }}
+                {{ form_row(form.steamAccount, {'input_group_prepend': '<i class="fab fa-discord"></i>'}) }}
+                {{ form_row(form.website, {'input_group_prepend': '<i class="fas fa-globe"></i>'}) }}
+                {{ form_row(form.hardware, {'input_group_prepend': '<i class="fas fa-desktop"></i>'}) }}
+                
                 <hr>
                 <div class="float-right pb-2 pt-2">
                     <a class="btn btn-secondary" href="{{ path('user_profile') }}">Abbrechen</a>
-                    <button type="submit" id="user_save" class="btn-primary btn">Speichern</button>
+                    <button type="submit" id="user_save" class="btn btn-primary">Speichern</button>
                 </div>
+                
                 {{ form_end(form) }}
             {% endblock %}
-        {% endembed  %}
+        {% endembed %}
     </div>
 
+    {# Crop Modal #}
     {% if form.image is defined %}
-        <div class="modal fade" id="profileImageCropModal" tabindex="-1" role="dialog" aria-labelledby="profileImageCropModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-                <div class="modal-content bg-white text-body">
-                    <div class="modal-header border-0">
-                        <h5 class="modal-title text-body" id="profileImageCropModalLabel"><i class="fas fa-crop"></i> Bild zuschneiden</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Schließen">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="profile-image-crop-container bg-dark p-2 rounded">
-                            <cropper-canvas background>
-                                <cropper-image rotatable scalable skewable translatable></cropper-image>
-                                <cropper-shade hidden></cropper-shade>
-                                <cropper-handle action="select" plain></cropper-handle>
-                                <cropper-selection initial-coverage="0.8" movable resizable outlined>
-                                    <cropper-grid role="grid" covered></cropper-grid>
-                                    <cropper-crosshair centered></cropper-crosshair>
-                                    <cropper-handle action="move" theme-color="rgba(255, 255, 255, 0.35)"></cropper-handle>
-                                    <cropper-handle action="n-resize"></cropper-handle>
-                                    <cropper-handle action="e-resize"></cropper-handle>
-                                    <cropper-handle action="s-resize"></cropper-handle>
-                                    <cropper-handle action="w-resize"></cropper-handle>
-                                    <cropper-handle action="ne-resize"></cropper-handle>
-                                    <cropper-handle action="nw-resize"></cropper-handle>
-                                    <cropper-handle action="se-resize"></cropper-handle>
-                                    <cropper-handle action="sw-resize"></cropper-handle>
-                                </cropper-selection>
-                            </cropper-canvas>
-                        </div>
-                    </div>
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-outline-secondary" id="profileImageCropCancel" data-dismiss="modal">Abbrechen</button>
-                        <button type="button" class="btn btn-primary" id="profileImageCropSave"><i class="fas fa-check"></i> Zuschnitt übernehmen</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% include 'site/components/profile/crop_modal.html.twig' %}
     {% endif %}
 {% endblock %}
 
