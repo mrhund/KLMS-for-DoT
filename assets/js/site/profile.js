@@ -42,6 +42,7 @@ const initProfileImageEditor = () => {
         removeButton: container.querySelector('.js-profile-image-remove'),
         deleteField: formFieldsContainer?.querySelector('input[type="checkbox"]'),
         preview: container.querySelector('#profile-image-preview'),
+        placeholder: container.querySelector('#profile-image-placeholder'),
         modal: document.getElementById('profileImageCropModal'),
         cropSave: document.getElementById('profileImageCropSave')
     };
@@ -72,6 +73,7 @@ const initProfileImageEditor = () => {
 
         Object.assign(elements.preview, { src: src || '' });
         elements.preview.style.display = src ? 'block' : 'none';
+        if (elements.placeholder) elements.placeholder.style.display = src ? 'none' : '';
         if (elements.removeButton) elements.removeButton.style.display = src ? '' : 'none';
 
         if (markAsInitial) {

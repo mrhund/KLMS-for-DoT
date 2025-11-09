@@ -24,6 +24,9 @@
                              class="rounded-circle border mb-3"
                              style="width: 150px; height: 150px; object-fit: cover;{{ hasImage ? '' : ' display:none;' }}"
                              alt="Profilbild Vorschau">
+                        <i id="profile-image-placeholder" 
+                           class="fas fa-user-circle mb-3" 
+                           style="font-size: 150px;{{ hasImage ? ' display:none;' : '' }}"></i>
                         
                         <button type="button" class="btn btn-sm btn-outline-light mb-2 js-profile-image-select">
                             <i class="fas fa-image"></i> Bild ändern
