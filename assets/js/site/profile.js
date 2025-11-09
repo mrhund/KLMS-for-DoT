@@ -34,12 +34,13 @@ const initProfileImageEditor = () => {
     const container = document.querySelector('[data-profile-image-field]');
     if (!container) return;
 
-    // DOM elements - search in whole document for form fields
+    // DOM elements - search for VichUploader generated fields
+    const formFieldsContainer = document.getElementById('profile-image-form-fields');
     const elements = {
-        fileInput: document.querySelector('.js-profile-image-input'),
+        fileInput: formFieldsContainer?.querySelector('input[type="file"]'),
         selectButton: container.querySelector('.js-profile-image-select'),
         removeButton: container.querySelector('.js-profile-image-remove'),
-        deleteField: document.querySelector('.js-profile-image-delete'),
+        deleteField: formFieldsContainer?.querySelector('input[type="checkbox"]'),
         preview: container.querySelector('#profile-image-preview'),
         modal: document.getElementById('profileImageCropModal'),
         cropSave: document.getElementById('profileImageCropSave')
@@ -51,7 +52,7 @@ const initProfileImageEditor = () => {
         get selection() { return this.canvas?.querySelector('cropper-selection'); }
     };
 
-    if (!elements.fileInput || !elements.preview || !elements.modal) return;
+    if (!elements.fileInput || !elements.preview) return;
 
     // State
     let objectUrl = null;

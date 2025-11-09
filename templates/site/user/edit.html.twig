@@ -44,7 +44,7 @@
                 
                 {# Render hidden image fields here inside the form #}
                 {% if form.image is defined %}
-                    <div class="d-none">
+                    <div class="d-none" id="profile-image-form-fields">
                         {{ form_row(form.image) }}
                     </div>
                 {% endif %}
