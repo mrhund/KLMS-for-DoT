@@ -34,12 +34,12 @@ const initProfileImageEditor = () => {
     const container = document.querySelector('[data-profile-image-field]');
     if (!container) return;
 
-    // DOM elements
+    // DOM elements - search in whole document for form fields
     const elements = {
-        fileInput: container.querySelector('.js-profile-image-input'),
+        fileInput: document.querySelector('.js-profile-image-input'),
         selectButton: container.querySelector('.js-profile-image-select'),
         removeButton: container.querySelector('.js-profile-image-remove'),
-        deleteField: container.querySelector('.js-profile-image-delete'),
+        deleteField: document.querySelector('.js-profile-image-delete'),
         preview: container.querySelector('#profile-image-preview'),
         modal: document.getElementById('profileImageCropModal'),
         cropSave: document.getElementById('profileImageCropSave')

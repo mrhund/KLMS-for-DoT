@@ -33,12 +33,6 @@
                                 {% if not hasImage %}style="display:none;"{% endif %}>
                             <i class="fas fa-trash-alt"></i> Entfernen
                         </button>
-
-                        {{ form_widget(form.image.imageFile.file, {'attr': {'class': 'd-none js-profile-image-input', 'accept': 'image/*'}}) }}
-                        {% if form.image.imageFile.delete is defined %}
-                            {{ form_widget(form.image.imageFile.delete, {'attr': {'class': 'd-none js-profile-image-delete'}}) }}
-                        {% endif %}
-                        {{ form_errors(form.image.imageFile.file) }}
                     </div>
                 {% else %}
                     {{ parent() }}
@@ -47,6 +41,14 @@
             {% block cardBody %}
                 <h1 class="h3 card-title mb-4">Profil bearbeiten</h1>
                 {{ form_start(form) }}
+                
+                {# Render hidden image fields here inside the form #}
+                {% if form.image is defined %}
+                    <div class="d-none">
+                        {{ form_row(form.image) }}
+                    </div>
+                {% endif %}
+                
                 <div class="float-right">
                     <a class="btn btn-outline-primary" href="{{ path('user_profile_edit_pw') }}"><i class="fas fa-user-edit"></i> Passwort ändern</a>
                 </div>
