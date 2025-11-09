@@ -1,8 +1,8 @@
-import Cropper from 'cropperjs';
+import 'cropperjs';
 import '../../css/site/profile.scss';
 
-const MAX_CROP_WIDTH = 700;
-const MAX_CROP_HEIGHT = 500;
+const MAX_CROP_WIDTH = 1600;
+const MAX_CROP_HEIGHT = 1200;
 
 const prepareImageDataUrl = (src, maxWidth, maxHeight) => {
     return new Promise((resolve) => {
@@ -62,7 +62,9 @@ const initProfileImageEditor = () => {
     const previewImage = container.querySelector('#profile-image-preview');
     const placeholder = container.querySelector('#profile-image-placeholder');
     const modalElement = document.getElementById('profileImageCropModal');
-    const cropperImage = modalElement ? modalElement.querySelector('#profile-image-crop') : null;
+    const cropperCanvas = modalElement ? modalElement.querySelector('cropper-canvas') : null;
+    const cropperImage = cropperCanvas ? cropperCanvas.querySelector('cropper-image') : null;
+    const cropperSelection = cropperCanvas ? cropperCanvas.querySelector('cropper-selection') : null;
     const cropSave = document.getElementById('profileImageCropSave');
     const cropCancel = document.getElementById('profileImageCropCancel');
     const modalCloseButton = modalElement ? modalElement.querySelector('.close') : null;
@@ -70,10 +72,6 @@ const initProfileImageEditor = () => {
     if (!fileInput || !previewImage) {
         return;
     }
-
-    const CropperLib = Cropper;
-
-    let cropper = null;
     let generatedObjectUrl = null;
     let pendingDataUrl = null;
     let cropInProgress = false;
@@ -134,34 +132,27 @@ const initProfileImageEditor = () => {
     };
 
     const initModalCropper = () => {
-        if (!pendingDataUrl || !cropperImage || !CropperLib) {
+        if (!pendingDataUrl || !cropperImage || !cropperSelection) {
             return;
         }
 
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
-        }
-
         cropperImage.src = pendingDataUrl;
-        cropper = new CropperLib(cropperImage, {
-            aspectRatio: 1,
-            viewMode: 1,
-            autoCropArea: 1,
-            movable: true,
-            zoomable: true,
-            rotatable: false,
-            scalable: false,
-        });
+        cropperSelection.x = 0;
+        cropperSelection.y = 0;
+        cropperSelection.width = 0;
+        cropperSelection.height = 0;
+        cropperSelection.aspectRatio = 1;
     };
 
     const teardownModalCropper = () => {
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
-        }
         if (cropperImage) {
             cropperImage.removeAttribute('src');
+        }
+        if (cropperSelection) {
+            cropperSelection.x = 0;
+            cropperSelection.y = 0;
+            cropperSelection.width = 0;
+            cropperSelection.height = 0;
         }
     };
 
@@ -262,41 +253,45 @@ const initProfileImageEditor = () => {
     }
 
     if (cropSave) {
-        cropSave.addEventListener('click', () => {
-            if (!cropper) {
+        cropSave.addEventListener('click', async () => {
+            if (!cropperSelection || !cropperCanvas) {
                 return;
             }
 
-            const canvas = cropper.getCroppedCanvas({
-                width: 200,
-                height: 200,
-                imageSmoothingQuality: 'high',
-            });
+            try {
+                const canvas = await cropperSelection.$toCanvas({
+                    width: 200,
+                    height: 200,
+                    imageSmoothingQuality: 'high',
+                });
 
-            if (!canvas) {
-                return;
-            }
-
-            setDeleteField(false);
-
-            canvas.toBlob((blob) => {
-                if (!blob) {
+                if (!canvas) {
                     return;
                 }
 
-                const originalFile = fileInput.files[0];
-                const fileName = originalFile ? originalFile.name : 'profilbild.jpg';
-                const croppedFile = new File([blob], fileName, { type: blob.type, lastModified: Date.now() });
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(croppedFile);
-                fileInput.files = dataTransfer.files;
+                setDeleteField(false);
 
-                const objectUrl = URL.createObjectURL(croppedFile);
-                updatePreview(objectUrl, true, true);
-                cropConfirmed = true;
-                cropInProgress = false;
-                hideModal();
-            }, 'image/jpeg');
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        return;
+                    }
+
+                    const originalFile = fileInput.files[0];
+                    const fileName = originalFile ? originalFile.name : 'profilbild.jpg';
+                    const croppedFile = new File([blob], fileName, { type: blob.type, lastModified: Date.now() });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(croppedFile);
+                    fileInput.files = dataTransfer.files;
+
+                    const objectUrl = URL.createObjectURL(croppedFile);
+                    updatePreview(objectUrl, true, true);
+                    cropConfirmed = true;
+                    cropInProgress = false;
+                    hideModal();
+                }, 'image/jpeg');
+            } catch (error) {
+                console.error('Cropping failed:', error);
+            }
         });
     }
 
@@ -319,7 +314,7 @@ const initProfileImageEditor = () => {
             }
 
             prepareImageDataUrl(result, MAX_CROP_WIDTH, MAX_CROP_HEIGHT).then((processedResult) => {
-                if (!CropperLib || !modalElement) {
+                if (!cropperCanvas || !modalElement) {
                     updatePreview(processedResult, true);
                     return;
                 }
