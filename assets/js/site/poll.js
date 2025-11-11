@@ -45,8 +45,7 @@ class PollWidget {
 
         const header = `
             <header>
-                <div>Frage des Tages</div>
-                <span>${this.formatDateRange(start, end)}</span>
+                <div>Community Umfrage</div>
             </header>
         `;
 
