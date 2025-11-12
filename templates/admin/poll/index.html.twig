@@ -19,6 +19,7 @@
                 <table id="pollTable" class="table table-striped admin-data-table" data-order='[[1, "desc"]]'>
                     <thead>
                         <tr>
+                            <th scope="col" style="width: 2em;" class="text-center">&#8470;</th>
                             <th>Frage</th>
                             <th class="text-nowrap">Start</th>
                             <th class="text-nowrap">Ende</th>
@@ -30,6 +31,7 @@
                     {% for poll in polls %}
                         {% set active = poll.isActive() %}
                         {% set ended = poll.hasEnded() %}
+                        <td class="text-center">{{ poll.id }}</td>
                         <tr>
                             <td>
                                 <a href="{{ path('admin_poll_edit', {'id': poll.id}) }}">
