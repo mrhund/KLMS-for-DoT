@@ -4,13 +4,13 @@
     bottom: 1.5rem;
     z-index: 1060;
     max-width: 320px;
-    background: rgba(10, 10, 10, 0.92);
+    background: rgba(28, 28, 28, 0.92);
     color: #fff;
     border-radius: 0.75rem;
     box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.35);
     overflow: hidden;
-    font-size: 0.95rem;
     line-height: 1.4;
+	font-size: 0.75rem;
 }
 
 .poll-widget.is-hidden {
@@ -21,13 +21,13 @@
     padding: 0.85rem 1rem 0.35rem;
     font-weight: 600;
     font-size: 1.05rem;
+    color: #df1238;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .poll-widget header span {
-    font-size: 0.75rem;
     font-weight: 400;
     opacity: 0.7;
 }
