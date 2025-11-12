@@ -8,6 +8,7 @@ class PollWidget {
         root.appendChild(this.element);
         this.state = null;
         this.isVoting = false;
+        this.dismissStorageKey = 'pollWidgetDismissed';
         this.load();
     }
 
@@ -39,14 +40,18 @@ class PollWidget {
             return;
         }
 
-    const { poll, hasVoted, isClosed, results, isAuthenticated } = this.state;
-        const start = new Date(poll.startAt);
-        const end = poll.endAt ? new Date(poll.endAt) : null;
-    const canVote = !poll.onlyRegistered || Boolean(isAuthenticated);
+        const { poll, hasVoted, isClosed, results, isAuthenticated } = this.state;
+        if (this.isDismissed(poll.id)) {
+            this.element.classList.add('is-hidden');
+            this.element.innerHTML = '';
+            return;
+        }
+        const canVote = !poll.onlyRegistered || Boolean(isAuthenticated);
 
         const header = `
             <header>
                 <div>Community Umfrage</div>
+                <button type="button" class="poll-widget-close" aria-label="Umfrage schließen">&times;</button>
             </header>
         `;
 
@@ -75,6 +80,7 @@ class PollWidget {
 
         this.element.innerHTML = header + body;
         this.element.classList.remove('is-hidden');
+        this.registerCloseHandler();
         if (!hasVoted && !isClosed && canVote) {
             this.registerOptionHandlers();
         }
@@ -124,6 +130,17 @@ class PollWidget {
         const buttons = this.element.querySelectorAll('button[data-option-id]');
         buttons.forEach(button => {
             button.addEventListener('click', () => this.vote(parseInt(button.dataset.optionId, 10)));
+        });
+    }
+
+    registerCloseHandler() {
+        const closeButton = this.element.querySelector('.poll-widget-close');
+        if (!closeButton) {
+            return;
+        }
+
+        closeButton.addEventListener('click', () => {
+            this.dismiss();
         });
     }
 
@@ -211,6 +228,54 @@ class PollWidget {
             '"': '&quot;',
             "'": '&#39;'
         })[match]);
+    }
+
+    dismiss() {
+        const pollId = this.state && this.state.poll ? this.state.poll.id : null;
+        this.storeDismissedPollId(pollId);
+        this.element.classList.add('is-hidden');
+        this.element.innerHTML = '';
+    }
+
+    isDismissed(pollId) {
+        if (!pollId) {
+            return false;
+        }
+
+        const dismissed = this.getDismissedPollIds();
+        return dismissed.includes(pollId);
+    }
+
+    storeDismissedPollId(pollId) {
+        if (!pollId) {
+            return;
+        }
+
+        const dismissed = this.getDismissedPollIds();
+        if (dismissed.includes(pollId)) {
+            return;
+        }
+
+        dismissed.push(pollId);
+        try {
+            sessionStorage.setItem(this.dismissStorageKey, JSON.stringify(dismissed));
+        } catch (error) {
+            // ignore storage issues, dismissal is non-critical
+        }
+    }
+
+    getDismissedPollIds() {
+        try {
+            const raw = sessionStorage.getItem(this.dismissStorageKey);
+            if (!raw) {
+                return [];
+            }
+
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            return [];
+        }
     }
 }
 
