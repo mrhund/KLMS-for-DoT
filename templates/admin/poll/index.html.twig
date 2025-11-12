@@ -31,8 +31,8 @@
                     {% for poll in polls %}
                         {% set active = poll.isActive() %}
                         {% set ended = poll.hasEnded() %}
-                        <td class="text-center">{{ poll.id }}</td>
                         <tr>
+                            <td class="text-center">{{ poll.id }}</td>
                             <td>
                                 <a href="{{ path('admin_poll_edit', {'id': poll.id}) }}">
                                     {{ poll.question }}
