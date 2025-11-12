@@ -34,24 +34,23 @@ class PollWidget {
     }
 
     render() {
-        if (!this.state || !this.state.poll) {
-            this.element.classList.add('is-hidden');
-            this.element.innerHTML = '';
+        const { poll, hasVoted, isClosed, results, isAuthenticated } = this.state || {};
+        
+        if (!poll || this.isDismissed(poll.id)) {
+            this.hide();
             return;
         }
-
-        const { poll, hasVoted, isClosed, results, isAuthenticated } = this.state;
-        if (this.isDismissed(poll.id)) {
-            this.element.classList.add('is-hidden');
-            this.element.innerHTML = '';
-            return;
-        }
+        
         const canVote = !poll.onlyRegistered || Boolean(isAuthenticated);
 
         const header = `
             <header>
                 <div>Community Umfrage</div>
-                <button type="button" class="poll-widget-close" aria-label="Umfrage schließen">&times;</button>
+                <button type="button" class="poll-widget-close" aria-label="Umfrage schließen">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
             </header>
         `;
 
@@ -92,9 +91,8 @@ class PollWidget {
         }
 
         const options = poll.options.map(option => {
-            const disabledAttr = canVote ? '' : ' disabled="disabled"';
-            const disabledClass = canVote ? '' : ' is-disabled';
-            return `<button type="button" class="${disabledClass}" data-option-id="${option.id}"${disabledAttr}>${this.escape(option.label)}</button>`;
+            const attrs = canVote ? '' : ' disabled class="is-disabled"';
+            return `<button type="button"${attrs} data-option-id="${option.id}">${this.escape(option.label)}</button>`;
         }).join('');
 
         return `<div class="poll-options">${options}</div>`;
@@ -135,13 +133,7 @@ class PollWidget {
 
     registerCloseHandler() {
         const closeButton = this.element.querySelector('.poll-widget-close');
-        if (!closeButton) {
-            return;
-        }
-
-        closeButton.addEventListener('click', () => {
-            this.dismiss();
-        });
+        closeButton?.addEventListener('click', () => this.dismiss());
     }
 
     async vote(optionId) {
@@ -185,39 +177,11 @@ class PollWidget {
         }
     }
 
-    formatDateRange(start, end) {
-        const startFormatted = this.formatDate(start);
-        if (!end) {
-            return startFormatted;
-        }
-
-        const endFormatted = this.formatDate(end);
-        if (startFormatted === endFormatted) {
-            return startFormatted;
-        }
-
-        return `${startFormatted} – ${endFormatted}`;
-    }
-
-    formatDate(date) {
-        if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-            return '';
-        }
-
-        return date.toLocaleDateString('de-DE', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    }
-
     formatPercentage(value) {
-        const formatter = new Intl.NumberFormat('de-DE', {
+        return new Intl.NumberFormat('de-DE', {
             minimumFractionDigits: 0,
             maximumFractionDigits: 1
-        });
-
-        return formatter.format(Number.isFinite(value) ? value : 0);
+        }).format(Number.isFinite(value) ? value : 0);
     }
 
     escape(text) {
@@ -231,35 +195,29 @@ class PollWidget {
     }
 
     dismiss() {
-        const pollId = this.state && this.state.poll ? this.state.poll.id : null;
-        this.storeDismissedPollId(pollId);
+        this.storeDismissedPollId(this.state?.poll?.id);
+        this.hide();
+    }
+
+    hide() {
         this.element.classList.add('is-hidden');
         this.element.innerHTML = '';
     }
 
     isDismissed(pollId) {
-        if (!pollId) {
-            return false;
-        }
-
-        const dismissed = this.getDismissedPollIds();
-        return dismissed.includes(pollId);
+        return pollId && this.getDismissedPollIds().includes(pollId);
     }
 
     storeDismissedPollId(pollId) {
-        if (!pollId) {
-            return;
-        }
+        if (!pollId) return;
 
         const dismissed = this.getDismissedPollIds();
-        if (dismissed.includes(pollId)) {
-            return;
-        }
+        if (dismissed.includes(pollId)) return;
 
         dismissed.push(pollId);
         try {
             sessionStorage.setItem(this.dismissStorageKey, JSON.stringify(dismissed));
-        } catch (error) {
+        } catch {
             // ignore storage issues, dismissal is non-critical
         }
     }
@@ -281,11 +239,7 @@ class PollWidget {
 
 function bootstrapPollWidget() {
     const root = document.getElementById('poll-widget-root');
-    if (!root) {
-        return;
-    }
-
-    new PollWidget(root);
+    if (root) new PollWidget(root);
 }
 
 document.addEventListener('DOMContentLoaded', bootstrapPollWidget);
