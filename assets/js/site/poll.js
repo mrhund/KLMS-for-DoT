@@ -43,14 +43,17 @@ class PollWidget {
         
         const canVote = !poll.onlyRegistered || Boolean(isAuthenticated);
 
+        const closeButton = `
+            <button type="button" class="poll-widget-close" aria-label="Umfrage schließen">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        `;
+
         const header = `
             <header>
                 <div>Community Umfrage</div>
-                <button type="button" class="poll-widget-close" aria-label="Umfrage schließen">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </button>
             </header>
         `;
 
@@ -77,7 +80,7 @@ class PollWidget {
 
         body += '</div>';
 
-        this.element.innerHTML = header + body;
+        this.element.innerHTML = closeButton + header + body;
         this.element.classList.remove('is-hidden');
         this.registerCloseHandler();
         if (!hasVoted && !isClosed && canVote) {
