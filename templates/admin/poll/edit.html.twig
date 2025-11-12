@@ -37,8 +37,18 @@
             </div>
             <div class="col-md-8 order-md-1 mb-4">
                 {{ form_row(form.question) }}
-                {{ form_row(form.startAt) }}
-                {{ form_row(form.endAt) }}
+                {{ form_row(form.startAt, {
+                    attr: {
+                        class: 'datetimepicker',
+                        'data-time-end': '#' ~ form.endAt.vars.id
+                    }
+                }) }}
+                {{ form_row(form.endAt, {
+                    attr: {
+                        class: 'datetimepicker',
+                        'data-time-start': '#' ~ form.startAt.vars.id
+                    }
+                }) }}
                 {{ form_row(form.onlyRegistered) }}
             </div>
         </div>

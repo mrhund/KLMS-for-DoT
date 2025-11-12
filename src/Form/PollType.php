@@ -5,7 +5,6 @@ namespace App\Form;
 use App\Entity\Poll;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
-use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -27,19 +26,13 @@ class PollType extends AbstractType
                 ],
             ])
             ->add('startAt', DateTimeType::class, [
-                'label' => 'Startzeit',
-                'widget' => 'single_text',
-                'html5' => true,
-                'with_seconds' => false,
+                'label' => 'Anzeigen ab',
                 'input' => 'datetime_immutable',
                 'required' => true,
                 'attr' => ['class' => 'form-control'],
             ])
             ->add('endAt', DateTimeType::class, [
-                'label' => 'Endzeit',
-                'widget' => 'single_text',
-                'html5' => true,
-                'with_seconds' => false,
+                'label' => 'Anzeigen bis',
                 'input' => 'datetime_immutable',
                 'required' => false,
                 'attr' => ['class' => 'form-control'],

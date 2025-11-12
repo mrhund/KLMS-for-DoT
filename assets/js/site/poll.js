@@ -61,7 +61,7 @@ class PollWidget {
 
         const metaParts = [];
         if (poll.onlyRegistered) {
-            metaParts.push('Melde dich an um abzustimmen');
+            metaParts.push('Nur angemeldete Nutzer können abstimmen');
         }
         if (results && typeof results.total === 'number') {
             metaParts.push(`${results.total} Stimme${results.total === 1 ? '' : 'n'}`);

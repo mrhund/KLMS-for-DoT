@@ -24,7 +24,6 @@
                             <th class="text-nowrap">Ende</th>
                             <th class="text-nowrap">Status</th>
                             <th class="text-nowrap">Nur registriert</th>
-                            <th class="text-nowrap w-1">Aktionen</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -32,7 +31,11 @@
                         {% set active = poll.isActive() %}
                         {% set ended = poll.hasEnded() %}
                         <tr>
-                            <td>{{ poll.question }}</td>
+                            <td>
+                                <a href="{{ path('admin_poll_edit', {'id': poll.id}) }}">
+                                    {{ poll.question }}
+                                </a>
+                            </td>
                             <td>{{ poll.startAt ? poll.startAt|date('d.m.Y H:i') : '-' }}</td>
                             <td>{{ poll.endAt ? poll.endAt|date('d.m.Y H:i') : '-' }}</td>
                             <td>
@@ -45,23 +48,6 @@
                                 {% endif %}
                             </td>
                             <td>{{ poll.onlyRegistered ? 'Ja' : 'Nein' }}</td>
-                            <td class="text-nowrap">
-                                <a class="btn btn-sm btn-outline-secondary" href="{{ path('admin_poll_options', {'id': poll.id}) }}">
-                                    <i class="fas fa-list"></i>
-                                    Optionen
-                                </a>
-                                <a class="btn btn-sm btn-outline-dark" href="{{ path('admin_poll_edit', {'id': poll.id}) }}">
-                                    <i class="fas fa-edit"></i>
-                                    Bearbeiten
-                                </a>
-                                <form method="post" action="{{ path('admin_poll_delete', {'id': poll.id}) }}" class="d-inline-block" data-toggle="confirmModal">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_poll_' ~ poll.id) }}">
-                                    <button class="btn btn-sm btn-outline-danger" type="submit">
-                                        <i class="fas fa-trash-alt"></i>
-                                        Löschen
-                                    </button>
-                                </form>
-                            </td>
                         </tr>
                     {% endfor %}
                     </tbody>

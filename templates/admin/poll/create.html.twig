@@ -10,8 +10,18 @@
                 <div class="card-body">
                     {{ form_start(form) }}
                         {{ form_row(form.question) }}
-                        {{ form_row(form.startAt) }}
-                        {{ form_row(form.endAt) }}
+                        {{ form_row(form.startAt, {
+                            attr: {
+                                class: 'datetimepicker',
+                                'data-time-end': '#' ~ form.endAt.vars.id
+                            }
+                        }) }}
+                        {{ form_row(form.endAt, {
+                            attr: {
+                                class: 'datetimepicker',
+                                'data-time-start': '#' ~ form.startAt.vars.id
+                            }
+                        }) }}
                         {{ form_row(form.onlyRegistered) }}
                         <div class="float-right">
                             <a class="btn btn-secondary" href="{{ path('admin_poll') }}">Abbrechen</a>
