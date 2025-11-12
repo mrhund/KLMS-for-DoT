@@ -39,9 +39,10 @@ class PollWidget {
             return;
         }
 
-        const { poll, hasVoted, isClosed, results } = this.state;
+    const { poll, hasVoted, isClosed, results, isAuthenticated } = this.state;
         const start = new Date(poll.startAt);
         const end = poll.endAt ? new Date(poll.endAt) : null;
+    const canVote = !poll.onlyRegistered || Boolean(isAuthenticated);
 
         const header = `
             <header>
@@ -55,12 +56,12 @@ class PollWidget {
         if (hasVoted || isClosed) {
             body += this.renderResults(results);
         } else {
-            body += this.renderOptions(poll);
+            body += this.renderOptions(poll, canVote);
         }
 
         const metaParts = [];
         if (poll.onlyRegistered) {
-            metaParts.push('Nur für registrierte Nutzer');
+            metaParts.push('Melde dich an um abzustimmen');
         }
         if (results && typeof results.total === 'number') {
             metaParts.push(`${results.total} Stimme${results.total === 1 ? '' : 'n'}`);
@@ -74,18 +75,20 @@ class PollWidget {
 
         this.element.innerHTML = header + body;
         this.element.classList.remove('is-hidden');
-        if (!hasVoted && !isClosed) {
+        if (!hasVoted && !isClosed && canVote) {
             this.registerOptionHandlers();
         }
     }
 
-    renderOptions(poll) {
+    renderOptions(poll, canVote) {
         if (!Array.isArray(poll.options)) {
             return '';
         }
 
         const options = poll.options.map(option => {
-            return `<button type="button" data-option-id="${option.id}">${this.escape(option.label)}</button>`;
+            const disabledAttr = canVote ? '' : ' disabled="disabled"';
+            const disabledClass = canVote ? '' : ' is-disabled';
+            return `<button type="button" class="${disabledClass}" data-option-id="${option.id}"${disabledAttr}>${this.escape(option.label)}</button>`;
         }).join('');
 
         return `<div class="poll-options">${options}</div>`;

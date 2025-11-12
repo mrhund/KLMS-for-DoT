@@ -61,6 +61,7 @@ class PollService
             'poll' => $this->serializePoll($poll),
             'hasVoted' => $hasVoted,
             'isClosed' => $isClosed,
+            'isAuthenticated' => $context['isAuthenticated'],
             'results' => ($hasVoted || $isClosed) ? $this->buildResults($poll, $existingVote) : null,
         ];
     }
@@ -134,7 +135,7 @@ class PollService
     }
 
     /**
-     * @return array{userUuid: ?string, fingerprint: string, now: DateTimeImmutable}
+     * @return array{userUuid: ?string, fingerprint: string, now: DateTimeImmutable, isAuthenticated: bool}
      */
     private function buildContext(): array
     {
@@ -143,6 +144,7 @@ class PollService
 
         $loginUser = $this->security->getUser();
         $userUuid = null;
+        $isAuthenticated = $loginUser !== null;
         if ($loginUser instanceof LoginUser) {
             $userUuid = $loginUser->getUser()->getUuid()?->toString();
         }
@@ -153,6 +155,7 @@ class PollService
             'userUuid' => $userUuid,
             'fingerprint' => $fingerprint,
             'now' => $now,
+            'isAuthenticated' => $isAuthenticated,
         ];
     }
 

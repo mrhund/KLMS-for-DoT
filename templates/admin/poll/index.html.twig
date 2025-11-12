@@ -63,13 +63,14 @@
                                 </form>
                             </td>
                         </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="6" class="text-center text-muted">Noch keine Umfragen vorhanden.</td>
-                        </tr>
                     {% endfor %}
                     </tbody>
                 </table>
+                {% if polls is empty %}
+                    <div class="card-body text-center text-muted">
+                        Noch keine Umfragen vorhanden.
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
