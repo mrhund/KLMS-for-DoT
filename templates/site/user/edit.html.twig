@@ -7,10 +7,14 @@
     <div class="container">
         {% embed "site/components/cards/skeletons/cardProfile.html.twig" %}
             {% block cardImage %}
-                {% include 'site/components/profile/image_editor.html.twig' with {
-                    'form': form,
-                    'user': user
-                } %}
+                {% if form.image is defined %}
+                    {% include 'site/components/profile/image_editor.html.twig' with {
+                        'form': form,
+                        'user': user
+                    } %}
+                {% else %}
+                    {{ parent() }}
+                {% endif %}
             {% endblock %}
             
             {% block cardBody %}
