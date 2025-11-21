@@ -383,6 +383,11 @@ class TourneyService extends OptimalService
 
         return [];
     }
+
+    public function hasIncompleteGroupGames(Tourney $tourney): bool
+    {
+        return $this->gameRepository->hasIncompleteGroupGames($tourney);
+    }
     
     /* Result logging */
 

@@ -379,6 +379,14 @@ class TourneyController extends AbstractController
             $forms[$t->getId()] = [self::FORM_NAME_RESULT => $this->generateFormResult()->setData(['id' => $game->getId()])->createView()];
         }
 
+        // Check which tourneys have incomplete group games
+        $groupGamesIncomplete = [];
+        foreach ($tourneys as $tourney) {
+            if ($tourney->getGroupCount() > 0) {
+                $groupGamesIncomplete[$tourney->getId()] = $this->service->hasIncompleteGroupGames($tourney);
+            }
+        }
+
         return $this->render('site/tourney/index.html.twig', [
             'tourneys' => $tourneys,
             'participates' => true,
@@ -388,6 +396,7 @@ class TourneyController extends AbstractController
             'token' => $token,
             'forms' => $forms,
             'show' => $show,
+            'group_games_incomplete' => $groupGamesIncomplete,
         ]);
     }
 
