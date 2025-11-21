@@ -141,12 +141,10 @@
                                 </div>
                             {% endfor %}
                         </div>
-                        <div class="alert alert-secondary mt-3" role="alert">
-                            <small>
-                                <strong>Rangfolge bei Punktgleichheit:</strong>
-                                1. Punkte &bull; 2. Direkter Vergleich &bull; 3. Score-Differenz &bull; 4. Erzielte Scores
-                            </small>
-                        </div>
+                        <p class="text-muted text-center mt-3" style="font-size: 0.85rem;">
+                            <strong>Rangfolge bei Punktgleichheit:</strong>
+                            1. Punkte &bull; 2. Direkter Vergleich &bull; 3. Score-Differenz &bull; 4. Erzielte Scores
+                        </p>
                     {% endif %}
                     {% set has_tree = trees is not empty %}
                     {% if has_tree %}

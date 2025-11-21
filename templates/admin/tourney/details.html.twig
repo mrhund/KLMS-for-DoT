@@ -51,11 +51,6 @@
                                     data-toggle="ajaxModal" href="{{ path('admin_tourney_seed', {'id': tourney.id}) }}">
                                 <i class="fa-solid fa-circle-info"></i> Seed bearbeiten
                             </button>
-                            {% if tourney.mode.hasTree %}
-                                <a class="btn btn-outline-dark btn-sm mb-2 mr-2" href="{{ path('tourney_show', {'id': tourney.id}) }}" target="_blank">
-                                    <i class="fa-solid fa-tree"></i> Baum anzeigen
-                                </a>
-                            {% endif %}
                         {% elseif tourney.status == TourneyStage.Running %}
                             {{ m.action_button('Turnier neustarten', path('admin_tourney_back', {'id': tourney.id}), csrf_token_advance, detailRedirectPath, 'arrow-circle-left') }}
                             {% if not tourney.mode.canHaveGames %}
@@ -65,18 +60,8 @@
                                 </button>
                             {% endif %}
                             {{ m.action_button('Turnier beenden', path('admin_tourney_advance', {'id': tourney.id}), csrf_token_advance, detailRedirectPath, 'arrow-circle-right') }}
-                            {% if tourney.mode.hasTree %}
-                                <a class="btn btn-outline-dark btn-sm mb-2 mr-2" href="{{ path('tourney_show', {'id': tourney.id}) }}" target="_blank">
-                                    <i class="fa-solid fa-tree"></i> Baum anzeigen
-                                </a>
-                            {% endif %}
                         {% elseif tourney.status == TourneyStage.Finished %}
                             {{ m.action_button('Turnier wiedereröffnen', path('admin_tourney_back', {'id': tourney.id}), csrf_token_advance, detailRedirectPath, 'arrow-circle-left') }}
-                            {% if tourney.mode.hasTree %}
-                                <a class="btn btn-outline-dark btn-sm mb-2 mr-2" href="{{ path('tourney_show', {'id': tourney.id}) }}" target="_blank">
-                                    <i class="fa-solid fa-tree"></i> Baum anzeigen
-                                </a>
-                            {% endif %}
                         {% endif %}
                     </div>
                 </div>
@@ -257,11 +242,30 @@
                                     </div>
                                 {% endfor %}
                             </div>
-                            <div class="alert alert-secondary mt-3 mb-0" role="alert">
-                                <small>
-                                    <strong>Rangfolge bei Punktgleichheit:</strong>
-                                    1. Punkte &bull; 2. Direkter Vergleich &bull; 3. Score-Differenz &bull; 4. Erzielte Scores
-                                </small>
+                            <p class="text-muted mt-3 mb-0" style="font-size: 0.85rem;">
+                                <strong>Rangfolge bei Punktgleichheit:</strong>
+                                1. Punkte &bull; 2. Direkter Vergleich &bull; 3. Score-Differenz &bull; 4. Erzielte Scores
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% from 'site/tourney/show.html.twig' import tree %}
+        {% set trees = trees | default({}) %}
+        {% if trees is not empty %}
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="mb-3"><i class="fa-solid fa-tree"></i> Turnierbaum</h5>
+                            <hr>
+                            <div class="tournament" {{ stimulus_controller('tourney_tree') }}>
+                                {% for name, tree_data in trees %}
+                                    {% if name is not empty %}<h5 {% if not loop.first %}class="mt-4"{% endif %}>{{ name }}</h5>{% endif %}
+                                    {{ tree(tourney, tree_data, null, false) }}
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
@@ -273,4 +277,8 @@
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('admin_tourney') }}
+{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('tourney') }}
 {% endblock %}

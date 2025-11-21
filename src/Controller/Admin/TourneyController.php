@@ -115,6 +115,7 @@ class TourneyController extends AbstractController
             'csrf_token_advance' => self::CSRF_TOKEN_ADVANCE,
             'csrf_token_modify' => self::CSRF_TOKEN_MODIFY,
             'group_tables' => $this->service->getGroupTables($tourney),
+            'trees' => $this->service->getRoots($tourney),
         ]);
     }
 
