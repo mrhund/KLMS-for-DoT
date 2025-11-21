@@ -117,13 +117,63 @@ class TourneyController extends AbstractController
         ]);
     }
 
-    #[Route(path: '/seed/{id}', name: '_seed')]
+    #[Route(path: '/seed/{id}', name: '_seed', methods: ['GET', 'POST'])]
     public function seed(Request $request, Tourney $tourney): Response
     {
-        // TODO generate form and make the seed accordingly
-        $this->service->seed($tourney);
-        $this->addFlash('success', 'Seed wurde neu berechnet');
-        return $this->redirectToRoute('admin_tourney');
+        if ($tourney->getStatus() != TourneyStage::Seeding) {
+            throw $this->createNotFoundException('Tourney is not in seeding stage.');
+        }
+
+        $teams = $tourney->getTeams()->toArray();
+        
+        $form = $this->createFormBuilder()
+            ->add('submit', SubmitType::class, ['label' => 'Seed speichern'])
+            ->setAction($request->getUri())
+            ->getForm();
+
+        $form->handleRequest($request);
+        
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Get the team order from POST data
+            $seedOrder = $request->request->all('seed');
+            
+            if (empty($seedOrder) || !is_array($seedOrder)) {
+                $this->addFlash('error', 'Keine gültige Seed-Reihenfolge übermittelt.');
+                return $this->redirectToRoute('admin_tourney_details', ['id' => $tourney->getId()]);
+            }
+
+            // Build ordered team array based on submitted IDs
+            $orderedTeams = [];
+            foreach ($seedOrder as $teamId) {
+                foreach ($teams as $team) {
+                    if ($team->getId() == $teamId) {
+                        $orderedTeams[] = $team;
+                        break;
+                    }
+                }
+            }
+
+            // Validate that all teams are included
+            if (count($orderedTeams) !== count($teams)) {
+                $this->addFlash('error', 'Seed-Reihenfolge ist unvollständig.');
+                return $this->redirectToRoute('admin_tourney_details', ['id' => $tourney->getId()]);
+            }
+
+            try {
+                $this->service->seed($tourney, $orderedTeams);
+                $this->addFlash('success', 'Seed wurde erfolgreich gespeichert.');
+            } catch (ServiceException $e) {
+                $this->addFlash('error', 'Seed konnte nicht gespeichert werden: ' . $e->getMessage());
+            }
+            
+            return $this->redirectToRoute('admin_tourney_details', ['id' => $tourney->getId()]);
+        }
+
+        return $this->render('admin/tourney/seed.html.twig', [
+            'tourney' => $tourney,
+            'teams' => $teams,
+            'form' => $form->createView(),
+        ]);
     }
 
     #[Route(path: '/game-result/{id}', name: '_game_result')]
