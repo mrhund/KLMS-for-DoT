@@ -11,68 +11,66 @@ const initAdminTables = () => {
 
 const initSeedDragAndDrop = () => {
     const seedList = document.getElementById('seedList');
-    if (!seedList) return;
-    
-    const items = seedList.querySelectorAll('.list-group-item');
-    if (items.length === 0) return;
-    
-    let draggedItem = null;
+    if (!seedList || seedList.dataset.dragInitialized === 'true') {
+        return;
+    }
+    seedList.dataset.dragInitialized = 'true';
 
-    const updateSeeds = () => {
+    const updateBadges = () => {
         seedList.querySelectorAll('.list-group-item').forEach((item, index) => {
             const badge = item.querySelector('.badge');
-            if (badge) badge.textContent = index + 1;
+            if (badge) {
+                badge.textContent = index + 1;
+            }
         });
     };
 
-    const clearBorders = () => {
-        seedList.querySelectorAll('.list-group-item').forEach(i => {
-            i.style.borderTop = '';
-            i.style.borderBottom = '';
-        });
-    };
+    let draggedItem = null;
 
-    items.forEach(item => {
-        item.addEventListener('dragstart', (e) => {
+    seedList.querySelectorAll('.list-group-item').forEach(item => {
+        item.draggable = true;
+
+        item.addEventListener('dragstart', event => {
             draggedItem = item;
             item.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/html', item.innerHTML);
         });
 
         item.addEventListener('dragend', () => {
             item.classList.remove('dragging');
-            clearBorders();
-            updateSeeds();
+            draggedItem = null;
+            updateBadges();
         });
+    });
 
-        item.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            if (!draggedItem || draggedItem === item) return;
-            
-            clearBorders();
-            const rect = item.getBoundingClientRect();
-            const midpoint = rect.top + rect.height / 2;
-            
-            item.style[e.clientY > midpoint ? 'borderBottom' : 'borderTop'] = '3px solid #007bff';
-        });
+    seedList.addEventListener('dragover', event => {
+        if (!draggedItem) {
+            return;
+        }
 
-        item.addEventListener('dragleave', () => clearBorders());
+        const target = event.target.closest('.list-group-item');
+        event.preventDefault();
 
-        item.addEventListener('drop', (e) => {
-            e.preventDefault();
-            if (!draggedItem || draggedItem === item) return;
-            
-            const rect = item.getBoundingClientRect();
-            const midpoint = rect.top + rect.height / 2;
-            
-            item.parentNode.insertBefore(
-                draggedItem, 
-                e.clientY > midpoint ? item.nextSibling : item
-            );
-            
-            clearBorders();
-            updateSeeds();
-        });
+        if (!target) {
+            seedList.appendChild(draggedItem);
+            updateBadges();
+            return;
+        }
+        if (target === draggedItem) {
+            return;
+        }
+
+        const { top, height } = target.getBoundingClientRect();
+        const insertAfter = event.clientY > top + height / 2;
+        seedList.insertBefore(draggedItem, insertAfter ? target.nextSibling : target);
+        updateBadges();
+    });
+
+    seedList.addEventListener('drop', event => {
+        event.preventDefault();
+        draggedItem = null;
+        updateBadges();
     });
 };
 
@@ -85,6 +83,15 @@ document.readyState === 'loading'
     ? document.addEventListener('DOMContentLoaded', init)
     : init();
 
-$(document).on('shown.bs.modal', '#seedModal', () => {
-    setTimeout(initSeedDragAndDrop, 50);
+// Lausche auf AJAX-Modal das dynamisch geladen wird
+$(document).on('shown.bs.modal', '.modal', function() {
+    // Prüfe ob das Seed-Modal geöffnet wurde
+    if ($(this).find('#seedList').length > 0) {
+        // Reset das Flag
+        const seedList = document.getElementById('seedList');
+        if (seedList) {
+            delete seedList.dataset.dragInitialized;
+        }
+        setTimeout(initSeedDragAndDrop, 100);
+    }
 });

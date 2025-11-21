@@ -56,13 +56,7 @@
                                         {{ tourney.teamsize ~ 'v' ~ tourney.teamsize }}
                                     </small>
                                     <small class="mr-3">
-                                    {% if tourney.mode == TourneyRules.SingleElimination %}
-                                        Single Elimination
-                                    {% elseif tourney.mode == TourneyRules.DoubleElimination %}
-                                        Double Elimination
-                                    {% elseif tourney.mode == TourneyRules.RegistrationOnly %}
-                                        Nur Anmeldung
-                                    {% endif %}
+                                        {{ tourney.mode.message }}
                                     </small>
                                 </div>
                             </td>

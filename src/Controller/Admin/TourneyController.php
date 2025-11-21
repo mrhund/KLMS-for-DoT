@@ -114,6 +114,7 @@ class TourneyController extends AbstractController
             'tourney' => $tourney,
             'csrf_token_advance' => self::CSRF_TOKEN_ADVANCE,
             'csrf_token_modify' => self::CSRF_TOKEN_MODIFY,
+            'group_tables' => $this->service->getGroupTables($tourney),
         ]);
     }
 
@@ -203,7 +204,7 @@ class TourneyController extends AbstractController
             } catch (ServiceException $e) {
                 $this->addFlash('error', 'Ergebnis konnte nicht gesetzt werden: ' . $e->getMessage());
             }
-            return $this->redirectToRoute('admin_tourney');
+            return $this->redirectToRoute('admin_tourney_details', ['id' => $tourney->getId()]);
         }
 
         return $this->render('admin/tourney/gameresult.html.twig', [

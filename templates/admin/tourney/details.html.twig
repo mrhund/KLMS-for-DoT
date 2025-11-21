@@ -91,18 +91,25 @@
             </div>
         </div>
     {% else %}
+        {% set groupPending = tourney.games | filter(game => game.groupStage and game.pending) %}
+        {% set groupDone = tourney.games | filter(game => game.groupStage and game.done) %}
+        {% set bracketPending = tourney.games | filter(game => (not game.groupStage) and game.pending) %}
+        {% set bracketDone = tourney.games | filter(game => (not game.groupStage) and game.done) %}
+        
         <div class="row">
             <div class="{% if tourney.canHaveGames %}col-lg-6{% else %}col-lg-12{% endif %} mb-4">
                 <div class="card shadow-sm h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="mb-0"><i class="fa-solid fa-people-group"></i> Teams ({{ tourney.teams | length }} / {{ tourney.maxTeams | default('&infin;') | raw }})</h5>
+
                             {% if tourney.status.canRegister %}
                                 <button type="button" class="btn btn-sm btn-success" data-toggle="ajaxModal" href="{{ path('admin_tourney_add_team', {'id': tourney.id, 'redirect': detailRedirectPath}) }}">
                                     <i class="fa-solid fa-plus"></i> Team hinzufügen
                                 </button>
                             {% endif %}
                         </div>
+                        <hr>
                         <p class="text-muted mb-3" style="font-size: small;">
                             Registrierte User{% if not tourney.singlePlayer %} (bestätigt, <i class="italic">nicht bestätigt</i>){% endif %}.
                         </p>
@@ -139,26 +146,61 @@
                 <div class="col-lg-6 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
-                            <h5><i class="fa-solid fa-gamepad"></i> Games</h5>
+                            <h5><i class="fa-solid fa-gamepad"></i> Spiele</h5>
                             <hr>
+
+                            {% if group_tables is not empty %}
+                                <h5 class="text-muted text-uppercase">Gruppenspiele</h6>
+                                <h6>Ausstehende Spiele</h6>
+                                <ul class="list-group mb-3">
+                                    {% for game in groupPending %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <span class="badge badge-light mr-2">Gruppe {{ game.groupKey }}</span>
+                                                {{ teamnameA(game) }} <span class="font-weight-bold">vs</span> {{ teamnameB(game) }}
+                                            </div>
+                                            <button type="button" class="btn btn-outline-dark text-nowrap btn-sm"
+                                                    data-toggle="ajaxModal" href="{{ path('admin_tourney_game_result', {'id' : game.id}) }}">
+                                                <i class="fa-solid fa-pencil"></i>
+                                            </button>
+                                        </li>
+                                    {% else %}
+                                        <li class="list-group-item text-muted">Keine ausstehenden Gruppenspiele vorhanden.</li>
+                                    {% endfor %}
+                                </ul>
+
+                                <h6>Abgeschlossene Spiele</h6>
+                                <ul class="list-group mb-4">
+                                    {% for game in groupDone %}
+                                        <li class="list-group-item">
+                                            <span class="badge badge-light mr-2">Gruppe {{ game.groupKey }}</span>
+                                            {{ teamnameA(game) }} vs {{ teamnameB(game) }} ({{ game.scoreA }} : {{ game.scoreB }})
+                                        </li>
+                                    {% else %}
+                                        <li class="list-group-item text-muted">Noch keine Gruppenergebnisse vorhanden.</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+
+                            <h5 class="text-muted text-uppercase">K.-o.-Spiele</h6>
                             <h6>Ausstehende Spiele</h6>
                             <ul class="list-group mb-3">
-                                {% for game in tourney.games | filter(game => game.pending) %}
+                                {% for game in bracketPending %}
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <div>{{ teamnameA(game) }} <span class="font-weight-bold">vs</span> {{ teamnameB(game) }}</div>
                                         <button type="button" class="btn btn-outline-dark text-nowrap btn-sm"
                                                 data-toggle="ajaxModal" href="{{ path('admin_tourney_game_result', {'id' : game.id}) }}">
                                             <i class="fa-solid fa-pencil"></i>
                                         </button>
-                                    </div>
+                                    </li>
                                 {% else %}
-                                    <li class="list-group-item text-muted">Keine ausstehenden Spiele vorhanden.</li>
+                                    <li class="list-group-item text-muted">Keine ausstehenden K.-o.-Spiele vorhanden.</li>
                                 {% endfor %}
                             </ul>
 
                             <h6>Abgeschlossene Spiele</h6>
                             <ul class="list-group mb-0">
-                                {% for game in tourney.games | filter(game => game.done) %}
+                                {% for game in bracketDone %}
                                     <li class="list-group-item">
                                         <span>
                                             {% if game.hasWon(true) %}<b>{% endif %}{{ teamnameA(game) }}{% if game.hasWon(true) %}</b>{% endif %}
@@ -176,5 +218,53 @@
                 </div>
             {% endif %}
         </div>
+
+        {% if group_tables is not empty %}
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="mb-3"><i class="fa-solid fa-layer-group"></i> Gruppentabellen</h5>
+                            <hr>
+                            <div class="row">
+                                {% for groupName, standings in group_tables %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="font-weight-bold">Gruppe {{ groupName }}</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-striped mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>#</th>
+                                                        <th>Team</th>
+                                                        <th>Pkt</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for row in standings %}
+                                                        <tr>
+                                                            <td>{{ loop.index }}</td>
+                                                            <td>{{ teamname(row.team) }}</td>
+                                                            <td>{{ row.points }}</td>
+                                                        </tr>
+                                                    {% else %}
+                                                        <tr>
+                                                            <td colspan="3" class="text-center text-muted">Noch keine Teams zugewiesen.</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     {% endif %}
+{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('admin_tourney') }}
 {% endblock %}

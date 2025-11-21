@@ -409,7 +409,8 @@ class TourneyController extends AbstractController
         }
 
         $roots = $this->service->getRoots($tourney);
-        if (empty($roots)) {
+        $groupTables = $this->service->getGroupTables($tourney);
+        if (empty($roots) && empty($groupTables)) {
             throw $this->createNotFoundException();
         }
 
@@ -461,6 +462,7 @@ class TourneyController extends AbstractController
             'trees' => $trees,
             'podium' => $podium,
             'team' => $ownTeam,
+            'group_tables' => $groupTables,
         ]);
     }
 }
