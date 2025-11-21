@@ -5,6 +5,7 @@
 
 {% block main %}
     {% from 'site/tourney/show.html.twig' import teamname, teamnameA, teamnameB %}
+    {% from 'site/tourney/_team.card.html.twig' import team_card_title, team_card_body %}
     {% set TourneyStage = enum('\\App\\Entity\\TourneyStage') %}
     {% set detailRedirectPath = path('admin_tourney_details', {'id': tourney.id}) %}
 
@@ -26,6 +27,56 @@
     {% endmacro %}
 
     {% import _self as m %}
+
+    {% macro tree(tourney, tree, team = null, show_seat = false) %}
+        <div class="tree">
+            {% for round in tree %}
+                <div class="round">
+                    {% for game in round %}
+                        {% if game is not empty %}
+                            <div id="game{{ game.id }}" class="match"
+                                 {% if game.loserNext is not null %}data-ref-loser="game{{ game.loserNext.id ~ (game.isLoserNextA ? 'a' : 'b') }}"{% endif %}
+                                 {% if game.parent is not null %}data-ref-winner="game{{ game.parent.id ~ (game.isChildA ? 'a' : 'b') }}"{% endif %}
+                            >
+                                <div class="teams">
+                                    <div id="game{{ game.id }}a" class="team {{ game.teamA is null ? 'team-empty' : '' }} {{ game.hasWon(true) ? 'winner' : '' }} {{ game.teamA is same as team ? 'team-own' : '' }} ">
+                                        {% if game.teamA is not null %}
+                                            <span class="team-name">{{ teamname(game.teamA) }}</span>
+                                            <span class="team-score">{{ tourney.showPoints ? (game.scoreA() ?? '') : '' }}</span>
+                                            <div class="team-info" style="display: none;">
+                                                <div class="team-info-head">
+                                                    {{ team_card_title(game.teamA, show_seat) }}
+                                                </div>
+                                                <div class="team-info-body">
+                                                    {{ team_card_body(game.teamA, show_seat) }}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div id="game{{ game.id }}b" class="team {{ game.teamB is null ? 'team-empty' : '' }} {{ game.hasWon(false) ? 'winner' : '' }} {{ game.teamB is same as team ? 'team-own' : '' }}">
+                                        {% if game.teamB is not null %}
+                                            <span class="team-name">{{ teamname(game.teamB) }}</span>
+                                            <span class="team-score">{{ tourney.showPoints ? (game.scoreB() ?? '') : '' }}</span>
+                                            <div class="team-info" style="display: none;">
+                                                <div class="team-info-head">
+                                                    {{ team_card_title(game.teamB, show_seat) }}
+                                                </div>
+                                                <div class="team-info-body">
+                                                    {{ team_card_body(game.teamB, show_seat) }}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="match empty"></div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endmacro %}
 
     <div class="row mb-4">
         <div class="col-12">
@@ -252,7 +303,6 @@
             </div>
         {% endif %}
 
-        {% from 'site/tourney/show.html.twig' import tree %}
         {% set trees = trees | default({}) %}
         {% if trees is not empty %}
             <div class="row">
@@ -264,7 +314,7 @@
                             <div class="tournament" {{ stimulus_controller('tourney_tree') }}>
                                 {% for name, tree_data in trees %}
                                     {% if name is not empty %}<h5 {% if not loop.first %}class="mt-4"{% endif %}>{{ name }}</h5>{% endif %}
-                                    {{ tree(tourney, tree_data, null, false) }}
+                                    {{ m.tree(tourney, tree_data, null, false) }}
                                 {% endfor %}
                             </div>
                         </div>
