@@ -249,6 +249,8 @@ abstract class TourneyRuleGroupStage extends TourneyRule implements GroupStageAw
         return [
             'team' => $team,
             'points' => 0,
+            'scored' => 0,
+            'conceded' => 0,
         ];
     }
 
@@ -258,6 +260,13 @@ abstract class TourneyRuleGroupStage extends TourneyRule implements GroupStageAw
             return;
         }
 
+        // Update scores
+        $rowA['scored'] += $scoreA;
+        $rowA['conceded'] += $scoreB;
+        $rowB['scored'] += $scoreB;
+        $rowB['conceded'] += $scoreA;
+
+        // Update points
         if ($scoreA > $scoreB) {
             $rowA['points'] += 3;
         } elseif ($scoreB > $scoreA) {
@@ -270,7 +279,79 @@ abstract class TourneyRuleGroupStage extends TourneyRule implements GroupStageAw
 
     private function compareStandings(array $a, array $b): int
     {
-        return $b['points'] <=> $a['points']
-            ?: strcmp($a['team']->getName() ?? '', $b['team']->getName() ?? '');
+        // 1. Punkte
+        $pointsDiff = $b['points'] <=> $a['points'];
+        if ($pointsDiff !== 0) {
+            return $pointsDiff;
+        }
+
+        // 2. Head-to-Head (direkter Vergleich)
+        $h2h = $this->getHeadToHeadResult($a['team'], $b['team']);
+        if ($h2h !== 0) {
+            return $h2h;
+        }
+
+        // 3. Score-Differenz
+        $diffA = $a['scored'] - $a['conceded'];
+        $diffB = $b['scored'] - $b['conceded'];
+        $scoreDiff = $diffB <=> $diffA;
+        if ($scoreDiff !== 0) {
+            return $scoreDiff;
+        }
+
+        // 4. Erzielte Scores
+        $scoredDiff = $b['scored'] <=> $a['scored'];
+        if ($scoredDiff !== 0) {
+            return $scoredDiff;
+        }
+
+        // 5. Alphabetisch (Fallback)
+        return strcmp($a['team']->getName() ?? '', $b['team']->getName() ?? '');
+    }
+
+    /**
+     * Get head-to-head result between two teams
+     * @return int -1 if team A won, 1 if team B won, 0 if draw or no game played
+     */
+    private function getHeadToHeadResult(TourneyTeam $teamA, TourneyTeam $teamB): int
+    {
+        $groupKey = $teamA->getGroupKey();
+        if (!$groupKey || $groupKey !== $teamB->getGroupKey()) {
+            return 0;
+        }
+
+        foreach ($this->tourney->getGames() as $game) {
+            if (!$game->isGroupStage() || !$game->isDone() || $game->getGroupKey() !== $groupKey) {
+                continue;
+            }
+
+            $gameTeamA = $game->getTeamA();
+            $gameTeamB = $game->getTeamB();
+            
+            if (!$gameTeamA || !$gameTeamB) {
+                continue;
+            }
+
+            // Check if this is the game between our two teams
+            if (($gameTeamA->getId() === $teamA->getId() && $gameTeamB->getId() === $teamB->getId())) {
+                $scoreA = $game->getScoreA();
+                $scoreB = $game->getScoreB();
+                if ($scoreA === null || $scoreB === null) {
+                    return 0;
+                }
+                return $scoreA > $scoreB ? -1 : ($scoreB > $scoreA ? 1 : 0);
+            }
+            
+            if (($gameTeamA->getId() === $teamB->getId() && $gameTeamB->getId() === $teamA->getId())) {
+                $scoreA = $game->getScoreA();
+                $scoreB = $game->getScoreB();
+                if ($scoreA === null || $scoreB === null) {
+                    return 0;
+                }
+                return $scoreB > $scoreA ? -1 : ($scoreA > $scoreB ? 1 : 0);
+            }
+        }
+
+        return 0;
     }
 }
