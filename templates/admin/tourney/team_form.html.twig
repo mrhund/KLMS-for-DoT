@@ -4,7 +4,7 @@
 {% embed 'modules/modals/skeleton.html.twig' with {
     id: modal_id,
     title: modal_title,
-    dialogClass: 'modal-lg modal-dialog-scrollable'
+    dialogClass: 'modal-lg'
 } %}
     {% block modalContent %}
         {{ form_start(form, {'action': path(is_edit ? 'admin_tourney_edit_team' : 'admin_tourney_add_team', is_edit ? {'id': team.id} : {'id': tourney.id}) ~ (redirect ? '?redirect=' ~ redirect|url_encode : ''), 'method': 'POST'}) }}
@@ -37,10 +37,6 @@
             <div class="mb-3">
                 {{ form_row(form.singlePlayer) }}
             </div>
-            <div class="mb-3">
-                {{ form_row(form.name, {'attr': {'readonly': true}}) }}
-                <p class="text-muted small mb-0">Der Teamname wird automatisch anhand des ausgewählten Spielers gesetzt.</p>
-            </div>
         {% else %}
             <div class="mb-3">
                 {{ form_row(form.name) }}
@@ -48,7 +44,7 @@
 
             {% if form.members is defined %}
                 {% set prototype %}
-                    {% include 'admin/tourney/_team_member_row.html.twig' with { memberForm: form.members.vars.prototype } %}
+                    {% include 'admin/tourney/helpers/_team_member_row.html.twig' with { memberForm: form.members.vars.prototype } %}
                 {% endset %}
 
                 <div class="mb-2">
@@ -66,7 +62,7 @@
                         </div>
                         <div data-form-collection-target="container">
                             {% for memberForm in form.members %}
-                                {% include 'admin/tourney/_team_member_row.html.twig' with { memberForm: memberForm } %}
+                                {% include 'admin/tourney/helpers/_team_member_row.html.twig' with { memberForm: memberForm } %}
                             {% endfor %}
                         </div>
                         <button type="button" class="btn btn-outline-primary btn-sm mt-2"

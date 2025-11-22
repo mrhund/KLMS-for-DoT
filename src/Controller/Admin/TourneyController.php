@@ -110,12 +110,46 @@ class TourneyController extends AbstractController
     {
         // TODO render either full site or partial content, depending on xhr request (here and everywhere)
 
-    return $this->render('admin/tourney/details.html.twig', [
+        $roots = $this->service->getRoots($tourney);
+        
+        // Convert roots to tree structure for display
+        $calc = function(array $a) {
+            $root = $a[0];
+            $max_level = $a[1];
+            $array = [[$root]];
+            $level = 0;
+            $next = true;
+            while ($next) {
+                $array[] = [];
+                $next = false;
+                foreach ($array[$level] as $game) {
+                    if (is_null($game)) {
+                        $array[$level + 1][] = null;
+                        $array[$level + 1][] = null;
+                        continue;
+                    }
+                    $next = true;
+                    $array[$level + 1][] = is_null($game) ? null : $game->getChild(true);
+                    $array[$level + 1][] = is_null($game) ? null : $game->getChild(false);
+                }
+                $level++;
+                if ($max_level > 0 && $level > $max_level) {
+                    break;
+                }
+            }
+            array_pop($array);
+            array_pop($array);
+            return array_reverse($array);
+        };
+
+        $trees = array_map($calc, $roots);
+
+        return $this->render('admin/tourney/details.html.twig', [
             'tourney' => $tourney,
             'csrf_token_advance' => self::CSRF_TOKEN_ADVANCE,
             'csrf_token_modify' => self::CSRF_TOKEN_MODIFY,
             'group_tables' => $this->service->getGroupTables($tourney),
-            'trees' => $this->service->getRoots($tourney),
+            'trees' => $trees,
         ]);
     }
 

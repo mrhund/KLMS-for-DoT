@@ -29,16 +29,6 @@ class TourneyTeamType extends AbstractType
         $tourney = $options['tourney'];
         $userRepo = $this->idmManager->getRepository(User::class);
 
-        $builder
-            ->add('name', TextType::class, [
-                'label' => 'Teamname',
-                'required' => !$tourney->isSinglePlayer(),
-                'attr' => [
-                    'class' => 'form-control',
-                    'placeholder' => $tourney->isSinglePlayer() ? 'Wird automatisch gesetzt' : 'Team Name eingeben...'
-                ],
-            ]);
-
         if ($tourney->isSinglePlayer()) {
             $builder->add('singlePlayer', UserSelectType::class, [
                 'label' => 'Spieler auswählen',
@@ -47,6 +37,14 @@ class TourneyTeamType extends AbstractType
                 'hydrate' => false,
             ]);
         } else {
+            $builder->add('name', TextType::class, [
+                'label' => 'Teamname',
+                'required' => true,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'Team Name eingeben...'
+                ],
+            ]);
             $builder->add('members', CollectionType::class, [
                 'entry_type' => TourneyTeamMemberType::class,
                 'allow_add' => true,
@@ -73,7 +71,7 @@ class TourneyTeamType extends AbstractType
                     }
 
                     if ($user) {
-                        $team->setName($user->getNickname());
+                        $team->setName(null);
 
                         $member = $team->getMembers()->first();
                         if (!$member) {
