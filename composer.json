@@ -21,6 +21,7 @@
         "endroid/qr-code-bundle": "^6.0",
         "excelwebzone/recaptcha-bundle": "^1.5",
         "liip/imagine-bundle": "^2.15",
+        "minishlink/web-push-bundle": "^6.3",
         "nyholm/psr7": "^1.2",
         "phpdocumentor/reflection-docblock": "^5.1",
         "ramsey/uuid": "^4.0",

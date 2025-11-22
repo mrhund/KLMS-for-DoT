@@ -316,6 +316,7 @@ class TourneyController extends AbstractController
                 'tourneys' => $tourneys,
                 'podiums' => $podiums,
                 'participates' => false,
+                'vapid_public_key' => $_ENV['VAPID_PUBLIC_KEY'] ?? '',
             ]);
         }
 
@@ -397,6 +398,7 @@ class TourneyController extends AbstractController
             'forms' => $forms,
             'show' => $show,
             'group_games_incomplete' => $groupGamesIncomplete,
+            'vapid_public_key' => $_ENV['VAPID_PUBLIC_KEY'] ?? '',
         ]);
     }
 

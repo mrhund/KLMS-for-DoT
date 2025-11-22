@@ -17,12 +17,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
 use LogicException;
-use Psr\Log\LoggerInterface;
 
 class TourneyService extends OptimalService
 {
     private readonly EntityManagerInterface $em;
-    private readonly LoggerInterface $logger;
     private readonly TourneyRepository $repository;
     private readonly TourneyGameRepository $gameRepository;
     private readonly TourneyTeamRepository $teamRepository;
@@ -37,8 +35,7 @@ class TourneyService extends OptimalService
         TourneyTeamMemberRepository $teamMemberRepository,
         SettingService              $settings,
         TicketService               $ticketService,
-        EntityManagerInterface      $em,
-        LoggerInterface             $logger,
+        EntityManagerInterface      $em
     ) {
         parent::__construct($settings);
         $this->repository = $repository;
@@ -48,10 +45,7 @@ class TourneyService extends OptimalService
         $this->settings = $settings;
         $this->ticketService = $ticketService;
         $this->em = $em;
-        $this->logger = $logger;
     }
-
-    // TODO log everything
 
     public const TOKEN_COUNT = 40;
     public const TEAM_NAME_MAX_LENGTH = 25;
