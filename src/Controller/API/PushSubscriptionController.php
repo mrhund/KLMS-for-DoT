@@ -29,6 +29,9 @@ class PushSubscriptionController extends AbstractController
             return new JsonResponse(['success' => true, 'message' => 'Already subscribed']);
         }
         
+        /** @var LoginUser $user */
+        $user = $this->getUser();
+        
         $subscription = new PushSubscription();
         $subscription->setEndpoint($data['endpoint']);
         $subscription->setPublicKey($data['keys']['p256dh'] ?? null);
