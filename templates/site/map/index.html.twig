@@ -25,11 +25,6 @@
                         Google Maps API Key fehlt. Bitte in der Umgebungskonfiguration (<code>GOOGLE_MAPS_API_KEY</code> bzw. <code>UX_MAP_DSN</code>) hinterlegen.
                     </div>
                 {% endif %}
-                {% if markerCount == 0 %}
-                    <div class="alert alert-info">
-                        Es konnten keine User-Adressen gefunden oder geokodiert werden.
-                    </div>
-                {% endif %}
                 <div class="card shadow-sm">
                     <div class="card-body p-0">
                         {{ ux_map(map, {

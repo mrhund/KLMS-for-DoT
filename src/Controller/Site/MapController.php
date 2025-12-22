@@ -22,7 +22,6 @@ class MapController extends AbstractController
     {
         return $this->render('site/map/index.html.twig', [
             'map' => $this->mapService->buildUserMap(),
-            'markerCount' => $this->mapService->getUserMarkerCount(),
             'centerAddress' => $this->mapService->getCenterAddress(),
             'apiKeyMissing' => !$this->geocodingService->hasApiKey(),
         ]);

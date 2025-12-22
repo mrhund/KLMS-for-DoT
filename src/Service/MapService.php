@@ -45,30 +45,6 @@ class MapService
         return $map;
     }
 
-    public function getUserMarkerCount(): int
-    {
-        $count = 0;
-        foreach ($this->userRepository->findAll() as $user) {
-            if (!$user instanceof User) {
-                continue;
-            }
-            $location = $this->extractUserLocation($user);
-            if (!$location) {
-                continue;
-            }
-
-            if ($this->geoDataCacheService->getPointForLocation(
-                $location['country'],
-                $location['zip'],
-                $location['city']
-            )) {
-                ++$count;
-            }
-        }
-
-        return $count;
-    }
-
     public function getCenterAddress(): string
     {
         return trim((string) $this->settings->get('map.center_coordinates', ''));
