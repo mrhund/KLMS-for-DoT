@@ -88,7 +88,7 @@ class MapService
             }
 
             $location = $this->extractUserLocation($user);
-            if (!$location) {
+            if ($location === null) {
                 continue;
             }
 
@@ -97,20 +97,21 @@ class MapService
                 $location['zip'],
                 $location['city']
             );
-            if (!$point) {
+            if ($point === null) {
                 continue;
             }
 
             $bucketKey = $this->buildPointKey($point);
-            if (!isset($buckets[$bucketKey])) {
+            
+            if (isset($buckets[$bucketKey])) {
+                $buckets[$bucketKey]['count']++;
+            } else {
                 $buckets[$bucketKey] = [
                     'point' => $point,
                     'address' => $location['display'],
-                    'count' => 0,
+                    'count' => 1,
                 ];
             }
-
-            $buckets[$bucketKey]['count']++;
         }
 
         return $buckets;
