@@ -75,7 +75,7 @@ class PollWidget {
         }
 
         if (metaParts.length) {
-            body += `<div class="poll-meta"><br/>${metaParts.join('<br/>')}</div>`;
+            body += `<div class="poll-meta">${metaParts.join('<br/>')}</div>`;
         }
 
         body += '</div>';
