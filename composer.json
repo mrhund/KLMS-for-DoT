@@ -24,6 +24,7 @@
         "minishlink/web-push-bundle": "^6.3",
         "nyholm/psr7": "^1.2",
         "phpdocumentor/reflection-docblock": "^5.1",
+        "presta/sitemap-bundle": "^4.2",
         "ramsey/uuid": "^4.0",
         "ramsey/uuid-doctrine": "^1.6",
         "sentry/sentry-symfony": "^5.6",
