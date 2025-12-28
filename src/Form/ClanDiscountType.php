@@ -34,11 +34,7 @@ class ClanDiscountType extends AbstractType
         ]);
     }
 
-<<<<<<< HEAD
     public function configureOptions(OptionsResolver $resolver): void
-=======
-    public function configureOptions(OptionsResolver $resolver)
->>>>>>> lanbuddys
     {
         $resolver->setDefaults([
             'data_class' => ClanDiscount::class,
