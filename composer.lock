@@ -504,11 +504,7 @@
         },
         {
             "name": "doctrine/doctrine-bundle",
-<<<<<<< HEAD
             "version": "3.2.2",
-=======
-            "version": "2.13.2",
->>>>>>> lanbuddys
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/DoctrineBundle.git",
