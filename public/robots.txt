@@ -12,7 +12,7 @@ Disallow: /config/
 Disallow: /src/
 Disallow: /shop/payment/
 
-Sitemap: https://www.dot-lan.at/sitemap.xml
+Sitemap: https://www.lanbuddys.net/sitemap.xml
 
 # Crawl-delay für spezifische Bots (optional)
 User-agent: Googlebot
