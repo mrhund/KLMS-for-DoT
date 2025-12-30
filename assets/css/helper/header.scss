@@ -52,7 +52,7 @@
 
 
 // Medium devices (tablets, 768px and up)
-@include media-breakpoint-up(md) {
+@include bootstrap.media-breakpoint-up(md) {
     #header .head-wrap {
         height: 12rem;
         .head-content .logo {
@@ -72,7 +72,7 @@
 }
 
 // Large devices (desktops, 992px and up)
-@include media-breakpoint-up(lg) {
+@include bootstrap.media-breakpoint-up(lg) {
     #header .head-wrap {
         height: 12rem;
         .head-content .logo {
