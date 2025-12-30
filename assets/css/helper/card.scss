@@ -2,7 +2,7 @@
 @use '../bootstrap-site' as bootstrap;
 
 .card {
-    box-shadow: $box-shadow-sm;
+    box-shadow: vars.$box-shadow-sm;
     border:none;
 }
 

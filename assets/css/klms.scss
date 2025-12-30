@@ -1,17 +1,9 @@
+@use 'sass:color';
 @use 'helper/variables' as vars;
 @use 'bootstrap-site' as bootstrap;
 @use 'helper/header';
 @use 'helper/card';
 @use 'helper/hover';
-
-html,
-body {
-  height: 100%;
-}
-
-@import 'helper/header';
-@import 'helper/card';
-@import 'helper/hover';
 
 html, body {
     height: 100%;
@@ -27,7 +19,7 @@ main, #main {
 }
 
 footer, #footer {
-    box-shadow: $box-shadow;
+    box-shadow: vars.$box-shadow;
     flex-shrink: 0;
 }
 
@@ -35,10 +27,6 @@ footer, #footer {
   flex-shrink: 0; // For IE: https://github.com/twbs/bootstrap/issues/29396
   width: 100%; // Required because we use flexbox and this inherently applies align-self: stretch
   //max-height: 250px;
-}
-
-.navbar {
-    
 }
 
 .bg-dark {
@@ -53,7 +41,7 @@ footer, #footer {
 }
 
 .bg-darker {
-    background-color: darken($dark, 5);
+    background-color: color.adjust(#304b5b, $lightness: -5%);
 }
 
 .text-disabled {
