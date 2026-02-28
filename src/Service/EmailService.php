@@ -324,7 +324,11 @@ class EmailService
         $mapping = [];
         foreach ($replacements as $key => $value) {
             $search = $wrapInBraces ? '{{'.$key.'}}' : $key;
-            $mapping[$search] = trim((string) $value);
+            $replacement = trim((string) $value);
+            if ($wrapInBraces) {
+                $replacement = $this->sanitizeTemplateDelimiters($replacement);
+            }
+            $mapping[$search] = $replacement;
         }
 
         return strtr($text, $mapping);

@@ -57,7 +57,7 @@ class UserExtension extends AbstractExtension
         return [
             new TwigFilter('user', $this->getUser(...)),
             new TwigFilter('clan', $this->getClan(...)),
-            new TwigFilter('username', $this->getUserName(...), ['is_safe' => ['html']]),
+            new TwigFilter('username', $this->getUserName(...)),
             new TwigFilter('user_image', $this->getUserImage(...)),
             new TwigFilter('group_name', $this->getGroupName(...)),
             new TwigFilter('seat', $this->getSeat(...)),
@@ -90,10 +90,7 @@ class UserExtension extends AbstractExtension
             return '';
         }
 
-        // HTML-encode output and neutralize template expression delimiters
-        // to prevent SSTI (Twig) and CSTI (e.g. AngularJS) attacks.
-        $name = htmlspecialchars($user->getNickname() ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        return str_replace(['{{', '}}'], ['&#123;&#123;', '&#125;&#125;'], $name);
+        return $user->getNickname() ?? '';
     }
 
     public function getGroupName($groupUuid): string
