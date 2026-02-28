@@ -335,12 +335,12 @@ class EmailService
     }
 
     /**
-     * Encode Twig/template expression delimiters in user-supplied strings
+     * Remove Twig/template delimiters in user-supplied strings
      * to prevent server-side and client-side template injection.
      */
     private function sanitizeTemplateDelimiters(string $value): string
     {
-        return str_replace(['{{', '}}'], ['&#123;&#123;', '&#125;&#125;'], $value);
+        return str_replace(['{{', '}}', '{%', '%}', '{#', '#}'], '', $value);
     }
 
     private function getDesignFile(Email $template): string

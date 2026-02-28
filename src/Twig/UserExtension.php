@@ -90,7 +90,20 @@ class UserExtension extends AbstractExtension
             return '';
         }
 
-        return $user->getNickname() ?? '';
+        $nickname = $this->sanitizeTemplateDelimiters(trim((string) ($user->getNickname() ?? '')));
+        $firstname = $this->sanitizeTemplateDelimiters(trim((string) ($user->getFirstname() ?? '')));
+        $surname = $this->sanitizeTemplateDelimiters(trim((string) ($user->getSurname() ?? '')));
+
+        if ($nickname !== '') {
+            return $nickname;
+        }
+
+        return trim($firstname.' '.$surname);
+    }
+
+    private function sanitizeTemplateDelimiters(string $value): string
+    {
+        return str_replace(['{{', '}}', '{%', '%}', '{#', '#}'], '', $value);
     }
 
     public function getGroupName($groupUuid): string
