@@ -57,7 +57,7 @@ class UserExtension extends AbstractExtension
         return [
             new TwigFilter('user', $this->getUser(...)),
             new TwigFilter('clan', $this->getClan(...)),
-            new TwigFilter('username', $this->getUserName(...)),
+            new TwigFilter('username', $this->getUserName(...), ['is_safe' => ['html']]),
             new TwigFilter('user_image', $this->getUserImage(...)),
             new TwigFilter('group_name', $this->getGroupName(...)),
             new TwigFilter('seat', $this->getSeat(...)),
