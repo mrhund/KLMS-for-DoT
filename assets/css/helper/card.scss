@@ -2,8 +2,8 @@
 @use '../bootstrap-site' as bootstrap;
 
 .card {
+    box-shadow: vars.$box-shadow-sm;
     border:none;
-    background-color: vars.$bg-dark;
 }
 
 .card-avatar {
