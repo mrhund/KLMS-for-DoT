@@ -15,7 +15,7 @@ Disallow: /media/
 Disallow: /seatmap/seat/
 Disallow: /shop/payment/
 
-Sitemap: https://www.dot-lan.at/sitemap.xml
+Sitemap: https://www.lanbuddys.net/sitemap.xml
 
 # Schlechte Bots blockieren
 User-agent: AhrefsBot

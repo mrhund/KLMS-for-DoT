@@ -12,10 +12,10 @@
              {% endif %}
              />
         <div class="card">
-            <div class="card-body bg-darker text-light">
+            <div class="card-body">
                 <h1 class="card-title">{{ content.title }}</h1>
                 <p class="card-subtitle mb-3 text-muted">
-                    <small><i class="fas fa-clock"></i> gepostet {% if content.publishedFrom is null %}{{ content.created | ago }}{% else %}{{ content.publishedFrom | ago }}{% endif %} </small>
+                    <small>gepostet <i class="fas fa-clock"></i> {% if content.publishedFrom is null %}{{ content.created | ago }}{% else %}{{ content.publishedFrom | ago }}{% endif %} </small>
                 </p>
                 <div class="card-text">
                     {{ content.content|raw }}
@@ -24,10 +24,10 @@
         </div>
 
         <div class="card mt-4" id="comments">
-            <div class="card-header bg-darker text-light">
+            <div class="card-header">
                 <i class="fas fa-comments"></i> Kommentare ({{ comments|length }})
             </div>
-            <div class="card-body bg-darker text-light">
+            <div class="card-body">
                 {% if comments is empty %}
                     <p class="text-muted mb-0">Noch keine Kommentare vorhanden. Sei der/die Erste!</p>
                 {% else %}
@@ -80,7 +80,7 @@
                     </ul>
                 {% endif %}
             </div>
-            <div class="card-footer bg-darker text-light">
+            <div class="card-footer">
                 {% if commentForm %}
                     {{ form_start(commentForm, {'attr': {'novalidate': 'novalidate'}}) }}
                         {{ form_row(commentForm.content) }}

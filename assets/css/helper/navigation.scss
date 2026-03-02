@@ -3,15 +3,20 @@
 
 #main-nav .dropdown-menu {
     border:none;
+    box-shadow: vars.$box-shadow;
+}
 
     .dropdown-item {
         padding: 0.3rem 1rem 0.3rem 1.25rem;
         color: bootstrap.$gray-900;
         border-left: 3px solid transparent;
 
-        &:hover {
-            border-color:vars.$primary;
-        }
+        a {
+            width:100%;
+            display:block;
+            padding: 0.75rem 1.5rem;
+            color: bootstrap.$gray-900;
+            border-left: 3px solid transparent;
 
         &.active {
             border-color:vars.$primary;
