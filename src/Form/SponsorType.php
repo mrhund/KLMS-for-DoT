@@ -28,7 +28,7 @@ class SponsorType extends AbstractType
         $builder
             ->add('name')
             ->add('isVisible', null, ['label' => 'Sponsor anzeigen'])
-            ->add('sortOrder', IntegerType::class, ['label' => 'Sortierung'])
+            ->add('sortOrder', IntegerType::class, ['label' => 'Sortierung', 'required' => false])
             ->add('url', null, ['label' => 'URL'])
             ->add('text', HtmlTextareaType::class, [
                 'label' => 'Text',
@@ -52,6 +52,10 @@ class SponsorType extends AbstractType
             'image_uri' => false,
             'asset_helper' => false,
             'imagine_pattern' => 'sponsor_logo',
+            'help' => 'Erlaubte Formate: PNG, JPEG, WebP. Maximale Größe: 5 MB.',
+            'attr' => [
+                'accept' => 'image/png,image/jpeg,image/webp',
+            ],
         ]);
         $builder->addEventSubscriber($this->userInsertSubscriber);
     }

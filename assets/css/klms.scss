@@ -4,6 +4,7 @@
 @use 'helper/header';
 @use 'helper/card';
 @use 'helper/hover';
+@use 'helper/common';
 
 html, body {
     height: 100%;
@@ -34,9 +35,7 @@ footer, #footer {
 }
 
 .list-group-hover .list-group-item:hover {
-  z-index: 1;
   color: bootstrap.$list-group-action-hover-color;
-  text-decoration: none;
   background-color: bootstrap.$list-group-hover-bg;
 }
 
@@ -46,14 +45,6 @@ footer, #footer {
 
 .text-disabled {
   color: bootstrap.$gray-300;
-}
-
-.badge-pill {
-  border-radius: bootstrap.$badge-pill-border-radius;
-}
-
-.dropdown-menu-lg {
-  min-width: bootstrap.$dropdown-min-width * 2;
 }
 
 input.datetimepicker[readonly]:not([disabled]) {

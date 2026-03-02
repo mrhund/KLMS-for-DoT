@@ -57,7 +57,7 @@ class UserExtension extends AbstractExtension
         return [
             new TwigFilter('user', $this->getUser(...)),
             new TwigFilter('clan', $this->getClan(...)),
-            new TwigFilter('username', $this->getUserName(...)),
+            new TwigFilter('username', $this->getUserName(...), ['is_safe' => ['html']]),
             new TwigFilter('user_image', $this->getUserImage(...)),
             new TwigFilter('group_name', $this->getGroupName(...)),
             new TwigFilter('seat', $this->getSeat(...)),
@@ -90,7 +90,20 @@ class UserExtension extends AbstractExtension
             return '';
         }
 
-        return $user->getNickname();
+        $nickname = $this->sanitizeTemplateDelimiters(trim((string) ($user->getNickname() ?? '')));
+        $firstname = $this->sanitizeTemplateDelimiters(trim((string) ($user->getFirstname() ?? '')));
+        $surname = $this->sanitizeTemplateDelimiters(trim((string) ($user->getSurname() ?? '')));
+
+        if ($nickname !== '') {
+            return $nickname;
+        }
+
+        return trim($firstname.' '.$surname);
+    }
+
+    private function sanitizeTemplateDelimiters(string $value): string
+    {
+        return str_replace(['{{', '}}', '{%', '%}', '{#', '#}'], '', $value);
     }
 
     public function getGroupName($groupUuid): string
