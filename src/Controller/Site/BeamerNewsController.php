@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Vich\UploaderBundle\Storage\StorageInterface;
 
-#[Route(path: '/beamernews', name: 'beamernews')]
+#[Route(path: '/beamer', name: 'beamer')]
 class BeamerNewsController extends AbstractController
 {
     private readonly BeamerNewsService $beamerNewsService;

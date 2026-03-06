@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route(path: '/beamernews', name: 'beamernews')]
+#[Route(path: '/beamer', name: 'beamer')]
 #[IsGranted('ROLE_ADMIN_NEWS')]
 class BeamerNewsController extends AbstractController
 {
@@ -43,7 +43,7 @@ class BeamerNewsController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->beamerNewsService->save($form->getData());
 
-            return $this->redirectToRoute('admin_beamernews');
+            return $this->redirectToRoute('admin_beamer');
         }
 
         return $this->render('admin/beamernews/edit.html.twig', [
@@ -62,7 +62,7 @@ class BeamerNewsController extends AbstractController
         $this->beamerNewsService->delete($beamerNews);
         $this->addFlash('success', 'Erfolgreich gelöscht!');
 
-        return $this->redirectToRoute('admin_beamernews');
+        return $this->redirectToRoute('admin_beamer');
     }
 
     #[Route(path: '/edit/{id}', name: '_edit')]
@@ -74,7 +74,7 @@ class BeamerNewsController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $this->beamerNewsService->save($form->getData());
 
-            return $this->redirectToRoute('admin_beamernews');
+            return $this->redirectToRoute('admin_beamer');
         }
 
         return $this->render('admin/beamernews/edit.html.twig', [

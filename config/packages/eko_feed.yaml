@@ -11,5 +11,5 @@ eko_feed:
             title:       'Beamer News'
             description: 'KLMS Beamer News'
             link:
-                route_name: beamernews_feed
+                route_name: beamer_feed
             encoding:    'utf-8'

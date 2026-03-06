@@ -54,13 +54,13 @@
         <hr>
         {{ form_rest(form) }}
         <div class="float-right">
-            <a class="btn btn-secondary" href="{{ path('admin_beamernews') }}">Abbrechen</a>
+            <a class="btn btn-secondary" href="{{ path('admin_beamer') }}">Abbrechen</a>
             <button type="submit" id="beamernews_save" class="btn-primary btn">Speichern</button>
         </div>
         {{ form_end(form) }}
         <div class="float-left">
             {% if data is not empty %}
-                <form data-toggle="confirmModal" method="post" action="{{ path('admin_beamernews_delete', {'id' : data.id}) }}" class="d-inline-block">
+                <form data-toggle="confirmModal" method="post" action="{{ path('admin_beamer_delete', {'id' : data.id}) }}" class="d-inline-block">
                     <input type="hidden" name="_token" value="{{ csrf_token(csrf_token_delete) }}">
                     <button class="btn btn-danger" type="submit" value="delete"><i class="fas fa-trash-alt"></i> Löschen</button>
                 </form>
