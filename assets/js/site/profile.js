@@ -6,8 +6,8 @@ const CROP_OUTPUT_SIZE = 200;
 const ALLOWED_IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const ALLOWED_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
 const IMAGE_UPLOAD_ERRORS = {
-    invalidType: 'Ungueltiger Dateityp. Erlaubt sind nur PNG, JPEG und WebP.',
-    invalidContent: 'Die Datei ist kein gueltiges Bild. Bitte PNG, JPEG oder WebP verwenden.'
+    invalidType: 'Ungültiger Dateityp. Erlaubt sind nur PNG, JPEG und WebP.',
+    invalidContent: 'Die Datei ist kein gültiges Bild. Bitte PNG, JPEG oder WebP verwenden.'
 };
 
 const getFileExtension = (fileName) => {
