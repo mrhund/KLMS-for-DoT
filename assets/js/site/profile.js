@@ -5,6 +5,73 @@ const MAX_IMAGE_SIZE = { width: 1600, height: 1200 };
 const CROP_OUTPUT_SIZE = 200;
 const ALLOWED_IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const ALLOWED_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
+const IMAGE_UPLOAD_ERRORS = {
+    invalidType: 'Ungueltiger Dateityp. Erlaubt sind nur PNG, JPEG und WebP.',
+    invalidContent: 'Die Datei ist kein gueltiges Bild. Bitte PNG, JPEG oder WebP verwenden.'
+};
+
+const getFileExtension = (fileName) => {
+    if (!fileName || !fileName.includes('.')) {
+        return '';
+    }
+
+    return fileName.split('.').pop().toLowerCase();
+};
+
+const hasAllowedTypeAndExtension = (file) => {
+    if (!file) {
+        return false;
+    }
+
+    const extension = getFileExtension(file.name);
+
+    return ALLOWED_IMAGE_MIME_TYPES.includes(file.type)
+        && ALLOWED_IMAGE_EXTENSIONS.includes(extension);
+};
+
+const canRenderAsImage = async (file) => {
+    if (!file) return false;
+
+    if (typeof window.createImageBitmap === 'function') {
+        try {
+            const bitmap = await window.createImageBitmap(file);
+            bitmap.close?.();
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    return new Promise((resolve) => {
+        const probe = new Image();
+        const url = URL.createObjectURL(file);
+
+        probe.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(true);
+        };
+
+        probe.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(false);
+        };
+
+        probe.src = url;
+    });
+};
+
+const validateSelectedImageFile = async (file) => {
+    if (!hasAllowedTypeAndExtension(file)) {
+        return IMAGE_UPLOAD_ERRORS.invalidType;
+    }
+
+    const isRealImage = await canRenderAsImage(file);
+    if (!isRealImage) {
+        return IMAGE_UPLOAD_ERRORS.invalidContent;
+    }
+
+    return null;
+};
 
 // Scale down large images before cropping
 const scaleImage = (src, maxWidth, maxHeight) => new Promise((resolve) => {
@@ -76,15 +143,18 @@ const initProfileImageEditor = () => {
         elements.error.style.display = message ? '' : 'none';
     };
 
-    const isAllowedImageFile = (file) => {
-        if (!file) return false;
+    const hideCropModal = () => {
+        window.jQuery(elements.modal).modal('hide');
+    };
 
-        const extension = file.name.includes('.')
-            ? file.name.split('.').pop().toLowerCase()
-            : '';
+    const showCropModal = () => {
+        window.jQuery(elements.modal).modal({ backdrop: 'static', keyboard: false });
+    };
 
-        return ALLOWED_IMAGE_MIME_TYPES.includes(file.type)
-            && ALLOWED_IMAGE_EXTENSIONS.includes(extension);
+    const setInputFile = (file) => {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        elements.fileInput.files = dt.files;
     };
 
     const updatePreview = (src, markAsInitial = false) => {
@@ -140,6 +210,55 @@ const initProfileImageEditor = () => {
         [isCropping, pendingImage] = [false, null];
     };
 
+    const openCropperForDataUrl = async (dataUrl) => {
+        pendingImage = await scaleImage(dataUrl, MAX_IMAGE_SIZE.width, MAX_IMAGE_SIZE.height);
+        isCropping = true;
+        showCropModal();
+    };
+
+    const createCroppedImageFile = (blob) => {
+        if (!blob) {
+            return null;
+        }
+
+        return new File([blob], elements.fileInput.files[0]?.name || 'profilbild.jpg', {
+            type: blob.type,
+            lastModified: Date.now()
+        });
+    };
+
+    const applyCroppedFile = (file) => {
+        setInputFile(file);
+        setClientError('');
+        setDelete(false);
+        updatePreview(URL.createObjectURL(file), true);
+        isCropping = false;
+        hideCropModal();
+    };
+
+    const handleSelectedFile = async (file) => {
+        const validationError = await validateSelectedImageFile(file);
+        if (validationError) {
+            setClientError(validationError);
+            elements.fileInput.value = '';
+            return;
+        }
+
+        setClientError('');
+        setDelete(false);
+
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            const dataUrl = ev.target?.result;
+            if (!dataUrl) {
+                return;
+            }
+
+            await openCropperForDataUrl(dataUrl);
+        };
+        reader.readAsDataURL(file);
+    };
+
     // Initialize with existing image
     const initialSrc = elements.preview.dataset.initialSrc || '';
     if (elements.preview.dataset.hasImage === '1' && initialSrc) {
@@ -174,22 +293,12 @@ const initProfileImageEditor = () => {
             });
 
             canvas?.toBlob((blob) => {
-                if (!blob) return;
+                const file = createCroppedImageFile(blob);
+                if (!file) {
+                    return;
+                }
 
-                const file = new File([blob], elements.fileInput.files[0]?.name || 'profilbild.jpg', { 
-                    type: blob.type, 
-                    lastModified: Date.now() 
-                });
-                
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                elements.fileInput.files = dt.files;
-
-                setClientError('');
-                setDelete(false);
-                updatePreview(URL.createObjectURL(file), true);
-                [isCropping] = [false];
-                window.jQuery(elements.modal).modal('hide');
+                applyCroppedFile(file);
             }, 'image/jpeg');
         } catch (error) {
             console.error('Cropping failed:', error);
@@ -201,26 +310,7 @@ const initProfileImageEditor = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (!isAllowedImageFile(file)) {
-            setClientError('Ungueltiger Dateityp. Erlaubt sind nur PNG, JPEG und WebP.');
-            elements.fileInput.value = '';
-            return;
-        }
-
-        setClientError('');
-
-        setDelete(false);
-
-        const reader = new FileReader();
-        reader.onload = async (ev) => {
-            const dataUrl = ev.target?.result;
-            if (!dataUrl) return;
-
-            pendingImage = await scaleImage(dataUrl, MAX_IMAGE_SIZE.width, MAX_IMAGE_SIZE.height);
-            [isCropping] = [true];
-            window.jQuery(elements.modal).modal({ backdrop: 'static', keyboard: false });
-        };
-        reader.readAsDataURL(file);
+        await handleSelectedFile(file);
     });
 };
 
