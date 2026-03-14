@@ -3,6 +3,8 @@ import '../../css/site/profile.scss';
 
 const MAX_IMAGE_SIZE = { width: 1600, height: 1200 };
 const CROP_OUTPUT_SIZE = 200;
+const ALLOWED_IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const ALLOWED_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
 
 // Scale down large images before cropping
 const scaleImage = (src, maxWidth, maxHeight) => new Promise((resolve) => {
@@ -40,6 +42,7 @@ const initProfileImageEditor = () => {
         fileInput: formFieldsContainer?.querySelector('input[type="file"]'),
         selectButton: container.querySelector('.js-profile-image-select'),
         removeButton: container.querySelector('.js-profile-image-remove'),
+        error: container.querySelector('.js-profile-image-error'),
         deleteField: formFieldsContainer?.querySelector('input[type="checkbox"]'),
         preview: container.querySelector('#profile-image-preview'),
         placeholder: container.querySelector('#profile-image-placeholder'),
@@ -65,6 +68,23 @@ const initProfileImageEditor = () => {
         if (!elements.deleteField) return;
         const prop = elements.deleteField.type === 'checkbox' ? 'checked' : 'value';
         elements.deleteField[prop] = state ? (prop === 'checked' ? true : '1') : (prop === 'checked' ? false : '');
+    };
+
+    const setClientError = (message = '') => {
+        if (!elements.error) return;
+        elements.error.textContent = message;
+        elements.error.style.display = message ? '' : 'none';
+    };
+
+    const isAllowedImageFile = (file) => {
+        if (!file) return false;
+
+        const extension = file.name.includes('.')
+            ? file.name.split('.').pop().toLowerCase()
+            : '';
+
+        return ALLOWED_IMAGE_MIME_TYPES.includes(file.type)
+            && ALLOWED_IMAGE_EXTENSIONS.includes(extension);
     };
 
     const updatePreview = (src, markAsInitial = false) => {
@@ -138,6 +158,7 @@ const initProfileImageEditor = () => {
     elements.removeButton?.addEventListener('click', () => {
         elements.fileInput.value = '';
         setDelete(true);
+        setClientError('');
         updatePreview('', true);
     });
 
@@ -164,6 +185,7 @@ const initProfileImageEditor = () => {
                 dt.items.add(file);
                 elements.fileInput.files = dt.files;
 
+                setClientError('');
                 setDelete(false);
                 updatePreview(URL.createObjectURL(file), true);
                 [isCropping] = [false];
@@ -178,6 +200,14 @@ const initProfileImageEditor = () => {
     elements.fileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+
+        if (!isAllowedImageFile(file)) {
+            setClientError('Ungueltiger Dateityp. Erlaubt sind nur PNG, JPEG und WebP.');
+            elements.fileInput.value = '';
+            return;
+        }
+
+        setClientError('');
 
         setDelete(false);
 
