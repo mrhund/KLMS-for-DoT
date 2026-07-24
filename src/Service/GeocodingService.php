@@ -2,14 +2,14 @@
 
 namespace App\Service;
 
+use App\ValueObject\GeoPoint;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\UX\Map\Point;
 
 class GeocodingService
 {
     /**
-     * @var array<string, Point|null>
+    * @var array<string, GeoPoint|null>
      */
     private array $cache = [];
 
@@ -18,7 +18,7 @@ class GeocodingService
     ) {
     }
 
-    public function geocode(string $address): ?Point
+    public function geocode(string $address): ?GeoPoint
     {
         $address = trim($address);
         if ($address === '') {
@@ -50,13 +50,13 @@ class GeocodingService
 
             $loc = $data[0];
 
-            return $this->cache[$address] = new Point((float) ($loc['lat'] ?? 0), (float) ($loc['lon'] ?? 0));
+            return $this->cache[$address] = new GeoPoint((float) ($loc['lat'] ?? 0), (float) ($loc['lon'] ?? 0));
         } catch (ExceptionInterface) {
             return $this->cache[$address] = null;
         }
     }
 
-    public function calculateDistanceKm(Point $from, Point $to): float
+    public function calculateDistanceKm(GeoPoint $from, GeoPoint $to): float
     {
         $earthRadiusKm = 6371;
 
