@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\UX\Map\Point;
@@ -16,7 +15,6 @@ class GeocodingService
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        #[Autowire('%env(default::GOOGLE_MAPS_API_KEY)%')] private readonly ?string $googleMapsApiKey = null,
     ) {
     }
 
@@ -31,47 +29,31 @@ class GeocodingService
             return $this->cache[$address];
         }
 
-        $apiKey = $this->getApiKey();
-        if (empty($apiKey)) {
-            return $this->cache[$address] = null;
-        }
-
         try {
-            $response = $this->httpClient->request('GET', 'https://maps.googleapis.com/maps/api/geocode/json', [
+            $response = $this->httpClient->request('GET', 'https://nominatim.openstreetmap.org/search', [
                 'query' => [
-                    'address' => $address,
-                    'key' => $apiKey,
+                    'q' => $address,
+                    'format' => 'jsonv2',
+                    'limit' => 1,
+                ],
+                'headers' => [
+                    'User-Agent' => 'KLMS-for-DoT/1.0',
+                    'Accept' => 'application/json',
                 ],
                 'timeout' => 8,
             ]);
 
             $data = $response->toArray(false);
-            if (($data['status'] ?? null) !== 'OK' || empty($data['results'][0]['geometry']['location'])) {
+            if (!is_array($data) || empty($data[0]['lat']) || empty($data[0]['lon'])) {
                 return $this->cache[$address] = null;
             }
 
-            $loc = $data['results'][0]['geometry']['location'];
+            $loc = $data[0];
 
-            return $this->cache[$address] = new Point((float) ($loc['lat'] ?? 0), (float) ($loc['lng'] ?? 0));
+            return $this->cache[$address] = new Point((float) ($loc['lat'] ?? 0), (float) ($loc['lon'] ?? 0));
         } catch (ExceptionInterface) {
             return $this->cache[$address] = null;
         }
-    }
-
-    public function getApiKey(): ?string
-    {
-        if (!empty($this->googleMapsApiKey)) {
-            return $this->googleMapsApiKey;
-        }
-
-        $fallback = $_ENV['GOOGLE_MAPS_API_KEY'] ?? $_SERVER['GOOGLE_MAPS_API_KEY'] ?? getenv('GOOGLE_MAPS_API_KEY');
-
-        return is_string($fallback) && $fallback !== '' ? $fallback : null;
-    }
-
-    public function hasApiKey(): bool
-    {
-        return $this->getApiKey() !== null;
     }
 
     public function calculateDistanceKm(Point $from, Point $to): float

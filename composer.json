@@ -51,7 +51,6 @@
         "symfony/serializer": "^7.4",
         "symfony/stimulus-bundle": "^2.32",
         "symfony/twig-bundle": "^7.4",
-        "symfony/ux-google-map": "*",
         "symfony/validator": "^7.4",
         "symfony/web-profiler-bundle": "^7.4",
         "symfony/webpack-encore-bundle": "^2.4",
