@@ -1,0 +1,96 @@
+{% extends 'admin/adminBase.html.twig' %}
+
+{% block title %}
+	{% if resource.id %}Ressource bearbeiten{% else %}Ressource anlegen
+	{% endif %}
+	- KLMS - Admin
+{% endblock %}
+{% block siteheading %}
+	<i class="fas fa-calendar-check"></i>
+	{% if resource.id %}Ressource bearbeiten{% else %}Ressource anlegen
+	{% endif %}
+{% endblock %}
+
+{% block main %}
+	<div class="row">
+		<div class="col-md-8">
+			<div class="card">
+				<div class="card-header">
+					<h5 class="card-title">
+						{% if resource.id %}Ressource #{{ resource.id }}
+							bearbeiten{% else %}Neue Ressource
+						{% endif %}
+					</h5>
+				</div>
+				<div class="card-body">
+					{{ form_start(form) }}
+					<div class="mb-3">
+						{{ form_label(form.priority) }}
+						{{ form_widget(form.priority) }}
+						{{ form_errors(form.priority) }}
+						<small class="form-text text-muted">
+							Niedrigere Zahlen werden zuerst angezeigt.
+						</small>
+					</div>
+
+					<div class="mb-3">
+						{{ form_label(form.name) }}
+						{{ form_widget(form.name) }}
+						{{ form_errors(form.name) }}
+					</div>
+
+					<div class="mb-3">
+						{{ form_label(form.description) }}
+						{{ form_widget(form.description) }}
+						{{ form_errors(form.description) }}
+					</div>
+
+					<div class="mb-3">
+						{{ form_label(form.unitCount) }}
+						{{ form_widget(form.unitCount) }}
+						{{ form_errors(form.unitCount) }}
+						<small class="form-text text-muted">
+							Anzahl gleichartiger, austauschbarer Einheiten (zb. 5 Duschen).
+						</small>
+					</div>
+
+					<div class="mb-3">
+						{{ form_label(form.slotDurationMinutes) }}
+						{{ form_widget(form.slotDurationMinutes) }}
+						{{ form_errors(form.slotDurationMinutes) }}
+					</div>
+
+					<div class="mb-3">
+						{{ form_label(form.availableFrom) }}
+						{{ form_widget(form.availableFrom) }}
+						{{ form_errors(form.availableFrom) }}
+					</div>
+
+					<div class="mb-3">
+						{{ form_label(form.availableUntil) }}
+						{{ form_widget(form.availableUntil) }}
+						{{ form_errors(form.availableUntil) }}
+					</div>
+
+					<div class="mb-3">
+						{{ form_label(form.maxBookingsPerUser) }}
+						{{ form_widget(form.maxBookingsPerUser) }}
+						{{ form_errors(form.maxBookingsPerUser) }}
+					</div>
+
+					<div class="mb-3 form-check">
+						{{ form_widget(form.active) }}
+						{{ form_label(form.active) }}
+						{{ form_errors(form.active) }}
+					</div>
+
+					<div class="float-right">
+						<a class="btn btn-secondary" href="{{ path('admin_booking') }}">Abbrechen</a>
+						<button type="submit" class="btn-primary btn">Speichern</button>
+					</div>
+					{{ form_end(form) }}
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

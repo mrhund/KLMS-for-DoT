@@ -1,0 +1,70 @@
+{% extends 'site/siteBase.html.twig' %}
+
+{% block title %}{{ settings.get('site.title') }} - Buchungen{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('booking') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('booking') }}
+{% endblock %}
+
+{% block main %}
+<div class="container my-5" id="booking-app" data-csrf-token-url="{{ path('booking_csrf_token') }}">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center mb-4">Buchungen</h1>
+
+            {% if myBookings %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Meine Buchungen</h5>
+                    </div>
+                    <ul class="list-group list-group-flush" id="booking-my-list">
+                        {% for booking in myBookings %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center" data-booking-id="{{ booking.id }}">
+                                <span>
+                                    <strong>{{ booking.resource.name }} {{ booking.unitNumber }}</strong>
+                                    - {{ booking.startAt|date('d.m.Y H:i') }} - {{ booking.endAt|date('H:i') }}
+                                </span>
+                                <button type="button" class="btn btn-sm btn-outline-danger booking-cancel-btn" data-booking-id="{{ booking.id }}">
+                                    <i class="fas fa-ban"></i> Stornieren
+                                </button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if resources %}
+                <div class="row" id="booking-resources">
+                    {% for resource in resources %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card booking-resource" data-resource-id="{{ resource.id }}">
+                                <div class="card-header">
+                                    <h5 class="mb-0">{{ resource.name }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if resource.description %}
+                                        <p>{{ resource.description }}</p>
+                                    {% endif %}
+                                    <div class="booking-slots" data-resource-id="{{ resource.id }}">
+                                        <p class="text-muted">Verfügbare Zeiten werden geladen...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    Aktuell sind keine Ressourcen buchbar.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
