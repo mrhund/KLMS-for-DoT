@@ -36,12 +36,12 @@ Encore
     .addEntry('shop', './assets/js/site/shop.js')
     .addEntry('gallery', './assets/js/site/gallery.js')
     .addEntry('faq', './assets/js/site/faq.js')
-    .addEntry('booking', './assets/js/site/booking.js')
     .addEntry('profile', './assets/js/site/profile.js')
     .addEntry('admin_seatmap', './assets/js/admin/seatmap.js')
     .addEntry('admin_tourney', './assets/js/admin/tourney.js')
     .addEntry('admin_checkin', './assets/js/admin/checkin.js')
     .addStyleEntry('email', './assets/css/email.scss')
+    .addStyleEntry('booking', './assets/css/modules/booking.scss')
 
     // enables the Symfony UX Stimulus bridge (used in assets/bootstrap.js)
     .enableStimulusBridge('./assets/js/controllers.json')
