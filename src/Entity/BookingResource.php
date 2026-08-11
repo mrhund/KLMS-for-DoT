@@ -33,10 +33,25 @@ class BookingResource
     private int $unitCount = 1;
 
     /**
+     * Optional names for individual units, indexed by unit number - 1.
+     * Example: ["Dusche 1 Halle 17", "Dusche 2 Halle 19"].
+     *
+     * @var array<int, string>
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $unitNames = null;
+
+    /**
      * Length of a single bookable slot in minutes.
      */
     #[ORM\Column(type: Types::INTEGER)]
     private int $slotDurationMinutes = 15;
+
+    /**
+     * Required pause between two bookings of the same unit in minutes.
+     */
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    private int $bufferMinutes = 0;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $availableFrom;
@@ -119,6 +134,55 @@ class BookingResource
         return $this;
     }
 
+    /**
+     * @return array<int, string>
+     */
+    public function getUnitNames(): array
+    {
+        if ($this->unitNames === null) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(static fn(mixed $name) => trim((string) $name), $this->unitNames), static fn(string $name) => $name !== ''));
+    }
+
+    /**
+     * @param array<int, string> $unitNames
+     */
+    public function setUnitNames(array $unitNames): self
+    {
+        $normalized = array_values(array_filter(array_map(static fn(string $name) => trim($name), $unitNames), static fn(string $name) => $name !== ''));
+        $this->unitNames = $normalized !== [] ? $normalized : null;
+
+        return $this;
+    }
+
+    public function getUnitLabel(int $unitNumber): string
+    {
+        $index = $unitNumber - 1;
+        $names = $this->getUnitNames();
+
+        if (isset($names[$index]) && $names[$index] !== '') {
+            return $names[$index];
+        }
+
+        return sprintf('%s %d', $this->name, $unitNumber);
+    }
+
+    public function getUnitNamesText(): string
+    {
+        return implode("\n", $this->getUnitNames());
+    }
+
+    public function setUnitNamesText(?string $unitNamesText): self
+    {
+        $raw = $unitNamesText ?? '';
+        $lines = preg_split('/\R+/', $raw) ?: [];
+        $unitNames = array_values(array_filter(array_map(static fn(string $line) => trim($line), $lines), static fn(string $line) => $line !== ''));
+
+        return $this->setUnitNames($unitNames);
+    }
+
     public function getSlotDurationMinutes(): int
     {
         return $this->slotDurationMinutes;
@@ -131,13 +195,29 @@ class BookingResource
         return $this;
     }
 
+    public function getBufferMinutes(): int
+    {
+        return $this->bufferMinutes;
+    }
+
+    public function setBufferMinutes(int $bufferMinutes): self
+    {
+        $this->bufferMinutes = max(0, $bufferMinutes);
+
+        return $this;
+    }
+
     public function getAvailableFrom(): \DateTimeImmutable
     {
         return $this->availableFrom;
     }
 
-    public function setAvailableFrom(\DateTimeImmutable $availableFrom): self
+    public function setAvailableFrom(?\DateTimeImmutable $availableFrom): self
     {
+        if ($availableFrom === null) {
+            return $this;
+        }
+
         $this->availableFrom = $availableFrom;
 
         return $this;
@@ -148,8 +228,12 @@ class BookingResource
         return $this->availableUntil;
     }
 
-    public function setAvailableUntil(\DateTimeImmutable $availableUntil): self
+    public function setAvailableUntil(?\DateTimeImmutable $availableUntil): self
     {
+        if ($availableUntil === null) {
+            return $this;
+        }
+
         $this->availableUntil = $availableUntil;
 
         return $this;

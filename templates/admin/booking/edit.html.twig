@@ -25,63 +25,60 @@
 				<div class="card-body">
 					{{ form_start(form) }}
 					<div class="mb-3">
-						{{ form_label(form.priority) }}
-						{{ form_widget(form.priority) }}
-						{{ form_errors(form.priority) }}
+						{{ form_row(form.priority) }}
 						<small class="form-text text-muted">
 							Niedrigere Zahlen werden zuerst angezeigt.
 						</small>
 					</div>
 
 					<div class="mb-3">
-						{{ form_label(form.name) }}
-						{{ form_widget(form.name) }}
-						{{ form_errors(form.name) }}
+						{{ form_row(form.name) }}
 					</div>
 
 					<div class="mb-3">
-						{{ form_label(form.description) }}
-						{{ form_widget(form.description) }}
-						{{ form_errors(form.description) }}
+						{{ form_row(form.description) }}
 					</div>
 
 					<div class="mb-3">
-						{{ form_label(form.unitCount) }}
-						{{ form_widget(form.unitCount) }}
-						{{ form_errors(form.unitCount) }}
+						{{ form_row(form.unitCount) }}
 						<small class="form-text text-muted">
 							Anzahl gleichartiger, austauschbarer Einheiten (zb. 5 Duschen).
 						</small>
 					</div>
 
 					<div class="mb-3">
-						{{ form_label(form.slotDurationMinutes) }}
-						{{ form_widget(form.slotDurationMinutes) }}
-						{{ form_errors(form.slotDurationMinutes) }}
+						{{ form_row(form.unitNamesText) }}
+						<small class="form-text text-muted">
+							Optional: pro Zeile einen Namen für eine konkrete Einheit hinterlegen.
+							Die Buchung vergibt diese Einheiten weiterhin automatisch.
+						</small>
 					</div>
 
 					<div class="mb-3">
-						{{ form_label(form.availableFrom) }}
-						{{ form_widget(form.availableFrom) }}
-						{{ form_errors(form.availableFrom) }}
+						{{ form_row(form.slotDurationMinutes) }}
 					</div>
 
 					<div class="mb-3">
-						{{ form_label(form.availableUntil) }}
-						{{ form_widget(form.availableUntil) }}
-						{{ form_errors(form.availableUntil) }}
+						{{ form_row(form.bufferMinutes) }}
+						<small class="form-text text-muted">
+							Pause zwischen zwei Buchungen derselben Einheit in Minuten.
+						</small>
 					</div>
 
 					<div class="mb-3">
-						{{ form_label(form.maxBookingsPerUser) }}
-						{{ form_widget(form.maxBookingsPerUser) }}
-						{{ form_errors(form.maxBookingsPerUser) }}
+						{{ form_row(form.availableFrom, {'attr': {'class': 'datetimepicker', 'data-time-end': '#'~form.availableUntil.vars.id}}) }}
 					</div>
 
-					<div class="mb-3 form-check">
-						{{ form_widget(form.active) }}
-						{{ form_label(form.active) }}
-						{{ form_errors(form.active) }}
+					<div class="mb-3">
+						{{ form_row(form.availableUntil, {'attr': {'class': 'datetimepicker', 'data-time-start': '#'~form.availableFrom.vars.id}}) }}
+					</div>
+
+					<div class="mb-3">
+						{{ form_row(form.maxBookingsPerUser) }}
+					</div>
+
+					<div class="mb-3">
+						{{ form_row(form.active) }}
 					</div>
 
 					<div class="float-right">
@@ -89,6 +86,14 @@
 						<button type="submit" class="btn-primary btn">Speichern</button>
 					</div>
 					{{ form_end(form) }}
+					<div class="float-left">
+						{% if resource.id %}
+							<form data-toggle="confirmModal" method="post" action="{{ path('admin_booking_delete', {'id' : resource.id}) }}" class="d-inline-block">
+								<input type="hidden" name="_token" value="{{ csrf_token(csrf_token_delete) }}">
+								<button class="btn btn-danger" type="submit" value="delete"><i class="fas fa-trash-alt"></i> Löschen</button>
+							</form>
+						{% endif %}
+					</div>
 				</div>
 			</div>
 		</div>

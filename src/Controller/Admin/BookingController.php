@@ -65,6 +65,7 @@ class BookingController extends AbstractController
         return $this->render('admin/booking/edit.html.twig', [
             'resource' => $resource,
             'form' => $form->createView(),
+            'csrf_token_delete' => self::CSRF_TOKEN_DELETE,
         ]);
     }
 
@@ -88,6 +89,7 @@ class BookingController extends AbstractController
         return $this->render('admin/booking/edit.html.twig', [
             'resource' => $resource,
             'form' => $form->createView(),
+            'csrf_token_delete' => self::CSRF_TOKEN_DELETE,
         ]);
     }
 

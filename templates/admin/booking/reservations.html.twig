@@ -21,10 +21,10 @@
                 <tr>
                     <th scope="col" style="width: 2em;" class="text-center">&#8470;</th>
                     <th scope="col" style="width: auto">User</th>
-                    <th scope="col" style="width: 6em;" class="text-center">Einheit</th>
+                    <th scope="col" style="width: 18em;" class="text-center">Einheit</th>
                     <th scope="col" style="width: 14em;" class="text-center">Zeitraum</th>
                     <th scope="col" style="width: 8em;" class="text-center">Status</th>
-                    <th scope="col" style="width: 8em;" class="text-center">Aktionen</th>
+                    <th scope="col" style="width: 12em;" class="text-center">Aktionen</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -33,7 +33,7 @@
                     <tr>
                         <td class="text-center">{{ booking.id }}</td>
                         <td>{{ row.user ? row.user.nickname : 'Unbekannter User' }}</td>
-                        <td class="text-center">{{ resource.name }} {{ booking.unitNumber }}</td>
+                        <td class="text-center">{{ resource.getUnitLabel(booking.unitNumber) }}</td>
                         <td class="text-center">{{ booking.startAt|date('d.m.Y H:i') }} - {{ booking.endAt|date('H:i') }}</td>
                         <td class="text-center">
                             {% if booking.cancelled %}
@@ -44,11 +44,11 @@
                         </td>
                         <td class="text-center">
                             {% if not booking.cancelled %}
-                                <form method="post" action="{{ path('admin_booking_reservation_cancel', {'id': booking.id}) }}" style="display: inline;"
+                                <form method="post" action="{{ path('admin_booking_reservation_cancel', {'id': booking.id}) }}" class="d-inline-block"
                                       onsubmit="return confirm('Buchung wirklich stornieren?')">
                                     <input type="hidden" name="_token" value="{{ csrf_token(csrf_token_cancel) }}">
                                     <button type="submit" class="btn btn-outline-danger btn-sm" title="Stornieren">
-                                        <i class="fas fa-ban"></i>
+                                        <i class="fas fa-ban"></i> Stornieren
                                     </button>
                                 </form>
                             {% endif %}

@@ -117,22 +117,31 @@ class BookingService
             return $slots;
         }
 
-        $bookedCounts = $this->bookingRepository->countActiveBySlotStart($resource, $windowStart, $windowEnd);
+        $bufferMinutes = $resource->getBufferMinutes();
+        $overlapFrom = $bufferMinutes > 0
+            ? $windowStart->modify(sprintf('-%d minutes', $bufferMinutes))
+            : $windowStart;
+        $relevantBookings = $this->bookingRepository->findActiveOverlappingWindow($resource, $overlapFrom, $windowEnd);
         $duration = new \DateInterval('PT' . $resource->getSlotDurationMinutes() . 'M');
+        $step = new \DateInterval('PT' . ($resource->getSlotDurationMinutes() + $bufferMinutes) . 'M');
 
         $slotStart = $this->alignToGrid($resource, $windowStart);
         while ($slotStart < $windowEnd) {
             $slotEnd = $slotStart->add($duration);
-            $booked = $bookedCounts[$slotStart->getTimestamp()] ?? 0;
+            if ($slotEnd > $windowEnd) {
+                break;
+            }
+
+            $blockedUnits = $this->collectBlockedUnitsForSlot($relevantBookings, $slotStart, $slotEnd, $bufferMinutes);
 
             $slots[] = [
                 'start' => $slotStart,
                 'end' => $slotEnd,
                 'total' => $resource->getUnitCount(),
-                'free' => max(0, $resource->getUnitCount() - $booked),
+                'free' => max(0, $resource->getUnitCount() - count($blockedUnits)),
             ];
 
-            $slotStart = $slotEnd;
+            $slotStart = $slotStart->add($step);
         }
 
         return $slots;
@@ -153,6 +162,10 @@ class BookingService
             throw BookingException::invalidSlot();
         }
 
+        if ($this->bookingRepository->hasActiveBookingAtStartForUser($resource, $user->getUuid(), $start)) {
+            throw BookingException::alreadyBookedSlot();
+        }
+
         $limit = $resource->getMaxBookingsPerUser();
         if ($limit !== null && $this->bookingRepository->countActiveForUser($resource, $user->getUuid(), $now) >= $limit) {
             throw BookingException::limitReached();
@@ -163,7 +176,20 @@ class BookingService
             // Serialize concurrent booking attempts on the same resource.
             $this->em->lock($resource, LockMode::PESSIMISTIC_WRITE);
 
-            $bookedUnits = $this->bookingRepository->findActiveUnitNumbers($resource, $start);
+            if ($this->bookingRepository->hasActiveBookingAtStartForUser($resource, $user->getUuid(), $start)) {
+                $this->em->rollback();
+                throw BookingException::alreadyBookedSlot();
+            }
+
+            $duration = new \DateInterval('PT' . $resource->getSlotDurationMinutes() . 'M');
+            $end = $start->add($duration);
+            $bufferMinutes = $resource->getBufferMinutes();
+            $overlapFrom = $bufferMinutes > 0
+                ? $start->modify(sprintf('-%d minutes', $bufferMinutes))
+                : $start;
+
+            $relevantBookings = $this->bookingRepository->findActiveOverlappingWindow($resource, $overlapFrom, $end);
+            $bookedUnits = $this->collectBlockedUnitsForSlot($relevantBookings, $start, $end, $bufferMinutes);
             $unit = null;
             for ($candidate = 1; $candidate <= $resource->getUnitCount(); $candidate++) {
                 if (!in_array($candidate, $bookedUnits, true)) {
@@ -182,7 +208,7 @@ class BookingService
                 ->setUserUuid($user->getUuid())
                 ->setUnitNumber($unit)
                 ->setStartAt($start)
-                ->setEndAt($start->add(new \DateInterval('PT' . $resource->getSlotDurationMinutes() . 'M')));
+                ->setEndAt($end);
 
             $this->em->persist($booking);
             $this->em->flush();
@@ -215,15 +241,21 @@ class BookingService
      */
     public function cancelBooking(Booking $booking, User $user, bool $isAdmin = false, ?\DateTimeImmutable $now = null): void
     {
+        $reference = $now ?? new \DateTimeImmutable();
+
         if (!$isAdmin && !$booking->getUserUuid()->equals($user->getUuid())) {
             throw BookingException::notOwner();
+        }
+
+        if (!$isAdmin && $booking->getEndAt() <= $reference) {
+            throw BookingException::pastBooking();
         }
 
         if ($booking->isCancelled()) {
             throw BookingException::alreadyCancelled();
         }
 
-        $booking->setCancelledAt($now ?? new \DateTimeImmutable());
+        $booking->setCancelledAt($reference);
         $this->em->flush();
 
         $this->logger->info('Booking cancelled', [
@@ -237,7 +269,7 @@ class BookingService
      */
     public function getUserBookings(User $user, ?\DateTimeImmutable $now = null): array
     {
-        return $this->bookingRepository->findActiveUpcomingByUser($user->getUuid(), $now ?? new \DateTimeImmutable());
+        return $this->bookingRepository->findActiveByUserOrderedByStart($user->getUuid());
     }
 
     /**
@@ -264,10 +296,32 @@ class BookingService
 
     private function alignToGrid(BookingResource $resource, \DateTimeImmutable $moment): \DateTimeImmutable
     {
-        $slotSeconds = $resource->getSlotDurationMinutes() * 60;
+        $slotSeconds = ($resource->getSlotDurationMinutes() + $resource->getBufferMinutes()) * 60;
         $offset = $moment->getTimestamp() - $resource->getAvailableFrom()->getTimestamp();
         $alignedOffset = (int) ceil($offset / $slotSeconds) * $slotSeconds;
 
         return $resource->getAvailableFrom()->add(new \DateInterval('PT' . $alignedOffset . 'S'));
+    }
+
+    /**
+     * @param Booking[] $bookings
+     *
+     * @return int[]
+     */
+    private function collectBlockedUnitsForSlot(array $bookings, \DateTimeImmutable $slotStart, \DateTimeImmutable $slotEnd, int $bufferMinutes): array
+    {
+        $blocked = [];
+
+        foreach ($bookings as $booking) {
+            $blockedUntil = $bufferMinutes > 0
+                ? $booking->getEndAt()->add(new \DateInterval('PT' . $bufferMinutes . 'M'))
+                : $booking->getEndAt();
+
+            if ($booking->getStartAt() < $slotEnd && $blockedUntil > $slotStart) {
+                $blocked[$booking->getUnitNumber()] = true;
+            }
+        }
+
+        return array_map('intval', array_keys($blocked));
     }
 }

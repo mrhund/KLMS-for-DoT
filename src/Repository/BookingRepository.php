@@ -56,6 +56,23 @@ class BookingRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
+    public function hasActiveBookingAtStartForUser(BookingResource $resource, UuidInterface $userUuid, \DateTimeImmutable $start): bool
+    {
+        $count = (int) $this->createQueryBuilder('b')
+            ->select('COUNT(b.id)')
+            ->andWhere('b.resource = :resource')
+            ->andWhere('b.userUuid = :userUuid')
+            ->andWhere('b.startAt = :start')
+            ->andWhere('b.cancelledAt IS NULL')
+            ->setParameter('resource', $resource)
+            ->setParameter('userUuid', $userUuid)
+            ->setParameter('start', $start)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count > 0;
+    }
+
     /**
      * Counts active bookings per slot start (as timestamp) for a resource within a time range.
      *
@@ -114,6 +131,43 @@ class BookingRepository extends ServiceEntityRepository
             ->setParameter('userUuid', $userUuid)
             ->setParameter('reference', $reference)
             ->orderBy('b.startAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Active bookings of a user across all resources, including past bookings.
+     *
+     * @return Booking[]
+     */
+    public function findActiveByUserOrderedByStart(UuidInterface $userUuid): array
+    {
+        return $this->createQueryBuilder('b')
+            ->andWhere('b.userUuid = :userUuid')
+            ->andWhere('b.cancelledAt IS NULL')
+            ->setParameter('userUuid', $userUuid)
+            ->orderBy('b.startAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Active bookings overlapping the given time window.
+     *
+     * @return Booking[]
+     */
+    public function findActiveOverlappingWindow(BookingResource $resource, \DateTimeImmutable $from, \DateTimeImmutable $to): array
+    {
+        return $this->createQueryBuilder('b')
+            ->andWhere('b.resource = :resource')
+            ->andWhere('b.cancelledAt IS NULL')
+            ->andWhere('b.startAt < :to')
+            ->andWhere('b.endAt > :from')
+            ->setParameter('resource', $resource)
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->orderBy('b.startAt', 'ASC')
+            ->addOrderBy('b.unitNumber', 'ASC')
             ->getQuery()
             ->getResult();
     }

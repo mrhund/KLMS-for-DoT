@@ -15,8 +15,47 @@ class BookingApp {
 
     async init() {
         await this.loadCsrfToken();
-        this.root.querySelectorAll('.booking-slots').forEach((container) => this.loadSlots(container));
+        this.registerResourceSelection();
         this.registerCancelHandlers();
+    }
+
+    registerResourceSelection() {
+        const cards = this.root.querySelectorAll('.booking-resource-select');
+        const panel = this.root.querySelector('#booking-selected-resource-panel');
+        const slotsContainer = this.root.querySelector('#booking-selected-slots');
+        const title = this.root.querySelector('#booking-selected-resource-title');
+
+        if (!cards.length || !panel || !slotsContainer || !title) {
+            return;
+        }
+
+        const selectCard = (card) => {
+            cards.forEach((item) => item.classList.remove('is-selected'));
+            card.classList.add('is-selected');
+
+            const resourceId = card.dataset.resourceId;
+            const resourceName = card.dataset.resourceName || 'Ressource';
+
+            title.textContent = `Verfügbare Slots: ${resourceName}`;
+            panel.classList.remove('d-none');
+            slotsContainer.dataset.resourceId = resourceId;
+            slotsContainer.innerHTML = '<p class="text-muted">Verfügbare Zeiten werden geladen...</p>';
+            this.loadSlots(slotsContainer);
+        };
+
+        cards.forEach((card) => {
+            card.addEventListener('click', () => selectCard(card));
+            card.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    selectCard(card);
+                }
+            });
+        });
+
+        if (cards[0]) {
+            selectCard(cards[0]);
+        }
     }
 
     async loadCsrfToken() {
@@ -36,6 +75,11 @@ class BookingApp {
 
     async loadSlots(container) {
         const resourceId = container.dataset.resourceId;
+        if (!resourceId) {
+            container.innerHTML = '<p class="text-muted">Wähle eine Ressource aus, um verfügbare Zeiten zu sehen.</p>';
+            return;
+        }
+
         try {
             const response = await fetch(`/booking/${resourceId}/availability`, {
                 headers: { Accept: 'application/json' },
@@ -66,8 +110,10 @@ class BookingApp {
             button.type = 'button';
             button.className = 'btn btn-sm booking-slot-btn ' + (slot.free > 0 ? 'btn-outline-success' : 'btn-outline-secondary');
             button.disabled = slot.free <= 0;
-            const time = new Date(slot.start).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-            button.textContent = `${time} (${slot.free}/${slot.total})`;
+            const startTime = new Date(slot.start).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            const endTime = new Date(slot.end).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            const bufferText = slot.bufferMinutes > 0 ? ` + ${slot.bufferMinutes}m Puffer` : '';
+            button.textContent = `${startTime} - ${endTime} (${slot.free}/${slot.total})${bufferText}`;
             button.addEventListener('click', () => this.book(resourceId, slot.start, button));
             list.appendChild(button);
         });
@@ -82,22 +128,13 @@ class BookingApp {
         button.disabled = true;
 
         try {
-            const response = await fetch(`/booking/${resourceId}/book`, {
+            await fetch(`/booking/${resourceId}/book`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                 body: JSON.stringify({ start, csrfToken: this.csrfToken }),
             });
-            const data = await response.json().catch(() => null);
-
-            if (!response.ok) {
-                window.alert(data?.Error?.message || 'Buchung nicht möglich.');
-                button.disabled = false;
-                return;
-            }
-
             window.location.reload();
         } catch (error) {
-            window.alert('Buchung nicht möglich.');
             button.disabled = false;
         }
     }
@@ -120,22 +157,14 @@ class BookingApp {
         button.disabled = true;
 
         try {
-            const response = await fetch(`/booking/reservation/${bookingId}/cancel`, {
+            await fetch(`/booking/reservation/${bookingId}/cancel`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                 body: JSON.stringify({ csrfToken: this.csrfToken }),
             });
 
-            if (!response.ok) {
-                const data = await response.json().catch(() => null);
-                window.alert(data?.Error?.message || 'Stornierung nicht möglich.');
-                button.disabled = false;
-                return;
-            }
-
             window.location.reload();
         } catch (error) {
-            window.alert('Stornierung nicht möglich.');
             button.disabled = false;
         }
     }

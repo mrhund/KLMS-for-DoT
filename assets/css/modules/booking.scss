@@ -3,3 +3,19 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+.booking-resource-select {
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.125);
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.booking-resource-select:hover,
+.booking-resource-select:focus {
+  border-color: #80bdff;
+}
+
+.booking-resource-select.is-selected {
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}

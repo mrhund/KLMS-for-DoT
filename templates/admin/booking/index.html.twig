@@ -29,7 +29,9 @@
                     <th scope="col" style="width: auto">Name</th>
                     <th scope="col" style="width: 6em;" class="text-center">Einheiten</th>
                     <th scope="col" style="width: 8em;" class="text-center">Slot-Dauer</th>
-                    <th scope="col" style="width: 14em;" class="text-center">Buchbar</th>
+                    <th scope="col" style="width: 7em;" class="text-center">Puffer</th>
+                    <th scope="col" style="width: 8.5em;" class="text-center">Buchbar von</th>
+                    <th scope="col" style="width: 8.5em;" class="text-center">Buchbar bis</th>
                     <th scope="col" style="width: 12em;" class="text-center">Aktionen</th>
                 </tr>
                 </thead>
@@ -57,21 +59,14 @@
                         </td>
                         <td class="text-center">{{ resource.unitCount }}</td>
                         <td class="text-center">{{ resource.slotDurationMinutes }} min</td>
+                        <td class="text-center">{{ resource.bufferMinutes }} min</td>
+                        <td class="text-center" data-order="{{ resource.availableFrom|date('U') }}">{{ resource.availableFrom|date('d.m.Y H:i') }}</td>
+                        <td class="text-center" data-order="{{ resource.availableUntil|date('U') }}">{{ resource.availableUntil|date('d.m.Y H:i') }}</td>
                         <td class="text-center">
-                            {{ resource.availableFrom|date('d.m.Y H:i') }} - {{ resource.availableUntil|date('d.m.Y H:i') }}
-                        </td>
-                        <td class="text-center">
-                            <div class="btn-group btn-group-sm">
-                                <a href="{{ path('admin_booking_reservations', {'id': resource.id}) }}" class="btn btn-outline-primary" title="Buchungen ansehen">
-                                    <i class="fas fa-list"></i>
+                            <div class="btn-group" role="group">
+                                <a href="{{ path('admin_booking_reservations', {'id': resource.id}) }}" class="btn btn-sm btn-outline-primary" title="Buchungen ansehen">
+                                    <i class="fas fa-list"></i> Buchungen
                                 </a>
-                                <form method="post" action="{{ path('admin_booking_delete', {'id': resource.id}) }}" style="display: inline;"
-                                      onsubmit="return confirm('Sind Sie sicher, dass Sie diese Ressource löschen möchten?')">
-                                    <input type="hidden" name="_token" value="{{ csrf_token(csrf_token_delete) }}">
-                                    <button type="submit" class="btn btn-outline-danger" title="Löschen">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
                             </div>
                         </td>
                     </tr>
