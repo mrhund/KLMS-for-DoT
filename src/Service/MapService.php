@@ -13,7 +13,7 @@ use Symfony\Contracts\Cache\ItemInterface;
 class MapService
 {
     // reduces the number of serial IDM requests when enumerating all users for the map
-    private const IDM_PAGE_SIZE = 100;
+    private const IDM_PAGE_SIZE = 1000;
 
     private readonly IdmRepository $userRepository;
 
