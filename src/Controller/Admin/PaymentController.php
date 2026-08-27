@@ -3,8 +3,12 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Ticket;
+use App\Entity\ShopOrderPositionAddon;
+use App\Entity\User;
 use App\Exception\TicketLivecycleException;
 use App\Form\UserSelectType;
+use App\Idm\IdmManager;
+use App\Repository\TicketRepository;
 use App\Service\TicketService;
 use App\Service\TicketState;
 use App\Service\UserService;
@@ -27,20 +31,72 @@ class PaymentController extends AbstractController
     private readonly TicketService $ticketService;
     private readonly UserService $userService;
     private readonly SeatmapService $seatmapService;
+    private readonly IdmManager $idmManager;
+    private readonly TicketRepository $ticketRepository;
 
     public function __construct(TicketService $ticketService,
                                 UserService   $userService,
-                                SeatmapService $seatmapService)
+                                SeatmapService $seatmapService,
+                                IdmManager $idmManager,
+                                TicketRepository $ticketRepository)
     {
         $this->ticketService = $ticketService;
         $this->userService = $userService;
         $this->seatmapService = $seatmapService;
+        $this->idmManager = $idmManager;
+        $this->ticketRepository = $ticketRepository;
     }
 
     #[Route(path: '/quick-checkin', name: '_quick_checkin', methods: ['GET'])]
     public function quickCheckin(): Response
     {
         return $this->render('admin/payment/checkin.html.twig');
+    }
+
+    #[Route(path: '/desktop-checkin', name: '_desktop_checkin', methods: ['GET'])]
+    public function desktopCheckin(Request $request): Response
+    {
+        $query = trim((string) $request->query->get('q', ''));
+        $ticket = $query !== '' ? $this->ticketService->getTicketCode($query) : null;
+
+        if (!$ticket && ctype_digit($query)) {
+            $ticket = $this->ticketRepository->findOneByOrderId((int) $query);
+        }
+
+        $searchResults = [];
+        if (!$ticket && $query !== '') {
+            $users = $this->idmManager->getRepository(User::class)->findFuzzy($query)->getPage(1, 10);
+            foreach ($users as $user) {
+                $userTicket = $this->ticketService->getTicketUser($user);
+                if ($userTicket) {
+                    $searchResults[] = ['ticket' => $userTicket, 'user' => $user];
+                }
+            }
+        }
+
+        $user = $ticket ? $this->ticketService->userByTicket($ticket) : null;
+        $seats = $user ? $this->seatmapService->getUserSeats($user) : [];
+        $seatNames = array_map(fn ($seat) => $seat->generateSeatName(), $seats);
+        $addons = [];
+        $order = $ticket?->getShopOrderPosition()?->getOrder();
+        if ($order) {
+            foreach ($order->getShopOrderPositions() as $position) {
+                if ($position instanceof ShopOrderPositionAddon) {
+                    $addons[] = $position;
+                }
+            }
+        }
+
+        return $this->render('admin/payment/desktop_checkin.html.twig', [
+            'ticket' => $ticket,
+            'user' => $user,
+            'seats' => $seats,
+            'seatNames' => $seatNames,
+            'addons' => $addons,
+            'form' => $ticket ? $this->createTicketModificationForm($ticket, 'admin_payment_desktop_checkin')->createView() : null,
+            'searchQuery' => $query,
+            'searchResults' => $searchResults,
+        ]);
     }
 
     private function createTicketCreateForm(string $action = "", bool $forceUser = false): FormInterface
@@ -177,7 +233,7 @@ class PaymentController extends AbstractController
                 }
             } catch (TicketLivecycleException $exception) {
                 $this->addFlash('error', "Aktion konnte nicht durchgeführt werden ({$exception->getMessage()}).");
-                return $this->redirectToRoute($redirectRoute);
+                return $this->redirectToRoute($redirectRoute, $redirectRoute === 'admin_payment_desktop_checkin' ? ['q' => $ticket->getCode()] : []);
             }
             if (!empty($error)) {
                 $this->addFlash('error', $error);
@@ -186,7 +242,7 @@ class PaymentController extends AbstractController
             }
         }
 
-        return $this->redirectToRoute($redirectRoute);
+        return $this->redirectToRoute($redirectRoute, $redirectRoute === 'admin_payment_desktop_checkin' ? ['q' => $ticket->getCode()] : []);
     }
 
     #[Route(path: '/{id}', name: '_show', methods: ['GET'])]
