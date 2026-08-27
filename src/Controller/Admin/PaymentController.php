@@ -59,17 +59,29 @@ class PaymentController extends AbstractController
         $query = trim((string) $request->query->get('q', ''));
         $ticket = $query !== '' ? $this->ticketService->getTicketCode($query) : null;
 
+        $searchResults = [];
         if (!$ticket && ctype_digit($query)) {
-            $ticket = $this->ticketRepository->findOneByOrderId((int) $query);
+            $orderTickets = $this->ticketRepository->findByOrderId((int) $query);
+            if (count($orderTickets) === 1) {
+                $ticket = $orderTickets[0];
+            } else {
+                foreach ($orderTickets as $orderTicket) {
+                    $searchResults[] = [
+                        'ticket' => $orderTicket,
+                        'user' => $this->ticketService->userByTicket($orderTicket),
+                    ];
+                }
+            }
         }
 
-        $searchResults = [];
         if (!$ticket && $query !== '') {
-            $users = $this->idmManager->getRepository(User::class)->findFuzzy($query)->getPage(1, 10);
-            foreach ($users as $user) {
-                $userTicket = $this->ticketService->getTicketUser($user);
-                if ($userTicket) {
-                    $searchResults[] = ['ticket' => $userTicket, 'user' => $user];
+            if ($searchResults === []) {
+                $users = $this->idmManager->getRepository(User::class)->findFuzzy($query)->getPage(1, 10);
+                foreach ($users as $user) {
+                    $userTicket = $this->ticketService->getTicketUser($user);
+                    if ($userTicket) {
+                        $searchResults[] = ['ticket' => $userTicket, 'user' => $user];
+                    }
                 }
             }
         }

@@ -2,7 +2,7 @@
 
 {% block title %}Desktop Check-in{% endblock %}
 
-{% block body %}
+{% block main %}
 <div class="container-fluid py-3 desktop-checkin" data-checkin-page>
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
@@ -37,8 +37,8 @@
             <div class="list-group list-group-flush">
                 {% for result in searchResults %}
                     <a class="list-group-item list-group-item-action" href="{{ path('admin_payment_desktop_checkin', {q: result.ticket.code}) }}">
-                        <strong>{{ result.user.nickname|default('Nickname n.v.') }}</strong>
-                        <span class="ml-2">{{ result.user.firstname }} {{ result.user.surname }}</span>
+                        <strong>{{ result.user ? result.user.nickname|default('Nickname n.v.') : 'Nicht zugeordnet' }}</strong>
+                        {% if result.user %}<span class="ml-2">{{ result.user.firstname }} {{ result.user.surname }}</span>{% endif %}
                         <span class="float-right text-monospace">{{ result.ticket.code }}</span>
                     </a>
                 {% endfor %}
@@ -48,6 +48,16 @@
 
     {% if ticket %}
         {% set status = ticket.state %}
+        {% set statusLabels = {
+            'NEW': 'Ohne Zuordnung',
+            'REDEEMED': 'Zugeordnet',
+            'PUNCHED': 'Checked-in'
+        } %}
+        {% set statusBadges = {
+            'NEW': 'badge-danger',
+            'REDEEMED': 'badge-success',
+            'PUNCHED': 'badge-warning'
+        } %}
         <div class="row">
             <div class="col-xl-5 mb-3">
                 <div class="card h-100">
@@ -91,7 +101,7 @@
                             <div class="col-md-6">
                                 <dl>
                                     <dt>Ticketcode</dt><dd class="text-monospace">{{ ticket.code }}</dd>
-                                    <dt>Status</dt><dd><span class="badge badge-{% if status.name == 'PUNCHED' %}warning{% elseif status.name == 'REDEEMED' %}success{% else %}danger{% endif %}">{{ status.name|default('Unbekannt') }}</span></dd>
+                                    <dt>Status</dt><dd><span class="badge {{ status is not null ? statusBadges[status.name]|default('badge-light') : 'badge-light' }}">{{ status is not null ? statusLabels[status.name]|default('Status unbekannt') : 'Status unbekannt' }}</span></dd>
                                     <dt>Sitzplatz</dt><dd>{{ seatNames ? seatNames|join(', ') : 'Keiner' }}</dd>
                                 </dl>
                             </div>
@@ -113,12 +123,24 @@
                             {{ form_start(form, {'attr': {'class': 'd-flex flex-wrap mr-2'}}) }}
                             {% if status and status.name == 'NEW' %}
                                 <div class="mr-2" style="min-width: 16rem">{{ form_widget(form.user) }}</div>
-                                {{ form_widget(form.assign, {'attr': {'class': 'btn btn-primary'}, 'label': 'Ticket zuweisen'}) }}
+                                {{ form_widget(form.assign, {'attr': {'class': 'btn btn-sm mr-1 btn-primary'}, 'label': 'Ticket zuweisen'}) }}
                             {% endif %}
-                            {% if status and status.name == 'REDEEMED' %}{{ form_widget(form.punch, {'attr': {'class': 'btn btn-success mr-2'}, 'label': 'Einchecken'}) }}{% endif %}
-                            {% if status and status.name == 'PUNCHED' %}{{ form_widget(form.unpunch, {'attr': {'class': 'btn btn-warning mr-2'}, 'label': 'Auschecken'}) }}{% endif %}
+                            {% if form.unassign is defined %}{{ form_widget(form.unassign, {'attr': {'class': 'btn btn-sm mr-1 btn-secondary'}, 'label': 'Ticket freigeben'}) }}{% endif %}
+                            {% if form.delete is defined %}
+                                {{ form_widget(form.delete, {
+                                    'label': ticket.redeemed ? 'Ticket freigeben & löschen' : 'Ticket löschen',
+                                    'attr': {
+                                        'class': 'btn btn-sm mr-1 btn-outline-danger',
+                                        'data-toggle': 'confirmModal',
+                                        'data-modal-title': 'Bestätigen',
+                                        'data-modal-text': 'Sind Sie sicher?'
+                                    }
+                                }) }}
+                            {% endif %}
+                            {% if form.punch is defined %}{{ form_widget(form.punch, {'attr': {'class': 'btn btn-sm mr-1 btn-primary'}, 'label': 'Ticket checkin'}) }}{% endif %}
+                            {% if form.unpunch is defined %}{{ form_widget(form.unpunch, {'attr': {'class': 'btn btn-sm mr-1 btn-primary'}, 'label': 'Ticket checkout'}) }}{% endif %}
                             {{ form_end(form) }}
-                            <a class="btn btn-outline-secondary" href="{{ path('admin_payment_desktop_checkin') }}"><i class="fas fa-redo mr-1"></i>Nächster Scan</a>
+                            <a class="btn btn-sm btn-secondary" href="{{ path('admin_payment_desktop_checkin') }}"><i class="fas fa-redo mr-1"></i>Nächster Scan</a>
                         </div>
                     </div>
                 </div>
@@ -129,5 +151,6 @@
 {% endblock %}
 
 {% block javascripts %}
+    {{ parent() }}
     {{ encore_entry_script_tags('admin_desktop_checkin') }}
 {% endblock %}
