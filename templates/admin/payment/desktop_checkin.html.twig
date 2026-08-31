@@ -34,14 +34,33 @@
     {% if searchResults is not empty %}
         <div class="card mb-3">
             <div class="card-header">Treffer für „{{ searchQuery }}“</div>
-            <div class="list-group list-group-flush">
-                {% for result in searchResults %}
-                    <a class="list-group-item list-group-item-action" href="{{ path('admin_payment_desktop_checkin', {q: result.ticket.code}) }}">
-                        <strong>{{ result.user ? result.user.nickname|default('Nickname n.v.') : 'Nicht zugeordnet' }}</strong>
-                        {% if result.user %}<span class="ml-2">{{ result.user.firstname }} {{ result.user.surname }}</span>{% endif %}
-                        <span class="float-right text-monospace">{{ result.ticket.code }}</span>
-                    </a>
-                {% endfor %}
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nickname</th>
+                            <th>Vorname</th>
+                            <th>Nachname</th>
+                            <th>Ticketcode</th>
+                            <th class="text-nowrap">Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in searchResults %}
+                            <tr>
+                                <td>{{ result.user ? result.user.nickname|default('Nickname n.v.') : 'Nicht zugeordnet' }}</td>
+                                <td>{{ result.user ? result.user.firstname|default('-') : '-' }}</td>
+                                <td>{{ result.user ? result.user.surname|default('-') : '-' }}</td>
+                                <td class="text-monospace">{{ result.ticket.code }}</td>
+                                <td>
+                                    <a class="btn btn-sm btn-outline-primary text-nowrap" href="{{ path('admin_payment_desktop_checkin', {q: result.ticket.code}) }}">
+                                        <i class="fas fa-ticket-alt mr-1"></i>Auswählen
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     {% endif %}
