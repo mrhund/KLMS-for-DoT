@@ -152,6 +152,13 @@ class TourneyType extends AbstractType
                 'delete_label' => 'Regelwerk löschen',
                 'download_uri' => true,
             ])
+            ->add('rulesFile', VichFileType::class, [
+                'label' => 'Regelwerk (PDF)',
+                'required' => false,
+                'allow_delete' => true,
+                'delete_label' => 'Regelwerk löschen',
+                'download_uri' => true,
+            ])
         ;
 
         // Set initial value for hasGroupStage checkbox based on existing mode.
