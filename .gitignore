@@ -52,9 +52,14 @@
 /.web-server-pid
 
 .env.local
+.env.*.local
+.env.local.php
 /nbproject/
 .idea
 .php_cs.cache
+
+# macOS metadata
+**/.DS_Store
 
 #Ignore NodeJS Modules
 /node_modules
