@@ -47,7 +47,7 @@ class TourneyType extends AbstractType
                 'required' => false,
             ])
             ->add('mainOrganizer', UserSelectType::class, [
-                'label' => 'Hauptverantwortliche Turnierorga',
+                'label' => 'Turnierorga',
                 'required' => false,
                 'hydrate' => false,
             ])
