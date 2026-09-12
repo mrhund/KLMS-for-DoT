@@ -205,6 +205,7 @@ class PaymentController extends AbstractController
             'form' => $ticket ? $this->createTicketModificationForm($ticket, 'admin_payment_desktop_checkin')->createView() : null,
             'searchQuery' => $query,
             'searchResults' => $searchResults,
+            'checkedInCount' => $this->ticketService->countPunchedTickets(),
         ]);
     }
 
