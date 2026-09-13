@@ -59,7 +59,6 @@ class WalletWalletService
             'stripURL' => $this->walletWalletStripDataUri,
             'secondaryFields' => [
                 ['label' => 'Nickname', 'value' => $recipient->getNickname()],
-                ['label' => 'Name', 'value' => trim($recipient->getFirstname().' '.$recipient->getSurname())],
                 ['label' => 'Sitzplatz', 'value' => $seatName],
             ],
             'backFields' => [
