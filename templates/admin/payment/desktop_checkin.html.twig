@@ -143,16 +143,16 @@
                                 {% for addon in addons %}<li class="list-group-item d-flex justify-content-between"><span>{{ addon.text }}</span><span class="text-muted">{{ (addon.price / 100)|number_format(2, ',', '.') }} €</span></li>{% endfor %}
                             </ul>
                         {% else %}<p class="text-muted">Keine Add-ons gekauft.</p>{% endif %}
-                        <div class="border-top pt-3 d-flex flex-wrap">
-                            {{ form_start(form, {'attr': {'class': 'd-flex flex-wrap mr-2'}}) }}
+                        <div class="border-top pt-3 d-flex flex-wrap align-items-center">
+                            {{ form_start(form, {'attr': {'class': 'd-flex flex-wrap align-items-center mr-2'}}) }}
                             {% if status and status.name == 'NEW' %}
-                                <div class="mr-2" style="min-width: 16rem">{{ form_widget(form.user) }}</div>
-                                {{ form_widget(form.assign, {'attr': {'class': 'btn btn-sm mr-1 btn-primary'}, 'label': 'Ticket zuweisen'}) }}
+                                <div class="mr-2 mb-2 checkin-user-select">{{ form_widget(form.user) }}</div>
+                                {{ form_widget(form.assign, {'attr': {'class': 'btn btn-sm btn-primary checkin-action-btn mr-2 mb-2'}, 'label': 'Ticket zuweisen'}) }}
                             {% endif %}
-                            {% if form.punch is defined %}{{ form_widget(form.punch, {'attr': {'class': 'btn btn-sm mr-1 btn-primary'}, 'label': 'Ticket checkin'}) }}{% endif %}
-                            {% if form.unpunch is defined %}{{ form_widget(form.unpunch, {'attr': {'class': 'btn btn-sm mr-1 btn-primary'}, 'label': 'Ticket checkout'}) }}{% endif %}
+                            {% if form.punch is defined %}{{ form_widget(form.punch, {'attr': {'class': 'btn btn-sm btn-primary checkin-action-btn mr-2 mb-2'}, 'label': 'Ticket checkin'}) }}{% endif %}
+                            {% if form.unpunch is defined %}{{ form_widget(form.unpunch, {'attr': {'class': 'btn btn-sm btn-primary checkin-action-btn mr-2 mb-2'}, 'label': 'Ticket checkout'}) }}{% endif %}
                             {{ form_end(form) }}
-                            <a class="btn btn-sm btn-secondary" href="{{ path('admin_payment_desktop_checkin') }}"><i class="fas fa-redo mr-1"></i>Nächster Scan</a>
+                            <a class="btn btn-sm btn-secondary checkin-action-btn mr-2 mb-2" href="{{ path('admin_payment_desktop_checkin') }}"><i class="fas fa-redo mr-1"></i>Nächster Scan</a>
                         </div>
                     </div>
                 </div>
