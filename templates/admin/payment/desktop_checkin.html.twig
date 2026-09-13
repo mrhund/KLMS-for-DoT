@@ -151,7 +151,7 @@
                             {% endif %}
                             {% if form.punch is defined %}{{ form_widget(form.punch, {'attr': {'class': 'btn btn-sm btn-primary checkin-action-btn mr-2 mb-2'}, 'label': 'Ticket checkin'}) }}{% endif %}
                             {% if form.unpunch is defined %}{{ form_widget(form.unpunch, {'attr': {'class': 'btn btn-sm btn-primary checkin-action-btn mr-2 mb-2'}, 'label': 'Ticket checkout'}) }}{% endif %}
-                            {{ form_end(form) }}
+                            {{ form_end(form, {'render_rest': false}) }}
                             <a class="btn btn-sm btn-secondary checkin-action-btn mr-2 mb-2" href="{{ path('admin_payment_desktop_checkin') }}"><i class="fas fa-redo mr-1"></i>Nächster Scan</a>
                         </div>
                     </div>
