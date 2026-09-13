@@ -80,6 +80,7 @@ class EmailService
     private readonly SettingService $settingService;
     private readonly MessageBusInterface $messageBus;
     private readonly TicketService $ticketService;
+    private readonly WalletWalletService $walletWalletService;
     private readonly string $appSecret;
     private array $template_cache = [];
 
@@ -90,6 +91,7 @@ class EmailService
                                 Environment $twig,
                                 MessageBusInterface $messageBus,
                                 TicketService $ticketService,
+                                WalletWalletService $walletWalletService,
                                 string $appSecret)
     {
         $this->logger = $logger;
@@ -103,6 +105,7 @@ class EmailService
         $this->senderAddress = new Mime\Address($mailAddress, $mailName);
         $this->messageBus = $messageBus;
         $this->ticketService = $ticketService;
+        $this->walletWalletService = $walletWalletService;
     }
 
     public function scheduleSending(Email $template): bool
@@ -240,7 +243,10 @@ class EmailService
 
     public function getAvailableFields(?EmailRecipient $recipient): array
     {
-        return $this->buildRecipientData($recipient);
+        $data = $this->buildRecipientData($recipient, false);
+        $data['ticket-wallet-url'] = 'Add to Wallet';
+
+        return $data;
     }
 
     public function renderTemplate(Email $template, EmailRecipient $recipient): array
@@ -261,7 +267,7 @@ class EmailService
             $html
         );
 
-        $recipientData = $this->buildRecipientData($recipient);
+        $recipientData = $this->buildRecipientData($recipient, true);
 
         $subject = $this->replaceVariables($subject, $recipientData);
         $html = $this->replaceVariables($html, $recipientData);
@@ -273,17 +279,27 @@ class EmailService
         return ['subject' => $subject, 'html' => $html, 'text' => $text];
     }
 
-    private function buildRecipientData(?EmailRecipient $recipient): array
+    private function buildRecipientData(?EmailRecipient $recipient, bool $includeWalletLink): array
     {
         $data = $recipient?->getDataArray() ?? [];
         $data['ticket-code'] = '';
         $data['ticket-qr-code'] = '';
+        $data['ticket-wallet-url'] = '';
 
         if ($recipient?->getUuid()) {
             $ticket = $this->ticketService->getTicketUser($recipient->getUuid());
             if ($ticket && $ticket->getCode()) {
                 $data['ticket-code'] = $ticket->getCode();
                 $data['ticket-qr-code'] = $this->generateTicketQrCodeHtml($ticket->getCode());
+                if ($includeWalletLink && $recipient !== null) {
+                    $walletUrl = $this->walletWalletService->createShareUrl($ticket, $recipient);
+                    if ($walletUrl !== null) {
+                        $data['ticket-wallet-url'] = sprintf(
+                            '<a href="%s">Add to Wallet</a>',
+                            htmlspecialchars($walletUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+                        );
+                    }
+                }
             }
         }
 
