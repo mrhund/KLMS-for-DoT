@@ -160,7 +160,12 @@ class PaymentController extends AbstractController
 
         $searchResults = [];
         if (!$ticket && ctype_digit($query)) {
-            $orderTickets = $this->ticketRepository->findByOrderId((int) $query);
+            try {
+                $orderTickets = $this->ticketRepository->findByOrderId((int) $query);
+            } catch (\Throwable $e) {
+                // z.B. gescannter Barcode zu groß für die Order-ID-Spalte
+                $orderTickets = [];
+            }
             if (count($orderTickets) === 1) {
                 $ticket = $orderTickets[0];
             } else {

@@ -149,18 +149,6 @@
                                 <div class="mr-2" style="min-width: 16rem">{{ form_widget(form.user) }}</div>
                                 {{ form_widget(form.assign, {'attr': {'class': 'btn btn-sm mr-1 btn-primary'}, 'label': 'Ticket zuweisen'}) }}
                             {% endif %}
-                            {% if form.unassign is defined %}{{ form_widget(form.unassign, {'attr': {'class': 'btn btn-sm mr-1 btn-secondary'}, 'label': 'Ticket freigeben'}) }}{% endif %}
-                            {% if form.delete is defined %}
-                                {{ form_widget(form.delete, {
-                                    'label': ticket.redeemed ? 'Ticket freigeben & löschen' : 'Ticket löschen',
-                                    'attr': {
-                                        'class': 'btn btn-sm mr-1 btn-outline-danger',
-                                        'data-toggle': 'confirmModal',
-                                        'data-modal-title': 'Bestätigen',
-                                        'data-modal-text': 'Sind Sie sicher?'
-                                    }
-                                }) }}
-                            {% endif %}
                             {% if form.punch is defined %}{{ form_widget(form.punch, {'attr': {'class': 'btn btn-sm mr-1 btn-primary'}, 'label': 'Ticket checkin'}) }}{% endif %}
                             {% if form.unpunch is defined %}{{ form_widget(form.unpunch, {'attr': {'class': 'btn btn-sm mr-1 btn-primary'}, 'label': 'Ticket checkout'}) }}{% endif %}
                             {{ form_end(form) }}
