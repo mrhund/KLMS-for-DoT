@@ -20,6 +20,10 @@ services:
             string $vapidPublicKey: '%env(VAPID_PUBLIC_KEY)%'
             string $vapidPrivateKey: '%env(VAPID_PRIVATE_KEY)%'
             'string $cartoBasemapApiKey': '%env(CARTO_BASEMAP_API_KEY)%'
+            string $walletWalletApiKey: '%env(WALLETWALLET_API_KEY)%'
+            string $walletWalletLogoDataUri: '%env(WALLETWALLET_LOGO_DATA_URI)%'
+            string $walletWalletIconDataUri: '%env(WALLETWALLET_ICON_DATA_URI)%'
+            string $walletWalletStripDataUri: '%env(WALLETWALLET_STRIP_DATA_URI)%'
 
     #Register PSR-3 LogHandler for Sentry to resolve PSR-3 Placeholders in Reports
     Monolog\Processor\PsrLogMessageProcessor:
