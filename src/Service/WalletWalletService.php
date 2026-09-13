@@ -16,6 +16,7 @@ class WalletWalletService
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly SettingService $settings,
+        private readonly SeatmapService $seatmapService,
         private readonly ContentRepository $contentRepository,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly LoggerInterface $logger,
@@ -40,16 +41,18 @@ class WalletWalletService
         }
 
         $organization = (string) $this->settings->get('site.organisation', 'Verein LANMAKERS');
+        $seatNames = array_map(
+            static fn ($seat): string => $seat->generateSeatName(),
+            $this->seatmapService->getUserSeats($recipient->getUuid())
+        );
+        $seatName = $seatNames === [] ? 'Kein Sitzplatz' : implode(', ', $seatNames);
         $payload = [
             'barcodeValue' => $code,
             'barcodeFormat' => 'QR',
             'logoText' => 'DoT-LAN 2k26 - Ticket',
             'organizationName' => $organization,
-            'primaryFields' => [
-                ['label' => 'TICKET', 'value' => $code],
-            ],
             'colorPreset' => 'dark',
-            'expirationDays' => 30,
+            'expirationDays' => 7,
             'color' => '#2B2B2B',
             'logoURL' => $this->walletWalletLogoDataUri,
             'iconURL' => $this->walletWalletIconDataUri,
@@ -57,11 +60,11 @@ class WalletWalletService
             'secondaryFields' => [
                 ['label' => 'Nickname', 'value' => $recipient->getNickname()],
                 ['label' => 'Name', 'value' => trim($recipient->getFirstname().' '.$recipient->getSurname())],
+                ['label' => 'Sitzplatz', 'value' => $seatName],
             ],
             'backFields' => [
                 ['label' => 'Organisation', 'value' => $organization],
                 ['label' => 'Impressum', 'value' => $this->getImprintUrl()],
-                ['label' => 'Hinweis', 'value' => 'Zuerst zum Checkin, dann in die Halle!'],
             ],
         ];
 
