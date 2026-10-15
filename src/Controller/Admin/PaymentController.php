@@ -193,7 +193,9 @@ class PaymentController extends AbstractController
         $seatNames = array_map(fn ($seat) => $seat->generateSeatName(), $seats);
         $addons = [];
         $order = $ticket?->getShopOrderPosition()?->getOrder();
-        if ($order) {
+        // Addons gehören nur dem Besteller, nicht den anderen Ticket-Inhabern der Bestellung
+        $redeemer = $ticket?->getRedeemer();
+        if ($order && $redeemer && $order->getOrderer()?->equals($redeemer)) {
             foreach ($order->getShopOrderPositions() as $position) {
                 if ($position instanceof ShopOrderPositionAddon) {
                     $addons[] = $position;
