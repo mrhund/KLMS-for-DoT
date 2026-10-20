@@ -35,6 +35,9 @@ class MediaController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        return $this->downloadHandler->downloadObject($media, $fileField = 'mediaFile', $objectClass = null, $fileName = true, $forceDownload = false);
+        $response = $this->downloadHandler->downloadObject($media, $fileField = 'mediaFile', $objectClass = null, $fileName = true, $forceDownload = false);
+        $response->headers->set('Cache-Control', 'public, max-age=600');
+
+        return $response;
     }
 }
