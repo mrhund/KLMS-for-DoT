@@ -36,6 +36,7 @@ class ContentType extends AbstractType
                 'empty_data' => '',
                 'required' => false,
                 'fix_urls' => 'relative',
+                HtmlTextareaType::CLEAR_SCRIPTS => false,
             ])
         ;
         $builder->addEventSubscriber($this->userInsertSubscriber);
