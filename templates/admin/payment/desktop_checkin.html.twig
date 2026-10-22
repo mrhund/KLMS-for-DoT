@@ -90,6 +90,11 @@
                         {% if user %}
                             <h2 class="h4 d-flex align-items-center flex-wrap">
                                 <span class="mr-2">{{ user.firstname }} {{ user.surname }}</span>
+                                {% if user.personalDataConfirmed %}
+                                    <span class="badge badge-pill badge-primary" title="Persönliche Daten wurden überprüft!">
+                                        <i class="fas fa-check"></i> geprüft
+                                    </span>
+                                {% endif %}
                                 {% if user and user is age_below(18) %}
                                     <span class="badge badge-danger">U18</span>
                                 {% endif %}

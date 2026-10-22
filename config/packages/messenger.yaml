@@ -8,6 +8,8 @@ framework:
             #sync: 'sync://'
             async:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                # Throttles the worker, see framework.rate_limiter.mailer
+                rate_limiter: mailer
             failed: 'doctrine://default?queue_name=failed'
 
         routing:
