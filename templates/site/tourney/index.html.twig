@@ -37,7 +37,7 @@
                         'registered' : true,
                         'expand' : (tourney == (show ?? null)),
                         'tm': teams[tourney.id],
-                        'current_game' : (games[tourney.id] ?? null),
+                        'current_games' : (games[tourney.id] ?? []),
                         'forms': forms[tourney.id] ?? [],
                         'hasIncompleteGroupGames': groupGamesIncomplete[tourney.id] ?? false
                     } %}
@@ -59,6 +59,10 @@
             </div>
         </div>
     </div>
+{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('tourney') }}
 {% endblock %}
 {% block javascripts %}
     {{ parent() }}

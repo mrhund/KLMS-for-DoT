@@ -43,6 +43,7 @@ class GalleryImageRepository extends ServiceEntityRepository
         $images = $this->createQueryBuilder('g')
             ->leftJoin('g.galleryEvent', 'e')
             ->orderBy('e.priority', 'ASC')
+            ->addOrderBy('g.imageName', 'ASC')
             ->addOrderBy('g.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
@@ -68,7 +69,8 @@ class GalleryImageRepository extends ServiceEntityRepository
         if ($eventName === 'Ohne Event') {
             return $this->createQueryBuilder('g')
                 ->where('g.galleryEvent IS NULL')
-                ->orderBy('g.createdAt', 'DESC')
+                ->orderBy('g.imageName', 'ASC')
+                ->addOrderBy('g.createdAt', 'DESC')
                 ->getQuery()
                 ->getResult();
         }
@@ -77,7 +79,8 @@ class GalleryImageRepository extends ServiceEntityRepository
             ->leftJoin('g.galleryEvent', 'e')
             ->where('e.name = :eventName')
             ->setParameter('eventName', $eventName)
-            ->orderBy('g.createdAt', 'DESC')
+            ->orderBy('g.imageName', 'ASC')
+            ->addOrderBy('g.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
     }

@@ -42,7 +42,7 @@
                              {% if game.parent is not null %}data-ref-winner="game{{ game.parent.id ~ (game.isChildA ? 'a' : 'b') }}"{% endif %}
                         >
                             <div class="teams">
-                                <div id="game{{ game.id }}a" class="team {{ game.teamA is null ? 'team-empty' : '' }} {{ game.hasWon(true) ? 'winner' : '' }} {{ game.teamA is same as team ? 'team-own' : '' }} ">
+                                <div id="game{{ game.id }}a" class="team {{ game.teamA is null ? 'team-empty' : '' }} {{ game.hasWon(true) ? 'winner' : '' }} {{ team is not null and game.teamA is same as team ? 'team-own' : '' }} ">
                                     {% if game.teamA is not null %}
                                         <span class="team-name">{{ _self.teamnameA(game) }}</span>
                                         <span class="team-score">{{ tourney.showPoints ? (game.scoreA() ?? '') : '' }}</span>
@@ -56,7 +56,7 @@
                                         </div>
                                     {% endif %}
                                 </div>
-                                <div id="game{{ game.id }}b" class="team {{ game.teamB is null ? 'team-empty' : '' }} {{ game.hasWon(false) ? 'winner' : '' }} {{ game.teamB is same as team ? 'team-own' : '' }}">
+                                <div id="game{{ game.id }}b" class="team {{ game.teamB is null ? 'team-empty' : '' }} {{ game.hasWon(false) ? 'winner' : '' }} {{ team is not null and game.teamB is same as team ? 'team-own' : '' }}">
                                     {% if game.teamB is not null %}
                                         <span class="team-name">{{ _self.teamnameB(game) }}</span>
                                         <span class="team-score">{{ tourney.showPoints ? (game.scoreB() ?? '') : '' }}</span>
@@ -88,9 +88,14 @@
     <div class="container mb-5">
         <div class="card">
             <div class="card-body">
-                <div class="card-title">
-                    <h1>{{ tourney.name }}</h1>
-                    <p>{{ tourney.description }}</p>
+                <div class="card-title d-flex flex-wrap justify-content-between align-items-start">
+                    <div>
+                        <h1>{{ tourney.name }}</h1>
+                        <p>{{ tourney.description | raw }}</p>
+                    </div>
+                    <a href="{{ path('tourney') }}" class="btn btn-outline-secondary btn-sm mb-2">
+                        <i class="fa-solid fa-arrow-left"></i> Zurück zur Übersicht
+                    </a>
                 </div>
                 <div class="card-text">
                     {% if podium | default([]) is not empty %}

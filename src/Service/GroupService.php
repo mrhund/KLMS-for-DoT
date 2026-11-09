@@ -18,6 +18,7 @@ class GroupService
     final public const GROUP_PAID = '8ae23ac3-ced7-40f7-b092-79da065f0b02';
     final public const GROUP_PAID_NO_SEAT = '5ec12941-0448-4a6f-a194-fd9ce2874925';
     final public const GROUP_ADMINS = 'c74aaa27-c501-454d-a8cd-0026ff671f53';
+    final public const GROUP_CHECKED_IN = '3f9c2d71-6b0e-4a58-8d1c-b7e45a92c6d4';
 
     private const NAME = 'name';
     private const METHOD = 'method';
@@ -43,6 +44,11 @@ class GroupService
             self::NAME => 'Bezahlt ohne Sitzplatz',
             self::METHOD => 'getGamer',
             self::FILTER => ['seat' => false],
+        ],
+        self::GROUP_CHECKED_IN => [
+            self::NAME => 'Eingecheckt',
+            self::METHOD => 'getCheckedIn',
+            self::FILTER => [],
         ],
         self::GROUP_ADMINS => [
             self::NAME => 'KLMS Admins',
@@ -115,6 +121,13 @@ class GroupService
         }
         $uuids = array_values($uuids);
         return $this->userRepo->findById($uuids);
+    }
+
+    private function getCheckedIn(array $filter): array
+    {
+        $uuids = $this->ticketService->queryUserUuids(TicketState::PUNCHED);
+
+        return $this->userRepo->findById(array_values($uuids));
     }
 
     private function getAdmin(array $filter): array

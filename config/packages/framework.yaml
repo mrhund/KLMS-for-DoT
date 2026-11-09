@@ -28,6 +28,10 @@ framework:
             policy: 'sliding_window'
             limit: 1
             interval: '5 minutes'
+        mailer:
+            policy: 'sliding_window'
+            limit: '%env(int:MAILER_RATE_LIMIT)%'
+            interval: '%env(MAILER_RATE_LIMIT_INTERVAL)%'
 
     http_client:
         scoped_clients:
@@ -35,6 +39,8 @@ framework:
                 base_uri: '%env(KLMS_IDM_URL)%'
                 auth_basic: '%env(KLMS_IDM_AUTH)%'
                 max_redirects: 0
+                timeout: 5
+                max_duration: 10
                 headers:
                     Accept: 'application/json'
                     X-API-KEY: '%env(KLMS_IDM_APIKEY)%'

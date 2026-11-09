@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Idm\Exception\PersistException;
 use App\Idm\IdmManager;
 use App\Idm\IdmRepository;
+use Ramsey\Uuid\Exception\InvalidUuidStringException;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\Form\AbstractType;
@@ -64,11 +65,11 @@ class UserSelectType extends AbstractType
 
         switch (true) {
             case $entity instanceof User:
-                $data[$entity->getUuid()->toString()] = $entity->getEmail();
+                $data[$entity->getUuid()->toString()] = $entity->getNickname() ?: $entity->getEmail();
                 break;
             case $entity instanceof UuidInterface:
                 $user = $this->userRepository->findOneById($entity);
-                $data[$entity->toString()] = $user->getEmail();
+                $data[$entity->toString()] = $user->getNickname() ?: $user->getEmail();
                 break;
             default:
                 throw new TransformationFailedException('Unknown type to convert');
@@ -83,10 +84,10 @@ class UserSelectType extends AbstractType
             return null;
         }
 
-        $value = $value instanceof UuidInterface ? $value : Uuid::fromString($value);
         try {
+            $value = $value instanceof UuidInterface ? $value : Uuid::fromString($value);
             return $this->userRepository->findOneById($value);
-        } catch (PersistException) {
+        } catch (PersistException|InvalidUuidStringException) {
             throw new TransformationFailedException('Unknown type to convert');
         }
     }
@@ -96,6 +97,11 @@ class UserSelectType extends AbstractType
         if (empty($value)) {
             return null;
         }
-        return $value instanceof UuidInterface ? $value : Uuid::fromString($value);
+
+        try {
+            return $value instanceof UuidInterface ? $value : Uuid::fromString($value);
+        } catch (InvalidUuidStringException) {
+            throw new TransformationFailedException('Unknown type to convert');
+        }
     }
 }

@@ -50,6 +50,7 @@ export default class extends Controller {
             fontsize_formats:'0.5rem 0.75rem 1rem 1.25rem 1.5rem 1.75rem 2rem',
             relative_urls: false,
             remove_script_host: false,
+            extended_valid_elements: 'script[src|async|defer|type|charset|id]',
 
             // image plugin
             image_list: '/admin/media/list.json?filter=image',
