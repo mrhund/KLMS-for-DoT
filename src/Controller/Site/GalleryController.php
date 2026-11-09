@@ -33,8 +33,13 @@ class GalleryController extends AbstractController
         // Get images for this event
         $images = $event->getGalleryImages()->toArray();
         
-        // Sort images by createdAt DESC
-        usort($images, fn($a, $b) => $b->getCreatedAt() <=> $a->getCreatedAt());
+        // Sort images by name (natural, case-insensitive)
+        usort($images, static function ($a, $b): int {
+            $nameA = $a->getImageName() ?? '';
+            $nameB = $b->getImageName() ?? '';
+
+            return strnatcasecmp($nameA, $nameB);
+        });
 
         return $this->render('site/gallery/event.html.twig', [
             'event' => $event,

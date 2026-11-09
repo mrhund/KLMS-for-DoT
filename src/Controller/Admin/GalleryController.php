@@ -16,6 +16,7 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -93,10 +94,27 @@ class GalleryController extends AbstractController
     public function bulkUpload(Request $request, GalleryService $galleryService): Response
     {
         if ($request->isMethod('POST')) {
-            $eventName = $request->request->get('event');
+            $contentLength = (int) $request->server->get('CONTENT_LENGTH', 0);
+            $maxPostSize = $this->parseIniSizeToBytes((string) ini_get('post_max_size'));
+
+            if ($maxPostSize > 0 && $contentLength > $maxPostSize) {
+                $maxPostSizeMb = round($maxPostSize / 1024 / 1024, 2);
+                return $this->json([
+                    'error' => "Upload zu groß. Die gesamte Anfrage überschreitet post_max_size ({$maxPostSizeMb} MB). Bitte weniger oder kleinere Dateien hochladen."
+                ], 413);
+            }
+
+            $eventName = trim((string) (
+                $request->request->get('event')
+                ?? $request->request->get('eventName')
+                ?? ''
+            ));
             $files = $request->files->get('images');
+            if ($files instanceof UploadedFile) {
+                $files = [$files];
+            }
             
-            if (!$eventName || trim($eventName) === '') {
+            if ($eventName === '') {
                 return $this->json(['error' => 'Event name is required'], 400);
             }
             
@@ -150,6 +168,31 @@ class GalleryController extends AbstractController
         return $this->render('admin/gallery/bulk-upload.html.twig', [
             'events' => $events
         ]);
+    }
+
+    private function parseIniSizeToBytes(string $size): int
+    {
+        $value = trim($size);
+        if ($value === '') {
+            return 0;
+        }
+
+        $unit = strtolower(substr($value, -1));
+        $number = (float) $value;
+
+        switch ($unit) {
+            case 'g':
+                $number *= 1024;
+                // no break
+            case 'm':
+                $number *= 1024;
+                // no break
+            case 'k':
+                $number *= 1024;
+                break;
+        }
+
+        return (int) $number;
     }
 
     #[Route('/edit/{uuid}', name: '_edit', methods: ['GET', 'POST'])]

@@ -166,8 +166,13 @@ class GalleryService
         foreach ($events as $event) {
             $images = $event->getGalleryImages()->toArray();
             if (!empty($images)) {
-                // Sort images by createdAt DESC
-                usort($images, fn($a, $b) => $b->getCreatedAt() <=> $a->getCreatedAt());
+                // Sort images by name (natural, case-insensitive)
+                usort($images, static function ($a, $b): int {
+                    $nameA = $a->getImageName() ?? '';
+                    $nameB = $b->getImageName() ?? '';
+
+                    return strnatcasecmp($nameA, $nameB);
+                });
                 $result[$event->getName()] = [
                     'event' => $event,
                     'images' => $images

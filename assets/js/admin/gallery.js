@@ -343,7 +343,7 @@ class GalleryBulkUpload {
         this.uploadFiles();
     }
 
-    uploadFiles() {
+    async uploadFiles() {
         if (this.selectedFiles.length === 0) {
             alert('Bitte wählen Sie mindestens eine Datei aus.');
             return;
@@ -365,29 +365,87 @@ class GalleryBulkUpload {
         this.uploadBtn.disabled = true;
         this.clearBtn.disabled = true;
 
-        const formData = new FormData();
-        formData.append('event', eventName);
-        
-        this.selectedFiles.forEach((file) => {
-            formData.append('images[]', file);
-        });
+        const maxBatchSizeBytes = 6 * 1024 * 1024;
+        const maxFilesPerBatch = 20;
+        const uploadBatches = this.createUploadBatches(this.selectedFiles, maxBatchSizeBytes, maxFilesPerBatch);
+        const totalBatches = uploadBatches.length;
 
-        // Show indeterminate progress
-        this.progressBar.classList.add('progress-bar-striped', 'progress-bar-animated');
-        this.progressBar.style.width = '100%';
-        this.progressText.textContent = `${this.selectedFiles.length} Bilder werden hochgeladen...`;
+        this.progressBar.classList.remove('progress-bar-animated');
+        this.progressBar.classList.add('progress-bar-striped');
+        this.progressBar.style.width = '0%';
+        this.progressText.textContent = `0 / ${this.selectedFiles.length} Bilder hochgeladen`;
 
         // Get upload URL from window object or form action
         const uploadUrl = window.galleryBulkUploadUrl || this.form.action;
 
-        // Start upload
-        fetch(uploadUrl, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => this.handleUploadResponse(data))
-        .catch(error => this.handleUploadError(error));
+        let totalUploaded = 0;
+        const allErrors = [];
+
+        try {
+            for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+                const batchFiles = uploadBatches[batchIndex];
+                const formData = new FormData();
+                formData.append('event', eventName);
+                batchFiles.forEach((file) => {
+                    formData.append('images[]', file);
+                });
+
+                this.progressText.textContent = `Batch ${batchIndex + 1} / ${totalBatches}: ${totalUploaded} / ${this.selectedFiles.length} Bilder hochgeladen`;
+
+                const response = await fetch(uploadUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const responseData = await response.json();
+                if (!response.ok || !responseData.success) {
+                    throw new Error(responseData.error || 'Upload fehlgeschlagen');
+                }
+
+                totalUploaded += Number(responseData.uploaded || 0);
+                if (Array.isArray(responseData.errors) && responseData.errors.length > 0) {
+                    allErrors.push(...responseData.errors);
+                }
+
+                const progressPercentage = Math.min(100, Math.round(((batchIndex + 1) / totalBatches) * 100));
+                this.progressBar.style.width = `${progressPercentage}%`;
+                this.progressText.textContent = `${totalUploaded} / ${this.selectedFiles.length} Bilder hochgeladen`;
+            }
+
+            this.handleUploadResponse({
+                success: true,
+                uploaded: totalUploaded,
+                errors: allErrors
+            });
+        } catch (error) {
+            this.handleUploadError(error);
+        }
+    }
+
+    createUploadBatches(files, maxBatchSizeBytes, maxFilesPerBatch) {
+        const batches = [];
+        let currentBatch = [];
+        let currentBatchSize = 0;
+
+        files.forEach((file) => {
+            const exceedsBatchSize = currentBatchSize + file.size > maxBatchSizeBytes;
+            const exceedsBatchCount = currentBatch.length >= maxFilesPerBatch;
+
+            if (currentBatch.length > 0 && (exceedsBatchSize || exceedsBatchCount)) {
+                batches.push(currentBatch);
+                currentBatch = [];
+                currentBatchSize = 0;
+            }
+
+            currentBatch.push(file);
+            currentBatchSize += file.size;
+        });
+
+        if (currentBatch.length > 0) {
+            batches.push(currentBatch);
+        }
+
+        return batches;
     }
 
     handleUploadResponse(data) {
@@ -442,11 +500,12 @@ class GalleryBulkUpload {
 
     handleUploadError(error) {
         console.error('Upload error:', error);
+        this.uploadProgress.style.display = 'none';
         
         this.uploadResults.innerHTML = `
             <div class="alert alert-danger">
                 <i class="fas fa-times-circle me-2"></i>
-                <strong>Fehler:</strong> Upload fehlgeschlagen
+                <strong>Fehler:</strong> ${error?.message || 'Upload fehlgeschlagen'}
             </div>
         `;
         this.uploadResults.style.display = 'block';
