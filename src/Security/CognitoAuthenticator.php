@@ -102,6 +102,7 @@ final class CognitoAuthenticator extends AbstractAuthenticator implements Authen
             ->setNickname($nickname)
             ->setFirstname($givenName)
             ->setSurname($familyName)
+            ->setBirthdate($this->parseBirthdate($claims['birthdate'] ?? null))
             ->setPersonalDataConfirmed(false)
             ->setPersonalDataLocked(false)
             ->setIsSuperadmin(false)
@@ -124,6 +125,22 @@ final class CognitoAuthenticator extends AbstractAuthenticator implements Authen
         }
 
         return $nickname;
+    }
+
+    private function parseBirthdate(mixed $value): ?\DateTime
+    {
+        if (!is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        foreach (['!Y-m-d', '!m/d/Y'] as $format) {
+            $date = \DateTime::createFromFormat($format, trim($value));
+            if ($date !== false && \DateTime::getLastErrors() === false) {
+                return $date;
+            }
+        }
+
+        return null;
     }
 
     public function onAuthenticationSuccess(Request $request, \Symfony\Component\Security\Core\Authentication\Token\TokenInterface $token, string $firewallName): ?Response
