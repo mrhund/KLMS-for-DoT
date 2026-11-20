@@ -59,15 +59,12 @@ SITE_BASE_SCHEME=https
 SITE_BASE_HOST=<your_url>:<your_port>
 ```
 
-The Cognito hosted UI owns registration and password flows. The remaining optional configuration enables email sending and Recaptcha for other forms.
+The Cognito hosted UI owns registration and password flows. The remaining optional configuration enables email sending for KLMS.
 ```
 MAILER_DSN=smtp://<user>:<passwd>@<mailserver>:587
 MAILER_DEFAULT_SENDER_NAME='<name of your event>'
 MAILER_DEFAULT_SENDER_EMAIL=noreply@<yourdomain.com>
 
-RECAPTCHA3_SECRET=<your-recaptcha-v3-secret>
-RECAPTCHA3_KEY=<your-recaptcha-v3-site-key>
-RECAPTCHA3_ENABLED=1
 ```
 
 To set up the required third party libraries go to the project directory and run
