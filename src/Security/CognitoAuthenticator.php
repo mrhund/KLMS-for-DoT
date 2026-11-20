@@ -6,6 +6,7 @@ use App\Entity\UserIdentity;
 use App\Repository\UserIdentityRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,6 +31,7 @@ final class CognitoAuthenticator extends AbstractAuthenticator implements Authen
         private readonly UserIdentityRepository $identityRepository,
         private readonly EntityManagerInterface $em,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -84,6 +86,14 @@ final class CognitoAuthenticator extends AbstractAuthenticator implements Authen
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
+        $this->logger->warning('Cognito authentication failed.', [
+            'exception_class' => $exception::class,
+            'reason' => $exception->getMessage(),
+            'previous_class' => $exception->getPrevious() ? $exception->getPrevious()::class : null,
+            'previous_reason' => $exception->getPrevious()?->getMessage(),
+            'cognito_error' => $request->query->get('error'),
+        ]);
+
         $request->getSession()->set(
             \Symfony\Component\Security\Http\SecurityRequestAttributes::AUTHENTICATION_ERROR,
             $exception,
