@@ -3,6 +3,7 @@
 namespace App\Security;
 
 use App\Entity\UserIdentity;
+use App\Entity\User;
 use App\Repository\UserIdentityRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -52,13 +53,14 @@ final class CognitoAuthenticator extends AbstractAuthenticator implements Authen
         } else {
             $username = $claims['cognito:username'];
             if (!Uuid::isValid($username)) {
-                throw new BadCredentialsException('Cognito username is not a KLMS user UUID.');
+                $user = $this->provisionUser($claims);
+            } else {
+                $user = $this->userRepository->findOneByUuid($username);
+                if ($user === null) {
+                    $user = $this->provisionUser($claims, Uuid::fromString($username));
+                }
             }
 
-            $user = $this->userRepository->findOneByUuid($username);
-            if ($user === null) {
-                throw new BadCredentialsException('No imported KLMS profile exists for this Cognito user.');
-            }
             if (($claims['email_verified'] ?? false) !== true
                 || !is_string($claims['email'] ?? null)
                 || strcasecmp($claims['email'], (string) $user->getEmail()) !== 0) {
@@ -71,6 +73,57 @@ final class CognitoAuthenticator extends AbstractAuthenticator implements Authen
         }
 
         return new SelfValidatingPassport(new UserBadge($user->getUuid()->toString()));
+    }
+
+    private function provisionUser(array $claims, ?\Ramsey\Uuid\UuidInterface $uuid = null): User
+    {
+        $email = is_string($claims['email'] ?? null) ? strtolower(trim($claims['email'])) : '';
+        if (($claims['email_verified'] ?? false) !== true || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new BadCredentialsException('Cognito did not provide a verified email for user provisioning.');
+        }
+        if ($this->userRepository->findOneByEmailInsensitive($email) !== null) {
+            throw new BadCredentialsException('Cognito account email is already linked to another KLMS profile.');
+        }
+
+        $uuid ??= Uuid::uuid4();
+        $nickname = $this->uniqueNickname(
+            $claims['preferred_username'] ?? $claims['nickname'] ?? strstr($email, '@', true) ?: 'user-'.$uuid->toString(),
+        );
+        $name = is_string($claims['name'] ?? null) ? trim($claims['name']) : '';
+        $givenName = is_string($claims['given_name'] ?? null) ? trim($claims['given_name']) : $name;
+        $familyName = is_string($claims['family_name'] ?? null) ? trim($claims['family_name']) : '';
+        $now = new \DateTime();
+
+        $user = (new User())
+            ->setUuid($uuid)
+            ->setEmail($email)
+            ->setEmailConfirmed(true)
+            ->setInfoMails(false)
+            ->setNickname($nickname)
+            ->setFirstname($givenName)
+            ->setSurname($familyName)
+            ->setPersonalDataConfirmed(false)
+            ->setPersonalDataLocked(false)
+            ->setIsSuperadmin(false)
+            ->setRegisteredAt($now)
+            ->setModifiedAt($now);
+        $this->em->persist($user);
+
+        return $user;
+    }
+
+    private function uniqueNickname(mixed $candidate): string
+    {
+        $base = is_string($candidate) ? trim($candidate) : '';
+        $base = trim($base) !== '' ? mb_substr($base, 0, 64) : 'user';
+        $nickname = $base;
+        $counter = 2;
+        while ($this->userRepository->findOneByNicknameInsensitive($nickname) !== null) {
+            $suffix = '-'.$counter++;
+            $nickname = mb_substr($base, 0, 64 - strlen($suffix)).$suffix;
+        }
+
+        return $nickname;
     }
 
     public function onAuthenticationSuccess(Request $request, \Symfony\Component\Security\Core\Authentication\Token\TokenInterface $token, string $firewallName): ?Response

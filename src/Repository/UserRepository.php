@@ -56,6 +56,16 @@ class UserRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    public function findOneByNicknameInsensitive(string $nickname): ?User
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('LOWER(u.nickname) = :nickname')
+            ->setParameter('nickname', strtolower($nickname))
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     /**
      * @return User[]
      */
