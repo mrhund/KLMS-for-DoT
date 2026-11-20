@@ -49,7 +49,6 @@ final class CognitoAuthenticator extends AbstractAuthenticator implements Authen
         if ($identity !== null) {
             $identity->touch();
             $user = $identity->getUser();
-            $this->em->flush();
         } else {
             $username = $claims['cognito:username'];
             if (!Uuid::isValid($username)) {
@@ -69,8 +68,16 @@ final class CognitoAuthenticator extends AbstractAuthenticator implements Authen
 
             $identity = new UserIdentity($user, $claims['iss'], $claims['sub']);
             $this->em->persist($identity);
-            $this->em->flush();
         }
+
+        if ($user->getBirthdate() === null
+            && !$user->getPersonalDataConfirmed()
+            && !$user->getPersonalDataLocked()
+            && ($birthdate = $this->parseBirthdate($claims['birthdate'] ?? null)) !== null) {
+            $user->setBirthdate($birthdate);
+            $user->setModifiedAt(new \DateTime());
+        }
+        $this->em->flush();
 
         return new SelfValidatingPassport(new UserBadge($user->getUuid()->toString()));
     }
