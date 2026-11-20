@@ -106,7 +106,7 @@ class TourneyTeam
         return count($this->getMembers());
     }
 
-    public static function createTeamWithUser(UuidInterface $user, string $name = null): self
+    public static function createTeamWithUser(UuidInterface $user, ?string $name = null): self
     {
         return (new self())->setName($name)->addMember((new TourneyTeamMember())->setGamer($user)->setAccepted(true));
     }

@@ -8,12 +8,9 @@ use App\Entity\NewsComment;
 use App\Form\NewsCommentType;
 use App\Service\NewsCommentService;
 use App\Service\NewsService;
+use App\Service\RssFeedRenderer;
 use App\Service\SettingService;
 use App\Service\UserService;
-use DateTime;
-use Eko\FeedBundle\Feed\FeedManager;
-use Eko\FeedBundle\Field\Item\MediaItemField;
-use Eko\FeedBundle\Item\Writer\ItemInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,7 +25,7 @@ class NewsController extends AbstractController
 
     private readonly NewsService $newsService;
     private readonly UserService $userService;
-    private readonly FeedManager $feedManager;
+    private readonly RssFeedRenderer $feedRenderer;
     private readonly RouterInterface $router;
     private readonly UploaderHelper $vich;
     private readonly SettingService $settings;
@@ -39,11 +36,11 @@ class NewsController extends AbstractController
     /**
      * NewsController constructor.
      */
-    public function __construct(NewsService $newsService, UserService $userService, FeedManager $feedManager, RouterInterface $router, UploaderHelper $vich, SettingService $settings, NewsCommentService $commentService)
+    public function __construct(NewsService $newsService, UserService $userService, RssFeedRenderer $feedRenderer, RouterInterface $router, UploaderHelper $vich, SettingService $settings, NewsCommentService $commentService)
     {
         $this->newsService = $newsService;
         $this->userService = $userService;
-        $this->feedManager = $feedManager;
+        $this->feedRenderer = $feedRenderer;
         $this->router = $router;
         $this->vich = $vich;
         $this->settings = $settings;
@@ -138,26 +135,33 @@ class NewsController extends AbstractController
     {
         $news = $this->newsService->get();
         $news = array_map(fn($n) => $this->toFeedElement($request->getSchemeAndHttpHost(), $n), $news);
-        $feed = $this->feedManager->get('news');
-        $feed->addFromArray($news);
-        $feed->addItemField(new MediaItemField('getFeedItemImage'));
-        $feed->set('description', "News von {$this->settings->get('site.organisation')}");
-        return new Response($feed->render('rss'), 200, ['Content-Type' => 'application/rss+xml']);
+        $feed = $this->feedRenderer->render(
+            'News',
+            "News von {$this->settings->get('site.organisation')}",
+            $this->router->generate('news', [], RouterInterface::ABSOLUTE_URL),
+            $news
+        );
+        return new Response($feed, 200, ['Content-Type' => 'application/rss+xml']);
     }
 
-    private function toFeedElement(string $host, News $news): ItemInterface
+    private function toFeedElement(string $host, News $news): array
     {
         $url = $host . $this->router->generate('news_detail', ['id' => $news->getId()], RouterInterface::ABSOLUTE_PATH);
-        if (null !== $img_url = $this->vich->asset($news)){
-            $img_url = $host . $img_url;
+        $imageUrl = $this->vich->asset($news);
+        $enclosure = null;
+        if ($imageUrl !== null) {
+            $image = $news->getImage();
+            if ($image->getMimeType() === null || $image->getSize() === null) {
+                throw new \InvalidArgumentException('News feed image must have a MIME type and size.');
+            }
+            $enclosure = ['url' => $host . $imageUrl, 'type' => $image->getMimeType(), 'length' => $image->getSize()];
         }
-        return new class ($news, $url,  $img_url) implements ItemInterface {
-            public function __construct(private readonly News $news, private readonly string $url, private readonly ?string $img_url){}
-            public function getFeedItemTitle(): string { return $this->news->getTitle() ?? ""; }
-            public function getFeedItemDescription(): string { return $this->news->getContent() ?? ""; }
-            public function getFeedItemPubDate(): DateTime { return DateTime::createFromInterface($this->news->activeSince()); }
-            public function getFeedItemLink(): string { return $this->url; }
-            public function getFeedItemImage(): array { return empty($this->img_url) ? [] : ['type' => $this->news->getImage()->getMimeType(), 'length' => $this->news->getImage()->getSize(), 'value' => $this->img_url]; }
-        };
+        return [
+            'title' => $news->getTitle() ?? '',
+            'description' => $news->getContent() ?? '',
+            'link' => $url,
+            'date' => $news->activeSince(),
+            'enclosure' => $enclosure,
+        ];
     }
 }

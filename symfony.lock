@@ -47,18 +47,6 @@
             "./migrations/.gitignore"
         ]
     },
-    "eko/feedbundle": {
-        "version": "2.2",
-        "recipe": {
-            "repo": "github.com/symfony/recipes-contrib",
-            "branch": "main",
-            "version": "1.2",
-            "ref": "18200f71f86a12023fcd952546dad61850806c22"
-        },
-        "files": [
-            "./config/packages/eko_feed.yaml"
-        ]
-    },
     "endroid/qr-code-bundle": {
         "version": "6.1.0"
     },
