@@ -14,6 +14,7 @@ use Ramsey\Uuid\UuidInterface;
 class TicketService
 {
     private readonly TicketRepository $ticketRepository;
+    private readonly UserRepository $userRepo;
     private EntityManagerInterface $em;
 
     public const CODE_REGEX = '^([0-9A-Za-z]{5}-?){2}[0-9A-Za-z]{5}$';
