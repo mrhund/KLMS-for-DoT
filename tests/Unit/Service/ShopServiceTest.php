@@ -3,7 +3,7 @@
 namespace App\Tests\Unit\Service;
 
 use App\Entity\ShopOrder;
-use App\Idm\IdmManager;
+use App\Repository\UserRepository;
 use App\Repository\ShopAddonsRepository;
 use App\Repository\ShopOrderPositionRepository;
 use App\Repository\ShopOrderRepository;
@@ -14,7 +14,6 @@ use App\Service\TicketService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Symfony\Component\HttpClient\MockHttpClient;
 
 class ShopServiceTest extends TestCase
 {
@@ -43,13 +42,11 @@ class ShopServiceTest extends TestCase
 
     private function service(EntityManagerInterface $entityManager): ShopService
     {
-        $idmManager = new IdmManager(new MockHttpClient(), new NullLogger());
-
         return new ShopService(
             $this->createStub(ShopOrderRepository::class),
             $this->createStub(ShopOrderPositionRepository::class),
             $this->createStub(ShopAddonsRepository::class),
-            $idmManager,
+            $this->createStub(UserRepository::class),
             $this->createStub(SettingService::class),
             $this->createStub(TicketService::class),
             $this->createStub(EmailService::class),

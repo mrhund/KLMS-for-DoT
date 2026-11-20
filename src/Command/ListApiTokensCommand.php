@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Entity\User;
-use App\Idm\IdmManager;
+use App\Repository\UserRepository;
 use App\Service\ApiTokenService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -16,7 +16,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class ListApiTokensCommand extends Command
 {
     public function __construct(
-        private readonly IdmManager $idmManager,
+        private readonly UserRepository $userRepository,
         private readonly ApiTokenService $apiTokenService,
     ) {
         parent::__construct();
@@ -24,7 +24,7 @@ class ListApiTokensCommand extends Command
 
     protected function configure(): void
     {
-        $this->addArgument('email', InputArgument::OPTIONAL, 'Only list tokens belonging to this IDM user');
+        $this->addArgument('email', InputArgument::OPTIONAL, 'Only list tokens belonging to this user');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -33,9 +33,9 @@ class ListApiTokensCommand extends Command
         $userUuid = null;
         $email = $input->getArgument('email');
         if (null !== $email) {
-            $user = $this->idmManager->getRepository(User::class)->findOneCiBy(['email' => (string) $email]);
+            $user = $this->userRepository->findOneByEmailInsensitive((string) $email);
             if (!$user instanceof User || null === $user->getUuid()) {
-                $io->error(sprintf('No IDM user found for "%s".', $email));
+                $io->error(sprintf('No user found for "%s".', $email));
 
                 return Command::FAILURE;
             }

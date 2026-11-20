@@ -3,8 +3,7 @@
 namespace App\Controller\API;
 
 use App\Entity\Clan;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\ClanRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,11 +13,11 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route(path: '/clans', name: 'clans')]
 class ClanController extends AbstractController
 {
-    private readonly IdmRepository $clanRepo;
+    private readonly ClanRepository $clanRepo;
 
-    public function __construct(IdmManager $manager)
+    public function __construct(ClanRepository $clanRepo)
     {
-        $this->clanRepo = $manager->getRepository(Clan::class);
+        $this->clanRepo = $clanRepo;
     }
 
     /**
@@ -31,12 +30,11 @@ class ClanController extends AbstractController
         $limit = $request->query->getInt('limit', 10);
         $page = $request->query->getInt('page', 1);
 
-        $lazyLoadingCollection = $this->clanRepo->findFuzzy($search);
-        $items = $lazyLoadingCollection->getPage($page, $limit);
+        $items = $this->clanRepo->search($search, $limit, ($page - 1) * $limit);
 
         $result = [];
         $result['count'] = is_countable($items) ? count($items) : 0;
-        $result['total'] = $lazyLoadingCollection->count();
+        $result['total'] = $this->clanRepo->countSearch($search);
         // TODO this is hacky, but required for front-end JS a.t.m.?
         $result['items'] = array_map(fn (Clan $clan) => [
             'uuid' => $clan->getUuid(),

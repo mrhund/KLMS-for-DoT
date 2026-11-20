@@ -3,9 +3,7 @@
 namespace App\Form;
 
 use App\Entity\User;
-use App\Idm\Exception\PersistException;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use Ramsey\Uuid\Exception\InvalidUuidStringException;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -19,11 +17,11 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class UserSelectType extends AbstractType
 {
-    private readonly IdmRepository $userRepository;
+    private readonly UserRepository $userRepository;
 
-    public function __construct(IdmManager $manager)
+    public function __construct(UserRepository $userRepository)
     {
-        $this->userRepository = $manager->getRepository(User::class);
+        $this->userRepository = $userRepository;
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -68,7 +66,10 @@ class UserSelectType extends AbstractType
                 $data[$entity->getUuid()->toString()] = $entity->getNickname() ?: $entity->getEmail();
                 break;
             case $entity instanceof UuidInterface:
-                $user = $this->userRepository->findOneById($entity);
+                $user = $this->userRepository->findOneByUuid($entity);
+                if (!$user) {
+                    throw new TransformationFailedException('Unknown user');
+                }
                 $data[$entity->toString()] = $user->getNickname() ?: $user->getEmail();
                 break;
             default:
@@ -86,8 +87,8 @@ class UserSelectType extends AbstractType
 
         try {
             $value = $value instanceof UuidInterface ? $value : Uuid::fromString($value);
-            return $this->userRepository->findOneById($value);
-        } catch (PersistException|InvalidUuidStringException) {
+            return $this->userRepository->findOneByUuid($value);
+        } catch (InvalidUuidStringException) {
             throw new TransformationFailedException('Unknown type to convert');
         }
     }

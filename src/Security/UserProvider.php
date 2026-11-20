@@ -3,24 +3,22 @@
 namespace App\Security;
 
 use App\Entity\User;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Service\PermissionService;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
+use Ramsey\Uuid\Uuid;
 
 class UserProvider implements UserProviderInterface
 {
-    private readonly IdmRepository $userRepo;
     private readonly PermissionService $permissionService;
 
     public function __construct(
-        IdmManager $manager,
+        private readonly UserRepository $userRepo,
         PermissionService $permissionService,
     ) {
-        $this->userRepo = $manager->getRepository(User::class);
         $this->permissionService = $permissionService;
     }
 
@@ -52,11 +50,9 @@ class UserProvider implements UserProviderInterface
      */
     public function loadUserByIdentifier(string $identifier): UserInterface
     {
-        if (!filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
-            throw new UserNotFoundException();
-        }
-
-        $user = $this->userRepo->findOneCiBy(['email' => $identifier]);
+        $user = Uuid::isValid($identifier)
+            ? $this->userRepo->findOneByUuid($identifier)
+            : $this->userRepo->findOneByEmailInsensitive($identifier);
         if (empty($user)) {
             throw new UserNotFoundException();
         }
@@ -77,7 +73,12 @@ class UserProvider implements UserProviderInterface
             throw new UnsupportedUserException(sprintf('Invalid user class "%s".', $user::class));
         }
 
-        $lu = new LoginUser($this->userRepo->findOneById($user->getUser()->getUuid()));
+        $refreshed = $this->userRepo->findOneByUuid($user->getUser()->getUuid());
+        if (!$refreshed instanceof User) {
+            throw new UserNotFoundException();
+        }
+
+        $lu = new LoginUser($refreshed);
         $this->loadUserRoles($lu);
         $this->loadAdminRoles($lu);
 

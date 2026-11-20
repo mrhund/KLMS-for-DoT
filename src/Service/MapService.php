@@ -3,8 +3,7 @@
 namespace App\Service;
 
 use App\Entity\User;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\ValueObject\GeoPoint;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -12,19 +11,16 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 class MapService
 {
-    // reduces the number of serial IDM requests when enumerating all users for the map
-    private const IDM_PAGE_SIZE = 1000;
-
-    private readonly IdmRepository $userRepository;
+    private readonly UserRepository $userRepository;
 
     public function __construct(
-        IdmManager $manager,
+        UserRepository $userRepository,
         private readonly GeocodingService $geocodingService,
         private readonly SettingService $settings,
         private readonly GeoDataCacheService $geoDataCacheService,
         #[Autowire(service: 'cache.app')] private readonly CacheInterface $cache,
     ) {
-        $this->userRepository = $manager->getRepository(User::class);
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -78,7 +74,7 @@ class MapService
 
         // findAll() defaults to 10 users per request; a larger page size means fewer requests
         // to enumerate everyone, since every user is looked at here anyway (not just one page)
-        foreach ($this->userRepository->findAll(self::IDM_PAGE_SIZE) as $user) {
+        foreach ($this->userRepository->findAll() as $user) {
             if (!$user instanceof User) {
                 continue;
             }

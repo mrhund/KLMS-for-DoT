@@ -7,8 +7,7 @@ use App\Entity\Ticket;
 use App\Entity\User;
 use App\Exception\TicketLifecycleException;
 use App\Form\UserSelectType;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Repository\TicketRepository;
 use App\Service\SeatmapService;
 use App\Service\TicketService;
@@ -39,21 +38,21 @@ class PaymentController extends AbstractController
     private readonly TicketService $ticketService;
     private readonly UserService $userService;
     private readonly SeatmapService $seatmapService;
-    private readonly IdmRepository $userRepo;
+    private readonly UserRepository $userRepo;
     private readonly TicketRepository $ticketRepository;
     private readonly FormFactoryInterface $formFactory;
 
     public function __construct(TicketService $ticketService,
                                 UserService   $userService,
                                 SeatmapService $seatmapService,
-                                IdmManager $idmManager,
+                                UserRepository $userRepo,
                                 TicketRepository $ticketRepository,
                                 FormFactoryInterface $formFactory)
     {
         $this->ticketService = $ticketService;
         $this->userService = $userService;
         $this->seatmapService = $seatmapService;
-        $this->userRepo = $idmManager->getRepository(User::class);
+        $this->userRepo = $userRepo;
         $this->ticketRepository = $ticketRepository;
         $this->formFactory = $formFactory;
     }
@@ -179,7 +178,7 @@ class PaymentController extends AbstractController
         }
 
         if (!$ticket && $query !== '' && $searchResults === []) {
-            $users = $this->userRepo->findFuzzy($query)->getPage(1, 10);
+            $users = $this->userRepo->search($query, 10);
             foreach ($users as $user) {
                 $userTicket = $this->ticketService->getTicketUser($user);
                 if ($userTicket) {
@@ -246,7 +245,7 @@ class PaymentController extends AbstractController
             $comment = trim((string) ($registerForm->getData()['comment'] ?? ''));
             // 'user' is only a UUID here (hydrate: false, see UserSelectType) - resolve and confirm the user actually exists
             $userUuid = $registerForm->getData()['user'];
-            $user = $userUuid ? $this->userRepo->findOneById($userUuid) : null;
+            $user = $userUuid ? $this->userRepo->findOneByUuid($userUuid) : null;
             if (empty($user)) {
                 $this->addFlash('error', 'Ungültigen User ausgewählt.');
             } elseif ($this->ticketService->isUserRegistered($user)) {
@@ -302,7 +301,7 @@ class PaymentController extends AbstractController
                     case self::clickedIfExists($form, 'assign'):
                         // 'user' is only a UUID here (hydrate: false, see UserSelectType) - resolve and confirm the user actually exists
                         $userUuid = $form->get('user')->getData();
-                        $user = $userUuid ? $this->userRepo->findOneById($userUuid) : null;
+                        $user = $userUuid ? $this->userRepo->findOneByUuid($userUuid) : null;
                         if (empty($user)) {
                             $error = "Keinen User ausgewählt.";
                         } elseif ($this->ticketService->isUserRegistered($user)) {

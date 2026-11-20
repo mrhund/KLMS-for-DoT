@@ -32,7 +32,7 @@ class LoginUser implements UserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string) $this->user->getEmail();
+        return (string) $this->user->getUuid();
     }
 
     /**

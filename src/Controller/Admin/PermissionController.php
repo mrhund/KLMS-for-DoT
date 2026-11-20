@@ -5,8 +5,7 @@ namespace App\Controller\Admin;
 use App\Controller\BaseController;
 use App\Entity\User;
 use App\Form\PermissionType;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Service\PermissionService;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Form\FormError;
@@ -22,14 +21,14 @@ use Symfony\Component\Serializer\SerializerInterface;
 class PermissionController extends BaseController
 {
     private readonly PermissionService $permissionService;
-    private readonly IdmRepository $userRepo;
+    private readonly UserRepository $userRepo;
     private readonly FormFactoryInterface $formFactory;
 
-    public function __construct(PermissionService $permissionService, IdmManager $manager, FormFactoryInterface $formFactory, SerializerInterface $serializer)
+    public function __construct(PermissionService $permissionService, UserRepository $userRepo, FormFactoryInterface $formFactory, SerializerInterface $serializer)
     {
         parent::__construct($serializer);
         $this->permissionService = $permissionService;
-        $this->userRepo = $manager->getRepository(User::class);
+        $this->userRepo = $userRepo;
         $this->formFactory = $formFactory;
     }
 
@@ -85,7 +84,7 @@ class PermissionController extends BaseController
     #[Route(path: '/{id}', name: '_get', methods: ['GET'])]
     public function getPermission($id): Response
     {
-        $user = $this->userRepo->findOneById($id);
+        $user = $this->userRepo->findOneByUuid($id);
         if (empty($user)) {
             return $this->apiResponse([], false, 404);
         }
@@ -98,7 +97,7 @@ class PermissionController extends BaseController
     #[Route(path: '/{id}', name: '_edit', methods: ['POST'])]
     public function updatePermission(Request $request, $id): Response
     {
-        $user = $this->userRepo->findOneById($id);
+        $user = $this->userRepo->findOneByUuid($id);
 
         if (empty($user)) {
             return $this->apiResponse([], false, 404);

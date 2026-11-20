@@ -140,6 +140,6 @@ class ShopFixture extends Fixture implements DependentFixtureInterface
 
     public function getDependencies(): array
     {
-        return [SettingsFixture::class];
+        return [SettingsFixture::class, UserFixtures::class];
     }
 }

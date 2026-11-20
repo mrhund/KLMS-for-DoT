@@ -3,9 +3,7 @@
 namespace App\Form;
 
 use App\Entity\Clan;
-use App\Idm\Exception\PersistException;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\ClanRepository;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\Form\AbstractType;
@@ -18,11 +16,11 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class ClanSelectType extends AbstractType
 {
-    private readonly IdmRepository $clanRepository;
+    private readonly ClanRepository $clanRepository;
 
-    public function __construct(IdmManager $manager)
+    public function __construct(ClanRepository $clanRepository)
     {
-        $this->clanRepository = $manager->getRepository(Clan::class);
+        $this->clanRepository = $clanRepository;
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -67,7 +65,10 @@ class ClanSelectType extends AbstractType
                 $data[$entity->getUuid()->toString()] = $entity->getName();
                 break;
             case $entity instanceof UuidInterface:
-                $clan = $this->clanRepository->findOneById($entity);
+                $clan = $this->clanRepository->findOneByUuid($entity);
+                if (!$clan) {
+                    throw new TransformationFailedException('Unknown clan');
+                }
                 $data[$entity->toString()] = $clan->getName();
                 break;
             default:
@@ -84,11 +85,7 @@ class ClanSelectType extends AbstractType
         }
 
         $value = $value instanceof UuidInterface ? $value : Uuid::fromString($value);
-        try {
-            return $this->clanRepository->findOneById($value);
-        } catch (PersistException) {
-            throw new TransformationFailedException('Unknown type to convert');
-        }
+        return $this->clanRepository->findOneByUuid($value);
     }
 
     public function reverseTransformUuid($value): ?UuidInterface

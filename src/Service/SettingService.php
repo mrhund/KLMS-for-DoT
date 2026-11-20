@@ -45,7 +45,7 @@ class SettingService
         'sponsor.page.show_empty' => [self::TB_DESCRIPTION => 'Leere Sponsor Kategorien anzeigen', self::TB_TYPE => SettingType::Bool],
 
         'community.enabled' => [self::TB_DESCRIPTION => 'Community Sektion einschalten', self::TB_TYPE => SettingType::Bool],
-        'community.all' => [self::TB_DESCRIPTION => 'Alle IDM User in Community anzeigen', self::TB_TYPE => SettingType::Bool],
+        'community.all' => [self::TB_DESCRIPTION => 'Alle lokalen User in Community anzeigen', self::TB_TYPE => SettingType::Bool],
 
         'booking.enabled' => [self::TB_DESCRIPTION => 'Buchungssystem einschalten', self::TB_TYPE => SettingType::Bool],
         'booking.registration_require_checkin' => [self::TB_DESCRIPTION => 'Buchung nur mit Check-in erlauben', self::TB_TYPE => SettingType::Bool, self::TB_DEFAULT_VALUE => true],
@@ -91,11 +91,6 @@ class SettingService
         'style.logo_email' => [self::TB_DESCRIPTION => 'Abweichendes Logo für Mailversand verwenden?', self::TB_TYPE => SettingType::File],
         'style.bg_image' => [self::TB_DESCRIPTION => 'Hintergrundbild', self::TB_TYPE => SettingType::File],
 
-        'email.register.subject' => [self::TB_DESCRIPTION => 'Betreff der Registrierungsmail', self::TB_TYPE => SettingType::String],
-        'email.register.text' => [self::TB_DESCRIPTION => 'Text der Registrierungsmail', self::TB_TYPE => SettingType::HTML],
-        'email.reset.subject' => [self::TB_DESCRIPTION => 'Betreff der Passwort-Zurücksetzen Email', self::TB_TYPE => SettingType::String],
-        'email.reset.text' => [self::TB_DESCRIPTION => 'Text der Passwort-Zurücksetzen Email', self::TB_TYPE => SettingType::HTML],
-        'email.notify.subject' => [self::TB_DESCRIPTION => 'Betreff der Benachrichtigungs-Email', self::TB_TYPE => SettingType::String],
         'email.shop.text' => [self::TB_DESCRIPTION => 'Text der Bestellungsemail', self::TB_TYPE => SettingType::HTML],
         'email.shop.subject' => [self::TB_DESCRIPTION => 'Text der Bestellungsemail', self::TB_TYPE => SettingType::String],
         'email.signature' => [self::TB_DESCRIPTION => 'Grußformel für die autmatischen Emails.', self::TB_TYPE => SettingType::HTML],

@@ -3,28 +3,27 @@
 namespace App\Controller\Site;
 
 use App\Entity\User;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Service\EmailService;
-use App\Service\TokenService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Doctrine\ORM\EntityManagerInterface;
 
 class EmailController extends AbstractController
 {
     private readonly EmailService $mailService;
-    private readonly TokenService $tokenService;
-    private readonly IdmManager $manager;
-    private readonly IdmRepository $userRepo;
+    private readonly UserRepository $userRepo;
 
-    public function __construct(EmailService $mailService, TokenService $tokenService, IdmManager $manager)
+    public function __construct(
+        EmailService $mailService,
+        UserRepository $userRepo,
+        private readonly EntityManagerInterface $em,
+    )
     {
         $this->mailService = $mailService;
-        $this->tokenService = $tokenService;
-        $this->manager = $manager;
-        $this->userRepo = $manager->getRepository(User::class);
+        $this->userRepo = $userRepo;
     }
 
     #[Route(path: '/unsubscribe', name: 'email_unsubscribe')]
@@ -40,14 +39,14 @@ class EmailController extends AbstractController
 
             return $this->redirectToRoute('news');
         }
-        $user = $this->userRepo->findOneById($uuid);
+        $user = $this->userRepo->findOneByUuid($uuid);
         if (empty($user)) {
             $this->addFlash('error', 'User nicht gefunden.');
 
             return $this->redirectToRoute('news');
         }
         $user->setInfoMails(false);
-        $this->manager->flush();
+        $this->em->flush();
         $this->addFlash('success', "Newsletter für {$user->getEmail()} wurde abbestellt.");
 
         return $this->redirectToRoute('app_login');

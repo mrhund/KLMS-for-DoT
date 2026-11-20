@@ -14,6 +14,12 @@
     <!-- Get your API key and secret from https://g.co/recaptcha/v3 -->
     <env name="RECAPTCHA3_KEY" value="my_site_key"/>
     <env name="RECAPTCHA3_SECRET" value="my_secret"/>
+    <env name="COGNITO_DOMAIN" value="https://cognito.example.test"/>
+    <env name="COGNITO_ISSUER" value="https://cognito-idp.example.test/test-pool"/>
+    <env name="COGNITO_CLIENT_ID" value="test-client"/>
+    <env name="COGNITO_CLIENT_SECRET" value=""/>
+    <env name="COGNITO_REDIRECT_URI" value="https://klms.example.test/auth/cognito/callback"/>
+    <env name="COGNITO_LOGOUT_URI" value="https://klms.example.test/"/>
     <!-- ###- karser/karser-recaptcha3-bundle ### -->
   </php>
   <testsuites>

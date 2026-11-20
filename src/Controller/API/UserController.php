@@ -3,8 +3,7 @@
 namespace App\Controller\API;
 
 use App\Entity\User;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Service\UserService;
 use App\Transfer\Error;
 use InvalidArgumentException;
@@ -18,12 +17,12 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route(path: '/users', name: 'users')]
 class UserController extends AbstractController
 {
-    private readonly IdmRepository $userRepo;
+    private readonly UserRepository $userRepo;
     private readonly UserService $userService;
 
-    public function __construct(IdmManager $manager, UserService $userService)
+    public function __construct(UserRepository $userRepo, UserService $userService)
     {
-        $this->userRepo = $manager->getRepository(User::class);
+        $this->userRepo = $userRepo;
         $this->userService = $userService;
     }
 
@@ -33,22 +32,14 @@ class UserController extends AbstractController
         $search = $request->query->get('q', '');
         $limit = $request->query->getInt('limit', 10);
         $page = $request->query->getInt('page', 1);
-        $sort = $request->query->all('sort');
-
-        try {
-            $lazyLoadingCollection = $this->userRepo->findFuzzy($search, $sort);
-        } catch (InvalidArgumentException) {
-            return new JsonResponse(Error::withMessage('Invalid sort parameter'), Response::HTTP_BAD_REQUEST);
-        }
-
-        $items = $lazyLoadingCollection->getPage($page, $limit);
+        $items = $this->userRepo->search($search, $limit, ($page - 1) * $limit);
 
         // Nur Admins dürfen sensible Daten (E-Mail, Vorname, Nachname) sehen
         $isAdmin = $this->isGranted('ROLE_ADMIN');
 
         $result = [];
         $result['count'] = count($items);
-        $result['total'] = $lazyLoadingCollection->count();
+        $result['total'] = $this->userRepo->countSearch($search);
         $result['items'] = array_map(fn (User $user) => $this->userService->user2Array($user, $isAdmin), $items);
 
         return new JsonResponse(json_encode($result, JSON_THROW_ON_ERROR), Response::HTTP_OK, [], true);

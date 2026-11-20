@@ -7,20 +7,17 @@ use App\Entity\User;
 use App\Entity\UserImage;
 use App\Form\UserType;
 use App\Helper\EmailRecipient;
-use App\Idm\Exception\PersistException;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Repository\UserImageRepository;
 use App\Service\EmailService;
 use App\Service\SettingService;
 use App\Service\TicketService;
 use App\Service\TicketState;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\DBAL\Exception as DBALException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\Extension\Core\Type\PasswordType;
-use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -29,16 +26,16 @@ class UserController extends AbstractController
 {
     use LoginUserTrait;
 
-    private readonly IdmManager $manager;
-    private readonly IdmRepository $userRepo;
     private readonly EmailService $emailService;
     private readonly SettingService $settingService;
     private readonly TicketService $ticketService;
     private readonly LoggerInterface $logger;
     private readonly EntityManagerInterface $entityManager;
     private readonly UserImageRepository $userImgRepo;
+    private readonly UserRepository $userRepo;
 
-    public function __construct(IdmManager $manager,
+    public function __construct(
+                                UserRepository $userRepo,
                                 EmailService $emailService,
                                 SettingService $settingService,
                                 TicketService $ticketService,
@@ -46,8 +43,7 @@ class UserController extends AbstractController
                                 EntityManagerInterface $entityManager,
                                 UserImageRepository $userImgRepo)
     {
-        $this->manager = $manager;
-        $this->userRepo = $manager->getRepository(User::class);
+        $this->userRepo = $userRepo;
         $this->emailService = $emailService;
         $this->settingService = $settingService;
         $this->ticketService = $ticketService;
@@ -71,12 +67,11 @@ class UserController extends AbstractController
         $page = max($page, 1);
 
         if ($this->settingService->get('community.all', false)) {
-            $collection = $this->userRepo->findFuzzy($search);
-            $users = $collection->getPage($page, self::SHOW_LIMIT);
-            $count = $collection->count();
+            $users = $this->userRepo->search($search, self::SHOW_LIMIT, ($page - 1) * self::SHOW_LIMIT);
+            $count = $this->userRepo->countSearch($search);
         } else {
             $uuids = $this->ticketService->queryUserUuids(TicketState::REDEEMED);
-            $users = $this->userRepo->findById($uuids);
+            $users = $this->userRepo->findByUuids($uuids);
             if (!empty($search)) {
                 $users = array_filter($users, fn (User $u) => stripos($u->getNickname(), (string) $search) !== false || stripos($u->getFirstname(), (string) $search) !== false);
             }
@@ -108,7 +103,7 @@ class UserController extends AbstractController
     #[Route(path: '/user/{uuid}', name: 'user_show', requirements: ['uuid' => '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'])]
     public function userShow(string $uuid): Response
     {
-        $user = $this->userRepo->findOneById($uuid);
+        $user = $this->userRepo->findOneByUuid($uuid);
 
         if ($this->isGranted('IS_AUTHENTICATED_REMEMBERED')
             && $user && $user === $this->getDomainUser()) {
@@ -117,57 +112,6 @@ class UserController extends AbstractController
 
         return $this->render('site/user/show.html.twig', [
             'user' => $user,
-        ]);
-    }
-
-    #[IsGranted('IS_AUTHENTICATED_REMEMBERED')]
-    #[Route(path: '/user/profile/edit/pw', name: 'user_profile_edit_pw')]
-    public function userProfileEditPw(Request $request): Response
-    {
-    $user = $this->requireDomainUser();
-
-        $form = $this->createFormBuilder($user)
-            ->add('oldPassword', PasswordType::class, [
-                'required' => true,
-                'mapped' => false,
-                'label' => 'Aktuelles Passwort',
-            ])
-            ->add('password', RepeatedType::class, [
-                'type' => PasswordType::class,
-                'invalid_message' => 'Das Passwort muss übereinstimmen.',
-                'required' => true,
-                'first_options' => ['label' => 'Neues Passwort'],
-                'second_options' => ['label' => 'Passwort wiederholen'],
-            ])
-            ->getForm()
-        ;
-
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $data = $form->get('oldPassword')->getData();
-            try {
-                if ($this->userRepo->authenticate($user->getEmail(), $data)) {
-                    $this->manager->flush();
-                    $this->addFlash('success', 'Passwort wurde geändert');
-                    $this->emailService->scheduleHook(
-                        EmailService::APP_HOOK_CHANGE_NOTIFICATION,
-                        EmailRecipient::fromUser($user), [
-                            'message' => 'Dein Passwort wurde geändert',
-                        ]
-                    );
-
-                    return $this->redirectToRoute('user_profile');
-                } else {
-                    $this->addFlash('error', 'Altes Passwort inkorrekt.');
-                }
-            } catch (PersistException) {
-                $this->addFlash('error', 'Passwort konnte nicht geändert werden');
-                $this->logger->error('PW change failed');
-            }
-        }
-
-        return $this->render('site/user/edit.pw.html.twig', [
-            'form' => $form->createView(),
         ]);
     }
 
@@ -188,8 +132,7 @@ class UserController extends AbstractController
             // TODO: add Support for changing the EMail
             $user = $form->getData();
             try {
-                $this->manager->persist($user);
-                $this->manager->flush();
+                $this->entityManager->flush();
 
                 if ($form->has('image')) {
                     $image = $form->get('image')->getData();
@@ -207,11 +150,9 @@ class UserController extends AbstractController
                 }
 
                 return $this->redirectToRoute('user_profile');
-            } catch (PersistException $e) {
-                match ($e->getCode()) {
-                    PersistException::REASON_NON_UNIQUE => $this->addFlash('error', 'Nickname und/oder Email gibt es schon.'),
-                    default => $this->addFlash('error', 'Unbekannter Fehler beim Speichern.'),
-                };
+            } catch (DBALException $e) {
+                $this->logger->error('User profile update failed.', ['exception' => $e]);
+                $this->addFlash('error', 'Benutzer konnte nicht gespeichert werden.');
             }
         }
 

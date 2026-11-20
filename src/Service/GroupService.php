@@ -4,9 +4,7 @@ namespace App\Service;
 
 use App\Entity\User;
 use App\Entity\UserAdmin;
-use App\Idm\IdmManager;
-use App\Idm\IdmPagedCollection;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Repository\UserAdminsRepository;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -27,12 +25,12 @@ class GroupService
     private const GROUP_SETTING = [
         self::GROUP_ALL => [
             self::NAME => 'Alle Benutzer',
-            self::METHOD => 'getIdm',
+            self::METHOD => 'getLocal',
             self::FILTER => [],
         ],
         self::GROUP_NEWSLETTER => [
             self::NAME => 'Newsletter',
-            self::METHOD => 'getIdm',
+            self::METHOD => 'getLocal',
             self::FILTER => ['infoMails' => true],
         ],
         self::GROUP_PAID => [
@@ -57,17 +55,16 @@ class GroupService
         ],
     ];
 
-    private readonly IdmRepository $userRepo;
     private readonly UserAdminsRepository $adminRepo;
     private readonly TicketService $ticketService;
     private readonly SeatmapService $seatmapService;
 
-    public function __construct(IdmManager $manager, TicketService $ticketService, SeatmapService $seatmapService, UserAdminsRepository $adminRepo)
+    public function __construct(UserRepository $userRepo, TicketService $ticketService, SeatmapService $seatmapService, UserAdminsRepository $adminRepo)
     {
         $this->adminRepo = $adminRepo;
         $this->ticketService = $ticketService;
         $this->seatmapService = $seatmapService;
-        $this->userRepo = $manager->getRepository(User::class);
+        $this->userRepo = $userRepo;
     }
 
     public static function getGroups(): array
@@ -92,8 +89,7 @@ class GroupService
         return self::GROUP_SETTING[$group][self::NAME] ?? '';
     }
 
-    // TODO once Collection Interface is done for IDM service, change this to Collection
-    public function query(UuidInterface|string $group): array | IdmPagedCollection
+    public function query(UuidInterface|string $group): array
     {
         $group = $group instanceof UuidInterface ? $group->toString() : $group;
         if (!self::groupExists($group)) {
@@ -120,14 +116,14 @@ class GroupService
             }
         }
         $uuids = array_values($uuids);
-        return $this->userRepo->findById($uuids);
+        return $this->userRepo->findByUuids($uuids);
     }
 
     private function getCheckedIn(array $filter): array
     {
         $uuids = $this->ticketService->queryUserUuids(TicketState::PUNCHED);
 
-        return $this->userRepo->findById(array_values($uuids));
+        return $this->userRepo->findByUuids(array_values($uuids));
     }
 
     private function getAdmin(array $filter): array
@@ -136,11 +132,11 @@ class GroupService
         $admins = array_filter($admins, fn (UserAdmin $a) => !empty($a->getPermissions()));
         $ids = array_map(fn (UserAdmin $a) => $a->getUuid(), $admins);
 
-        return $this->userRepo->findById($ids);
+        return $this->userRepo->findByUuids($ids);
     }
 
-    private function getIdm(array $filter): IdmPagedCollection
+    private function getLocal(array $filter): array
     {
-        return $this->userRepo->findBy($filter);
+        return $this->userRepo->findBy($filter, ['nickname' => 'ASC']);
     }
 }

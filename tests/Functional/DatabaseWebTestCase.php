@@ -2,7 +2,8 @@
 
 namespace App\Tests\Functional;
 
-use App\Tests\IdmServerMock;
+use App\Repository\UserRepository;
+use App\Security\UserProvider;
 use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
 use Liip\TestFixturesBundle\Services\DatabaseTools\AbstractDatabaseTool;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -15,8 +16,6 @@ abstract class DatabaseWebTestCase extends WebTestCase
 
     protected readonly KernelBrowser $client;
 
-    protected readonly IdmServerMock $mock;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -27,9 +26,6 @@ abstract class DatabaseWebTestCase extends WebTestCase
         // don't reboot the kernel after one request to avoid trashing of in-memory db
         $this->client->disableReboot();
         $this->databaseTool = static::getContainer()->get(DatabaseToolCollection::class)->get();
-        $mock = static::getContainer()->get(IdmServerMock::class);
-        $this->assertInstanceOf(IdmServerMock::class, $mock);
-        $this->mock = $mock;
     }
 
     protected function tearDown(): void
@@ -43,24 +39,23 @@ abstract class DatabaseWebTestCase extends WebTestCase
 
     protected function login(string $user): void
     {
-        $crawler = $this->client->request('GET', '/login');
-        $form = $crawler->filter('form')->selectButton('Anmelden')->form();
-        $form['username'] = $user;
-        $form['password'] = 'password';
-        $this->client->submit($form);
-        if ($this->client->getResponse()->isRedirect()) {
-            $this->client->followRedirect();
-        }
+        $repository = static::getContainer()->get(UserRepository::class);
+        $localUser = $repository->findOneByEmailInsensitive($user);
+        $this->assertNotNull($localUser);
+        $provider = static::getContainer()->get(UserProvider::class);
+        $this->client->loginUser($provider->loadUserByIdentifier($localUser->getUuid()->toString()), 'main');
+        $this->client->request('GET', '/');
         $this->assertResponseStatusCodeSame(200);
         $this->assertSelectorTextNotContains('#dropdownMenuUser', "Anmelden");
     }
 
     protected function logout(): void
     {
+        $this->client->followRedirects(false);
         $this->client->request('GET', '/logout');
-        if ($this->client->getResponse()->isRedirect()) {
-            $this->client->followRedirect();
-        }
+        $this->assertResponseRedirects();
+        $this->client->followRedirects();
+        $this->client->request('GET', '/');
         $this->assertResponseStatusCodeSame(200);
         $this->assertSelectorTextContains('#dropdownMenuUser', "Anmelden");
     }

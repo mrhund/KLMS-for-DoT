@@ -5,8 +5,8 @@ namespace App\Twig;
 use App\Entity\Clan;
 use App\Entity\Seat;
 use App\Entity\User;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\ClanRepository;
+use App\Repository\UserRepository;
 use App\Service\GroupService;
 use App\Service\SeatmapService;
 use App\Service\TicketService;
@@ -19,16 +19,16 @@ use Twig\TwigTest;
 
 class UserExtension extends AbstractExtension
 {
-    private readonly IdmRepository $userRepo;
-    private readonly IdmRepository $clanRepo;
+    private readonly UserRepository $userRepo;
+    private readonly ClanRepository $clanRepo;
     private readonly UserService $userService;
     private readonly SeatmapService $seatmapService;
     private readonly TicketService $ticketService;
 
-    public function __construct(IdmManager $manager, UserService $userService, SeatmapService $seatmapService, TicketService $ticketService)
+    public function __construct(UserRepository $userRepo, ClanRepository $clanRepo, UserService $userService, SeatmapService $seatmapService, TicketService $ticketService)
     {
-        $this->userRepo = $manager->getRepository(User::class);
-        $this->clanRepo = $manager->getRepository(Clan::class);
+        $this->userRepo = $userRepo;
+        $this->clanRepo = $clanRepo;
         $this->userService = $userService;
         $this->seatmapService = $seatmapService;
         $this->ticketService = $ticketService;
@@ -70,7 +70,7 @@ class UserExtension extends AbstractExtension
             return null;
         }
 
-        return $this->userRepo->findOneById($userId);
+        return $this->userRepo->findOneByUuid($userId);
     }
 
     public function getClan($clanId): ?Clan
@@ -79,7 +79,7 @@ class UserExtension extends AbstractExtension
             return null;
         }
 
-        return $this->clanRepo->findOneById($clanId);
+        return $this->clanRepo->findOneByUuid($clanId);
     }
 
     public function getUserName($userId): string

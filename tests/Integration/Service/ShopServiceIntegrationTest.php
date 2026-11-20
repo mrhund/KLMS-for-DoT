@@ -9,7 +9,7 @@ use App\Entity\ShopOrderPositionTicket;
 use App\Entity\ShopOrderStatus;
 use App\Entity\User;
 use App\Exception\OrderLifecycleException;
-use App\Idm\IdmManager;
+use App\Repository\UserRepository;
 use App\Service\SettingService;
 use App\Service\ShopService;
 use App\Service\TicketService;
@@ -21,9 +21,7 @@ class ShopServiceIntegrationTest extends DatabaseTestCase
 {
     private function getUser(int $id): ?User
     {
-        $manager = self::getContainer()->get(IdmManager::class);
-        $userRepo = $manager->getRepository(User::class);
-        return $userRepo->findOneById(Uuid::fromInteger($id));
+        return self::getContainer()->get(UserRepository::class)->findOneByUuid(Uuid::fromInteger($id));
     }
     public function testOrderPaid()
     {

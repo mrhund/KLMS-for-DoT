@@ -30,9 +30,6 @@ class EmailService
     private const BODY_TEMPLATE_PLACEHOLDER = '__KLMS_EMAIL_BODY_PLACEHOLDER_9f0d31f1__';
     private const UNSUBSCRIBE_TEMPLATE_PLACEHOLDER = 'UNSUBSCRIBE_URL_TOKEN_PLACEHOLDER';
 
-    final public const APP_HOOK_REGISTRATION_CONFIRM = 'REGISTRATION_CONFIRMATION';
-    final public const APP_HOOK_RESET_PW = 'PASSWORD_RESET';
-    final public const APP_HOOK_CHANGE_NOTIFICATION = 'CHANGE_NOTIFICATION';
     final public const APP_HOOK_ORDER = 'ORDER';
 
     final public const HOOK_TEMPLATE = 'template';
@@ -41,24 +38,6 @@ class EmailService
     final public const HOOK_CONTEXT = 'context';
 
     final public const HOOKS = [
-        self::APP_HOOK_REGISTRATION_CONFIRM => [
-            self::HOOK_SUBJECT => 'email.register.subject',
-            self::HOOK_SUBJECT_DEFAULT => 'Registrierung',
-            self::HOOK_TEMPLATE => '/email/hooks/registration.html.twig',
-            self::HOOK_CONTEXT => ['user', 'token'],
-        ],
-        self::APP_HOOK_RESET_PW => [
-            self::HOOK_SUBJECT => 'email.reset.subject',
-            self::HOOK_SUBJECT_DEFAULT => 'Passwort zurücksetzen',
-            self::HOOK_TEMPLATE => '/email/hooks/reset.html.twig',
-            self::HOOK_CONTEXT => ['user', 'token'],
-        ],
-        self::APP_HOOK_CHANGE_NOTIFICATION => [
-            self::HOOK_SUBJECT => 'email.notify.subject',
-            self::HOOK_SUBJECT_DEFAULT => 'Hinweis',
-            self::HOOK_TEMPLATE => '/email/hooks/change.html.twig',
-            self::HOOK_CONTEXT => ['message'],
-        ],
         self::APP_HOOK_ORDER => [
             self::HOOK_SUBJECT => 'email.shop.subject',
             self::HOOK_SUBJECT_DEFAULT => 'LAN-Shop',

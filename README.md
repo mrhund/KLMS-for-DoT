@@ -18,7 +18,7 @@ Die technische Grundlage stammt vom **[KRRU LAN-Party Management System](https:/
 
 KLMS bietet:
 - **Event-Präsentation** – News, Sponsoren, Turniere, Teamvorstellungen und mehr, alles in einem modernen Design.  
-- **Anmeldung & Tickets** – Direkte Registrierung und Ticketbuchung für Teilnehmer:innen.  
+- **Anmeldung & Tickets** – Cognito-Anmeldung und Ticketbuchung für Teilnehmer:innen.
 - **Sitzplan** – Intuitive Sitzplatzwahl direkt auf der Website.  
 - **Turnierverwaltung** – Übersicht über alle Wettbewerbe, Anmeldungen und Ergebnisse.  
 - **Community & Partnerseiten** – Vorstellung unserer Streamer, Sponsoren und Partner.  
@@ -42,8 +42,7 @@ Es wurde von uns erweitert um:
 
 ## Technologie
 
-Basierend auf dem **Symfony Framework** und **Bootstrap**.  
-Daten und Logik stammen aus dem KRRU-Kernsystem.
+Basierend auf dem **Symfony Framework** und **Bootstrap**. Benutzer, Clans und fachliche Daten liegen lokal in KLMS; Amazon Cognito übernimmt ausschließlich die Authentifizierung.
 
 ---
 

@@ -14,7 +14,7 @@ use App\Entity\TourneyStage;
 use App\Entity\TourneyTeam;
 use App\Entity\User;
 use App\Exception\ServiceException;
-use App\Idm\IdmManager;
+use App\Repository\UserRepository;
 use App\Service\TourneyService;
 use App\Tests\Integration\DatabaseTestCase;
 use LogicException;
@@ -25,9 +25,7 @@ class TourneyServiceIntegrationTest extends DatabaseTestCase
 {
     private function getUser(int $id): ?User
     {
-        $manager = self::getContainer()->get(IdmManager::class);
-        $userRepo = $manager->getRepository(User::class);
-        return $userRepo->findOneById(Uuid::fromInteger($id));
+        return self::getContainer()->get(UserRepository::class)->findOneByUuid(Uuid::fromInteger($id));
     }
 
     public function testGetTourneys()

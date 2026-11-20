@@ -6,8 +6,7 @@ use App\Entity\Booking;
 use App\Entity\BookingResource;
 use App\Entity\User;
 use App\Form\BookingResourceType;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Service\BookingService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,12 +23,12 @@ class BookingController extends AbstractController
     private const CSRF_TOKEN_CANCEL = 'bookingCancelToken';
 
     private readonly BookingService $bookingService;
-    private readonly IdmRepository $userRepo;
+    private readonly UserRepository $userRepo;
 
-    public function __construct(BookingService $bookingService, IdmManager $idmManager)
+    public function __construct(BookingService $bookingService, UserRepository $userRepo)
     {
         $this->bookingService = $bookingService;
-        $this->userRepo = $idmManager->getRepository(User::class);
+        $this->userRepo = $userRepo;
     }
 
     #[Route(path: '/', name: '', methods: ['GET'])]
@@ -136,11 +135,11 @@ class BookingController extends AbstractController
         $bookings = $this->bookingService->getBookingsForResource($resource);
 
         $uuids = array_map(static fn(Booking $b) => $b->getUserUuid(), $bookings);
-        $this->userRepo->findById($uuids);
+        $this->userRepo->findByUuids($uuids);
 
         $rows = array_map(fn(Booking $b) => [
             'booking' => $b,
-            'user' => $this->userRepo->findOneById($b->getUserUuid()),
+            'user' => $this->userRepo->findOneByUuid($b->getUserUuid()),
         ], $bookings);
 
         return $this->render('admin/booking/reservations.html.twig', [
@@ -158,7 +157,7 @@ class BookingController extends AbstractController
             throw $this->createAccessDeniedException('Invalid CSRF token.');
         }
 
-        $user = $this->userRepo->findOneById($booking->getUserUuid());
+        $user = $this->userRepo->findOneByUuid($booking->getUserUuid());
         if (!$user instanceof User) {
             $this->addFlash('error', 'User der Buchung konnte nicht gefunden werden.');
 

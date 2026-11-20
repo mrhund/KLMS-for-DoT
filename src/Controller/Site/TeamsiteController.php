@@ -20,7 +20,7 @@ class TeamsiteController extends AbstractController
     #[Route(path: '/teamsite/{id}', name: 'teamsite')]
     public function byId(Teamsite $teamsite): Response
     {
-        // warm-up IDM UoW to avoid multiple requests
+        // Warm up the local user query before rendering entries.
         $this->service->getUsersOfTeamsite($teamsite);
 
         return $this->render('site/teamsite/index.html.twig', [

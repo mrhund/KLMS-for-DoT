@@ -5,8 +5,7 @@ namespace App\Service;
 use App\Entity\User;
 use App\Entity\UserAdmin;
 use App\Exception\PermissionException;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Repository\UserAdminsRepository;
 use App\Security\LoginUser;
 use Doctrine\ORM\EntityManagerInterface;
@@ -45,19 +44,17 @@ final class PermissionService
 
     private readonly UserAdminsRepository $repo;
     private readonly EntityManagerInterface $em;
-    private readonly IdmRepository $userRepo;
     private readonly Security $security;
 
     public function __construct(
         Security $security,
         EntityManagerInterface $em,
         UserAdminsRepository $repo,
-        IdmManager $manager
+        private readonly UserRepository $userRepo,
     ) {
         $this->repo = $repo;
         $this->em = $em;
         $this->security = $security;
-        $this->userRepo = $manager->getRepository(User::class);
     }
 
     public function validPermission(string $permission): bool
@@ -186,7 +183,7 @@ final class PermissionService
         $admins = array_filter($admins, fn (UserAdmin $a) => !empty($a->getPermissions()));
         $ids = array_map(fn (UserAdmin $a) => $a->getUuid()->toString(), $admins);
         $admins = array_combine($ids, $admins);
-        $users = $this->userRepo->findById($ids);
+        $users = $this->userRepo->findByUuids($ids);
 
         $ret = [];
         foreach ($users as $user) {

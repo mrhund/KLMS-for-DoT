@@ -8,4 +8,10 @@ app_logout:
 
 app_login:
     path: /login
+    methods: GET
     controller: App\Controller\SecurityController::login
+
+cognito_callback:
+    path: /auth/cognito/callback
+    methods: GET
+    controller: App\Controller\SecurityController::cognitoCallback

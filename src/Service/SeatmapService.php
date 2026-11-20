@@ -7,42 +7,37 @@ use App\Entity\Seat;
 use App\Entity\SeatKind;
 use App\Entity\User;
 use App\Exception\GamerLifecycleException;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\ClanRepository;
 use App\Repository\SeatRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\UuidInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
 class SeatmapService
 {
-    // short-lived cache since seat assignments can change at any time, but this avoids
-    // redundant IDM bulk calls for the many concurrent /seatmap page views in a short window
-    private const IDM_CACHE_TTL = 45;
-
     private readonly EntityManagerInterface $em;
     private readonly SeatRepository $seatRepository;
     private readonly TicketService $ticketService;
     private readonly Security $security;
-    private readonly IdmManager $manager;
-    private readonly IdmRepository $userRepo;
-    private readonly IdmRepository $clanRepo;
+    private readonly UserRepository $userRepo;
+    private readonly ClanRepository $clanRepo;
     private readonly SettingService $settingService;
     private readonly UserService $userService;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         SeatRepository         $seatRepository,
-        IdmManager             $manager,
+        UserRepository         $userRepo,
+        ClanRepository         $clanRepo,
         Security               $security,
         TicketService          $ticketService,
         SettingService         $settingService,
         UserService            $userService)
     {
         $this->em = $entityManager;
-        $this->manager = $manager;
-        $this->userRepo = $manager->getRepository(User::class);
-        $this->clanRepo = $manager->getRepository(Clan::class);
+        $this->userRepo = $userRepo;
+        $this->clanRepo = $clanRepo;
         $this->seatRepository = $seatRepository;
         $this->security = $security;
         $this->ticketService = $ticketService;
@@ -56,8 +51,7 @@ class SeatmapService
     }
 
     /**
-     * Preloads the owners and clan reservations of the given seats in two concurrent IDM bulk
-     * requests instead of two serial ones, populating the cache used by getSeatedUser()/getReservedClans().
+     * Preloads the owners and clan reservations of the given seats into Doctrine's identity map.
      *
      * @param Seat[] $seats
      * @return array{0: (?User)[], 1: (?Clan)[]} seat id => owner map, seat id => clan reservation map
@@ -67,11 +61,8 @@ class SeatmapService
         $userUuids = array_filter(array_map(fn (Seat $seat) => $seat->getOwner()?->toString(), $seats));
         $clanUuids = array_filter(array_map(fn (Seat $seat) => $seat->getClanReservation()?->toString(), $seats));
 
-        // both requests are dispatched together and their responses are awaited concurrently
-        $this->manager->bulkMany([
-            'users' => ['class' => User::class, 'ids' => $userUuids, 'cacheTtl' => self::IDM_CACHE_TTL],
-            'clans' => ['class' => Clan::class, 'ids' => $clanUuids, 'cacheTtl' => self::IDM_CACHE_TTL],
-        ]);
+        $this->userRepo->findByUuids($userUuids);
+        $this->clanRepo->findByUuids($clanUuids);
 
         $users = [];
         $clans = [];
@@ -92,7 +83,7 @@ class SeatmapService
         $uuids = array_map(fn (Seat $seat) => $seat->getOwner()?->toString(), $seats);
         $uuids = array_filter($uuids); // remove null from uuids
         // preload users
-        $this->userRepo->findById($uuids, self::IDM_CACHE_TTL);
+        $this->userRepo->findByUuids($uuids);
 
         $ret = [];
         foreach ($seats as $seat) {
@@ -111,7 +102,7 @@ class SeatmapService
         $uuids = array_map(fn (Seat $seat) => $seat->getClanReservation()?->toString(), $seats);
         $uuids = array_filter($uuids); // remove null from uuids
         // preload clans
-        $this->clanRepo->findById($uuids, self::IDM_CACHE_TTL);
+        $this->clanRepo->findByUuids($uuids);
 
         $ret = [];
         foreach ($seats as $seat) {
@@ -190,12 +181,12 @@ class SeatmapService
 
     public function getSeatOwner(Seat $seat): ?User
     {
-        return $seat->getOwner() ? $this->userRepo->findOneById($seat->getOwner()) : null;
+        return $seat->getOwner() ? $this->userRepo->findOneByUuid($seat->getOwner()) : null;
     }
 
     public function getClanReservation(Seat $seat): ?Clan
     {
-       return $seat->getClanReservation() ? $this->clanRepo->findOneById($seat->getClanReservation()) : null;
+       return $seat->getClanReservation() ? $this->clanRepo->findOneByUuid($seat->getClanReservation()) : null;
     }
 
     /**

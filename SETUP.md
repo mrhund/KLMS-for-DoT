@@ -1,7 +1,5 @@
 # System Requirements and Setup
-The KLMS environment consists of two applications:
-The [IDM Server](https://github.com/KRRUg/IDM) to store your user-data in a central location
-and one KLMS instance for each of your events.
+KLMS stores community profiles, clans and event data locally. Amazon Cognito is used only as identity provider for login, password reset, MFA and optional social sign-in.
 
 :point_right: For production setup, we will provide a docker setup shortly. If you need support right now, please contact us.
 
@@ -23,8 +21,8 @@ For instructions on how to configure apache to serve a symfony application, plea
 [Symfony documentation](https://symfony.com/doc/5.4/setup/web_server_configuration.html).
 Make sure that all required PHP extensions (`ctype`, `dom` `gd`, `iconv`,`json`,`pgsql`,`libxml`, and `intl`) are installed and enabled.
 
-We also assume that there is a running [IDM Server](https://github.com/KRRUg/IDM) instance
-(usually listening on localhost on the local server).
+Create an Amazon Cognito User Pool with an app client using the Authorization Code flow.
+The app client must allow the configured callback URL and these scopes: `openid`, `email` and `profile`.
 
 ### Database setup
 Login as the PostgreSQL admin user (usually `postgres`) and create a user
@@ -43,21 +41,25 @@ This guide follows loosely the [Symfony deployment instructions](https://symfony
 
 First, clone the KLMS source code in the web folder (e.g. `/var/www/klms`).
 
-Then create the local env file to tell the framework the database and IDM connections.
+Then create the local env file to configure the database and Cognito connection.
 Create a file `.env.local` in the project's main directory with the following content:
 ```
 APP_ENV=prod
 APP_SECRET=<some random string>
 
 DATABASE_URL=postgresql://<db_user>:<db_pw>@<db_ip>:<db_port>/<db_name>?serverVersion=12&charset=utf8
-KLMS_IDM_URL=https://<idm_host>:<idm_port>
-KLMS_IDM_APIKEY=<idm_key>
+COGNITO_DOMAIN=https://<custom-or-cognito-hosted-ui-domain>
+COGNITO_ISSUER=https://cognito-idp.<region>.amazonaws.com/<user-pool-id>
+COGNITO_CLIENT_ID=<app-client-id>
+COGNITO_CLIENT_SECRET=<app-client-secret-or-empty>
+COGNITO_REDIRECT_URI=https://<your_url>/auth/cognito/callback
+COGNITO_LOGOUT_URI=https://<your_url>/
 
 SITE_BASE_SCHEME=https
 SITE_BASE_HOST=<your_url>:<your_port>
 ```
 
-There are two optional config steps to enable email sending and/or Recaptcha protection for your registration page. 
+The Cognito hosted UI owns registration and password flows. The remaining optional configuration enables email sending and Recaptcha for other forms.
 ```
 MAILER_DSN=smtp://<user>:<passwd>@<mailserver>:587
 MAILER_DEFAULT_SENDER_NAME='<name of your event>'
@@ -121,7 +123,7 @@ The bundle's default MCP session store uses files under `var/cache/prod/mcp-sess
 
 #### API bearer tokens
 
-Tokens are linked to an IDM user; only a hash of the secret is stored in the KLMS database. Create a separate, short-lived token for each client. The value is printed only once; store it securely and never commit it:
+Tokens are linked to a local KLMS user; only a hash of the secret is stored in the database. Create a separate, short-lived token for each client. The value is printed only once; store it securely and never commit it:
 
 ```shell
 php bin/console app:api-token:create user@example.org --name="VS Code" --expires=30
@@ -213,8 +215,30 @@ The file contains a secret: do not commit or share it. The header-file option ke
 
 Start the configured server in the client and call `ping`; it should return `pong`. If authentication returns 401, check the token, its expiry and revocation, and header forwarding. A 403 can indicate missing admin rights or a disallowed host or origin. A tool-level permission error means the user lacks that tool's specific role. Check the client and server logs without exposing credentials.
 
-Open your site's URL in your browser. You should see an empty KLMS instance.
-To start configuring your site, log in with a super-admin account of your IDM instance to get all permissions on the KLMS instance at once.
+#### One-time IDM migration
+
+The final IDM export must contain the User, Clan and Gamer_Clan tables as UTF-8 CSV files. Before the production cutover, run the import as a dry run against a copy of the KLMS database:
+
+```shell
+php bin/console app:idm:import \
+  users.csv clans.csv gamer_clan.csv cognito-users.csv \
+  --dry-run
+```
+
+The command requires empty local User and Clan tables. It preserves User and Clan UUIDs, imports clan memberships locally, and creates `cognito-users.csv` with the Cognito template header. Only these fields are populated:
+
+```csv
+cognito:username,email,email_verified
+<existing-user-uuid>,user@example.org,TRUE
+```
+
+Passwords are intentionally left empty. In Cognito the imported users therefore enter `RESET_REQUIRED` and must set a new password when they first sign in. The IDM password hashes must not be uploaded.
+
+After the Cognito dry-run import reports zero failed or skipped users, run the same command without `--dry-run` while KLMS is in maintenance mode. Then create and start the Cognito import job with the generated file, verify all records, enable the Cognito deployment, and deactivate IDM. Imported users keep their KLMS UUID and can immediately access their existing clans and profiles after setting their new password.
+
+`Gamer_Clan` may identify users and clans by UUID or by the legacy `id` exported in the User and Clan files. Supported role columns are `is_admin`, `admin`, `is_clan_admin`, or `role=admin/owner`.
+
+Open your site's URL in your browser. A local user whose `isSuperadmin` flag is set receives all configured KLMS permissions when signing in through Cognito.
 
 To send emails and perform maintenance tasks, KLMS requires the PHP script `bin/console messenger:consume` to run on the server.
 We recommend to use supervisor to ensure the process is restarted whenever it ends.
@@ -237,5 +261,4 @@ Once all setup steps are done start the Symfony development server using
 ```
 symfony server:start --port=8000 --no-interaction --no-tls
 ```
-Open the printed URL in your browser and log in with a super-admin credential
-(in case have been following the IDM development setup, those are `admin@admin.local` with password `admin`).
+Open the printed URL in your browser and log in with a Cognito test user. Functional tests use locally persisted fixture users and do not require a real Cognito request.

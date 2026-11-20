@@ -13,8 +13,7 @@ use App\Entity\User;
 use App\Exception\ServiceException;
 use App\Form\TourneyType;
 use App\Form\TourneyTeamType;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Service\TourneyService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -30,7 +29,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 class TourneyController extends AbstractController
 {
     private TourneyService $service;
-    private IdmRepository $userRepo;
+    private UserRepository $userRepo;
     private LoggerInterface $logger;
 
     private const CSRF_TOKEN_MODIFY = 'tourneyModifyToken';
@@ -39,10 +38,10 @@ class TourneyController extends AbstractController
 
     use HttpExceptionTrait;
 
-    public function __construct(TourneyService $service, IdmManager $manager, LoggerInterface $logger)
+    public function __construct(TourneyService $service, UserRepository $userRepo, LoggerInterface $logger)
     {
         $this->service = $service;
-        $this->userRepo = $manager->getRepository(User::class);
+        $this->userRepo = $userRepo;
         $this->logger = $logger;
     }
 
@@ -257,7 +256,7 @@ class TourneyController extends AbstractController
 
         $choices = $tourney->getTeams()->toArray();
         $label = $tourney->isSinglePlayer()
-            ? fn (TourneyTeam $t) => $this->userRepo->findOneById($t->getMembers()[0]->getGamer())->getNickname()
+            ? fn (TourneyTeam $t) => $this->userRepo->findOneByUuid($t->getMembers()[0]->getGamer())->getNickname()
             : fn (TourneyTeam $t) => $t->getName();
         $form = $this->createFormBuilder()
             ->add('first', ChoiceType::class, [

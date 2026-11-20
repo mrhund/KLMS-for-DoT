@@ -5,11 +5,10 @@ namespace App\Controller\Admin;
 use App\Entity\User;
 use App\Entity\UserImage;
 use App\Form\UserAdminType;
-use App\Idm\Exception\PersistException;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Repository\UserImageRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\DBAL\Exception as DBALException;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,17 +18,15 @@ use Symfony\Component\Routing\Attribute\Route;
 #[IsGranted('ROLE_ADMIN')]
 class UserController extends AbstractController
 {
-    private readonly IdmManager $manager;
-    private readonly IdmRepository $userRepo;
+    private readonly UserRepository $userRepo;
     private readonly EntityManagerInterface $em;
     private readonly UserImageRepository $userImgRepo;
 
-    public function __construct(IdmManager $manager, EntityManagerInterface $em, UserImageRepository $userImgRepo)
+    public function __construct(UserRepository $userRepo, EntityManagerInterface $em, UserImageRepository $userImgRepo)
     {
-        $this->manager = $manager;
         $this->em = $em;
         $this->userImgRepo = $userImgRepo;
-        $this->userRepo = $manager->getRepository(User::class);
+        $this->userRepo = $userRepo;
     }
 
     #[Route(path: '/user', name: 'user', methods: ['GET'])]
@@ -40,8 +37,7 @@ class UserController extends AbstractController
         $limit = $request->query->getInt('limit', 10);
         $page = $request->query->getInt('page', 1);
 
-        $collection = $this->userRepo->findFuzzy($search);
-        $users = $collection->getPage($page, $limit);
+        $users = $this->userRepo->search($search, $limit, ($page - 1) * $limit);
 
         if (empty($users)) {
             throw $this->createNotFoundException();
@@ -56,7 +52,7 @@ class UserController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function show(string $uuid): Response
     {
-        $user = $this->userRepo->findOneById($uuid);
+        $user = $this->userRepo->findOneByUuid($uuid);
 
         if (empty($user)) {
             throw $this->createNotFoundException('User not found');
@@ -71,7 +67,7 @@ class UserController extends AbstractController
     #[IsGranted('ROLE_ADMIN_USER')]
     public function edit(string $uuid, Request $request): Response
     {
-        $user = $this->userRepo->findOneById($uuid);
+        $user = $this->userRepo->findOneByUuid($uuid);
 
         if (empty($user)) {
             throw $this->createNotFoundException('User not found');
@@ -85,8 +81,7 @@ class UserController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             try {
                 $user = $form->getData();
-                $this->manager->persist($user);
-                $this->manager->flush();
+                $this->em->flush();
 
                 $image = $form->get('image')->getData();
                 if ($image->isEmpty()) {
@@ -103,11 +98,8 @@ class UserController extends AbstractController
                 }
 
                 return $this->redirectToRoute('admin_user');
-            } catch (PersistException $e) {
-                match ($e->getCode()) {
-                    PersistException::REASON_NON_UNIQUE => $this->addFlash('error', 'Nickname und/oder Email ist schon in Verwendung'),
-                    default => $this->addFlash('error', 'Es ist ein unerwarteter Fehler aufgetreten'),
-                };
+            } catch (DBALException) {
+                $this->addFlash('error', 'Benutzer konnte nicht gespeichert werden.');
             }
         }
 

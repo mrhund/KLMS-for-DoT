@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Entity\User;
-use App\Idm\IdmManager;
+use App\Repository\UserRepository;
 use App\Service\ApiTokenService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -13,11 +13,11 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(name: 'app:api-token:create', description: 'Create a bearer token for an IDM user')]
+#[AsCommand(name: 'app:api-token:create', description: 'Create a bearer token for a user')]
 class CreateApiTokenCommand extends Command
 {
     public function __construct(
-        private readonly IdmManager $idmManager,
+        private readonly UserRepository $userRepository,
         private readonly ApiTokenService $apiTokenService,
     ) {
         parent::__construct();
@@ -26,7 +26,7 @@ class CreateApiTokenCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('email', InputArgument::REQUIRED, 'Email address of the IDM user')
+            ->addArgument('email', InputArgument::REQUIRED, 'Email address of the user')
             ->addOption('name', null, InputOption::VALUE_REQUIRED, 'Name for this token', 'MCP client')
             ->addOption('expires', null, InputOption::VALUE_REQUIRED, 'Token lifetime in days', '90');
     }
@@ -35,9 +35,9 @@ class CreateApiTokenCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $email = (string) $input->getArgument('email');
-        $user = $this->idmManager->getRepository(User::class)->findOneCiBy(['email' => $email]);
+        $user = $this->userRepository->findOneByEmailInsensitive($email);
         if (!$user instanceof User || null === $user->getUuid()) {
-            $io->error(sprintf('No IDM user found for "%s".', $email));
+            $io->error(sprintf('No user found for "%s".', $email));
 
             return Command::FAILURE;
         }

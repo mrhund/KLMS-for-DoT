@@ -2,81 +2,49 @@
 
 namespace App\Tests\Functional\Site;
 
+use App\DataFixtures\UserFixtures;
 use App\Tests\Functional\DatabaseWebTestCase;
 
 class LoginTest extends DatabaseWebTestCase
 {
-    public function testLoginHelperUsesBrowserSession(): void
+    public function testCognitoAuthorizationFlowUsesPkce(): void
     {
         $this->databaseTool->loadFixtures([]);
         $this->client->followRedirects(false);
 
+        $this->client->request('GET', '/login');
+
+        $this->assertResponseRedirects();
+        $location = (string) $this->client->getResponse()->headers->get('Location');
+        self::assertStringStartsWith('https://cognito.example.test/oauth2/authorize?', $location);
+        self::assertStringContainsString('response_type=code', $location);
+        self::assertStringContainsString('code_challenge_method=S256', $location);
+        self::assertStringContainsString('state=', $location);
+        self::assertStringContainsString('nonce=', $location);
+    }
+
+    public function testLoginHelperUsesBrowserSession(): void
+    {
+        $this->databaseTool->loadFixtures([UserFixtures::class]);
         $this->login('user2@localhost.local');
+
         $this->assertSelectorTextContains('#dropdownMenuUser', 'User 2');
+    }
+
+    public function testLoginAndLogout(): void
+    {
+        $this->databaseTool->loadFixtures([UserFixtures::class]);
+        $this->login('user2@localhost.local');
         $this->logout();
     }
 
-    public function testLoginAndLogout()
+    public function testAuthenticatedUserBypassesCognito(): void
     {
-        $this->databaseTool->loadFixtures([]);
-        $this->client->followRedirects();
+        $this->databaseTool->loadFixtures([UserFixtures::class]);
+        $this->login('user2@localhost.local');
 
-        $crawler = $this->client->request('GET', '/');
-        $this->assertResponseStatusCodeSame(200);
-        $this->assertSelectorTextContains('#dropdownMenuUser', "Anmelden");
+        $this->client->request('GET', '/login');
 
-        $form = $crawler->selectButton('Login')->form();
-        $form['username']->setValue('user2@localhost.local');
-        $form['password']->setValue('user2');
-        $this->client->submit($form);
-
-        $this->assertResponseStatusCodeSame(200);
-        $this->assertSelectorTextContains('#dropdownMenuUser', "User 2");
-        $this->assertSelectorNotExists('.alert-error');
-
-        $this->client->request('GET', '/logout');
-        $this->assertResponseStatusCodeSame(200);
-        $this->assertSelectorTextContains('#dropdownMenuUser', "Anmelden");
-    }
-
-    public function testLoginUserNotFound()
-    {
-        $this->databaseTool->loadFixtures([]);
-
-        $this->client->followRedirects(false);
-        $crawler = $this->client->request('GET', '/');
-        $this->assertResponseStatusCodeSame(200);
-        $this->assertSelectorTextContains('#dropdownMenuUser', "Anmelden");
-
-        $form = $crawler->selectButton('Login')->form();
-        $form['username']->setValue('unkown@localhost.local');
-        $form['password']->setValue('pa$$word');
-        $this->client->submit($form);
-
-        $this->assertResponseStatusCodeSame(302);
-        $this->assertResponseRedirects('/login');
-        $this->client->followRedirect();
-        $this->assertSelectorTextContains('#dropdownMenuUser', "Anmelden");
-        $this->assertSelectorExists('.alert-error');
-    }
-
-    public function testLoginNotConfirmedUser()
-    {
-        $this->databaseTool->loadFixtures([]);
-
-        $this->client->followRedirects(false);
-        $crawler = $this->client->request('GET', '/');
-        $this->assertResponseStatusCodeSame(200);
-
-        $form = $crawler->selectButton('Login')->form();
-        $form['username']->setValue('user16@localhost.local');
-        $form['password']->setValue('pa$$word');
-        $this->client->submit($form);
-
-        $this->assertResponseStatusCodeSame(302);
-        $this->assertResponseRedirects('/login');
-        $this->client->followRedirect();
-        $this->assertSelectorTextContains('#dropdownMenuUser', "Anmelden");
-        $this->assertSelectorExists('.alert-error');
+        $this->assertResponseRedirects('/');
     }
 }

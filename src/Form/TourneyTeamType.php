@@ -5,7 +5,7 @@ namespace App\Form;
 use App\Entity\TourneyTeam;
 use App\Entity\TourneyTeamMember;
 use App\Entity\User;
-use App\Idm\IdmManager;
+use App\Repository\UserRepository;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
@@ -17,17 +17,14 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class TourneyTeamType extends AbstractType
 {
-    private IdmManager $idmManager;
-
-    public function __construct(IdmManager $idmManager)
+    public function __construct(private readonly UserRepository $userRepository)
     {
-        $this->idmManager = $idmManager;
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $tourney = $options['tourney'];
-        $userRepo = $this->idmManager->getRepository(User::class);
+        $userRepo = $this->userRepository;
 
         if ($tourney->isSinglePlayer()) {
             $builder->add('singlePlayer', UserSelectType::class, [
@@ -67,7 +64,7 @@ class TourneyTeamType extends AbstractType
                     if ($selectedUser instanceof User) {
                         $user = $selectedUser;
                     } else {
-                        $user = $userRepo->findOneById(Uuid::fromString((string) $selectedUser));
+                        $user = $userRepo->findOneByUuid(Uuid::fromString((string) $selectedUser));
                     }
 
                     if ($user) {

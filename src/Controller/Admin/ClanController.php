@@ -5,9 +5,10 @@ namespace App\Controller\Admin;
 use App\Entity\Clan;
 use App\Entity\User;
 use App\Form\ClanType;
-use App\Idm\Exception\PersistException;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\ClanRepository;
+use App\Repository\UserRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\DBAL\Exception as DBALException;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,15 +22,17 @@ class ClanController extends AbstractController
     private const CSRF_TOKEN_DELETE = 'clanDeleteToken';
     private const CSRF_TOKEN_MEMBER_EDIT = 'clanMemberAddToken';
 
-    private readonly IdmManager $im;
-    private readonly IdmRepository $clanRepo;
-    private readonly IdmRepository $userRepo;
+    private readonly ClanRepository $clanRepo;
+    private readonly UserRepository $userRepo;
 
-    public function __construct(IdmManager $manager)
+    public function __construct(
+        ClanRepository $clanRepo,
+        UserRepository $userRepo,
+        private readonly EntityManagerInterface $em,
+    )
     {
-        $this->im = $manager;
-        $this->clanRepo = $manager->getRepository(Clan::class);
-        $this->userRepo = $manager->getRepository(User::class);
+        $this->clanRepo = $clanRepo;
+        $this->userRepo = $userRepo;
     }
 
     #[Route(path: '/clan', name: 'clan', methods: ['GET'])]
@@ -52,17 +55,15 @@ class ClanController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $clan = $form->getData();
             try {
-                $this->im->persist($clan);
-                $this->im->flush();
+                $clan->setPlainJoinPassword($form->get('joinPassword')->getData());
+                $this->em->persist($clan);
+                $this->em->flush();
 
                 $this->addFlash('success', 'Clan erfolgreich angelegt!');
 
                 return $this->redirectToRoute('admin_clan');
-            } catch (PersistException $e) {
-                match ($e->getCode()) {
-                    PersistException::REASON_NON_UNIQUE => $this->addFlash('error', 'Clanname und/oder Tag ist schon in Verwendung'),
-                    default => $this->addFlash('error', 'Es ist ein unerwarteter Fehler aufgetreten'),
-                };
+            } catch (DBALException) {
+                $this->addFlash('error', 'Clan konnte nicht gespeichert werden.');
             }
         }
 
@@ -74,7 +75,7 @@ class ClanController extends AbstractController
     #[Route(path: '/clan/{uuid}/edit', name: 'clan_edit', methods: ['GET', 'POST'])]
     public function edit(string $uuid, Request $request): Response
     {
-        $clan = $this->clanRepo->findOneById($uuid);
+        $clan = $this->clanRepo->findOneByUuid($uuid);
         if (is_null($clan)) {
             throw $this->createNotFoundException();
         }
@@ -84,9 +85,12 @@ class ClanController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $clan = $form->getData();
-
-            $this->im->persist($clan);
-            $this->im->flush();
+            $plainPassword = $form->get('joinPassword')->getData();
+            if ($plainPassword !== null && $plainPassword !== '') {
+                $clan->setPlainJoinPassword($plainPassword);
+            }
+            $clan->setModifiedAt(new \DateTime());
+            $this->em->flush();
 
             $this->addFlash('success', 'Clan erfolgreich bearbeitet!');
 
@@ -103,7 +107,7 @@ class ClanController extends AbstractController
     #[Route(path: '/clan/{uuid}', name: 'clan_show', methods: ['GET'])]
     public function show(string $uuid): Response
     {
-        $clan = $this->clanRepo->findOneById($uuid);
+        $clan = $this->clanRepo->findOneByUuid($uuid);
         if (is_null($clan)) {
             throw $this->createNotFoundException();
         }
@@ -116,7 +120,7 @@ class ClanController extends AbstractController
     #[Route(path: '/clan/{uuid}/member', name: 'clan_member', methods: ['GET'])]
     public function member(string $uuid): Response
     {
-        $clan = $this->clanRepo->findOneById($uuid);
+        $clan = $this->clanRepo->findOneByUuid($uuid);
         if (is_null($clan)) {
             throw $this->createNotFoundException();
         }
@@ -135,8 +139,8 @@ class ClanController extends AbstractController
             throw $this->createAccessDeniedException('The CSRF token is invalid.');
         }
 
-        $clan = $this->clanRepo->findOneById($uuid);
-        $user = $this->userRepo->findOneById($request->request->get('user_uuid'));
+        $clan = $this->clanRepo->findOneByUuid($uuid);
+        $user = $this->userRepo->findOneByUuid($request->request->get('user_uuid'));
 
         if (empty($clan)) {
             throw $this->createNotFoundException();
@@ -161,11 +165,10 @@ class ClanController extends AbstractController
     private function memberAdd(Clan $clan, User $user): void
     {
         try {
-            $clan->getUsers()[] = $user;
-            $this->im->persist($clan);
-            $this->im->flush();
+            $clan->addUser($user);
+            $this->em->flush();
             $this->addFlash('info', "User {$user->getNickname()} erfolgreich zum Clan hinzugefügt!");
-        } catch (PersistException) {
+        } catch (DBALException) {
             $this->addFlash('error', 'Es ist ein unerwarteter Fehler aufgetreten');
         }
     }
@@ -174,10 +177,9 @@ class ClanController extends AbstractController
     {
         try {
             $clan->removeUser($user);
-            $this->im->persist($clan);
-            $this->im->flush();
+            $this->em->flush();
             $this->addFlash('info', "User {$user->getNickname()} erfolgreich vom Clan entfernt!");
-        } catch (PersistException) {
+        } catch (DBALException) {
             $this->addFlash('error', 'Es ist ein unerwarteter Fehler aufgetreten');
         }
     }
@@ -190,9 +192,9 @@ class ClanController extends AbstractController
             } else {
                 $clan->removeAdmin($user);
             }
-            $this->im->flush();
+            $this->em->flush();
             $this->addFlash('success', 'Userstatus erfolgreich geändert!');
-        } catch (PersistException) {
+        } catch (DBALException) {
             $this->addFlash('error', 'Es ist ein unerwarteter Fehler aufgetreten');
         }
     }
@@ -200,7 +202,7 @@ class ClanController extends AbstractController
     #[Route(path: '/clan/{uuid}/delete', name: 'clan_delete', methods: ['POST'])]
     public function delete(string $uuid, Request $request): Response
     {
-        $clan = $this->clanRepo->findOneById($uuid);
+        $clan = $this->clanRepo->findOneByUuid($uuid);
         if (is_null($clan)) {
             throw $this->createNotFoundException();
         }
@@ -211,10 +213,10 @@ class ClanController extends AbstractController
         }
 
         try {
-            $this->im->remove($clan);
-            $this->im->flush();
+            $this->em->remove($clan);
+            $this->em->flush();
             $this->addFlash('info', 'Clan erfolgreich gelöscht!');
-        } catch (PersistException) {
+        } catch (DBALException) {
             $this->addFlash('error', 'Es ist ein unerwarteter Fehler aufgetreten');
         }
 

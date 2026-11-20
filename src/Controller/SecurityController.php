@@ -2,15 +2,11 @@
 
 namespace App\Controller;
 
-use App\Security\AccountNotConfirmedException;
+use App\Security\CognitoOidcClient;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Security\Core\Exception\BadCredentialsException;
-use Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException;
-use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 /**
@@ -18,53 +14,31 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
  */
 class SecurityController extends AbstractController
 {
-    private readonly UrlGeneratorInterface $urlGenerator;
-
-    public function __construct(UrlGeneratorInterface $urlGenerator)
+    public function __construct(private readonly CognitoOidcClient $cognito)
     {
-        $this->urlGenerator = $urlGenerator;
     }
 
-    #[Route(path: '/login', name: 'app_login')]
-    public function login(AuthenticationUtils $authenticationUtils): Response
+    #[Route(path: '/login', name: 'app_login', methods: ['GET'])]
+    public function login(\Symfony\Component\HttpFoundation\Request $request, AuthenticationUtils $authenticationUtils): Response
     {
         if ($this->getUser()) {
-            // Redirect to Frontpage if already logged in
             return $this->redirect('/');
         }
-        // get the login error if there is one
-        $error = $authenticationUtils->getLastAuthenticationError();
-        // last username entered by the user
-        $lastUsername = $authenticationUtils->getLastUsername();
 
-        if ($error) {
-            $this->addFlash('error-raw', $this->errorMsgToHtml($error, $lastUsername));
+        if ($error = $authenticationUtils->getLastAuthenticationError()) {
+            $this->addFlash('error', 'Die Anmeldung bei Cognito ist fehlgeschlagen. Bitte erneut versuchen.');
+            $authenticationUtils->getLastUsername();
+
+            return $this->render('security/login.html.twig');
         }
 
-        return $this->render('security/login.html.twig', [
-            'last_username' => $lastUsername,
-        ]);
+        return $this->cognito->startAuthorization($request);
     }
 
-    private function errorMsgToHtml($error, string $lastUsername): string
+    #[Route(path: '/auth/cognito/callback', name: 'cognito_callback', methods: ['GET'])]
+    public function cognitoCallback(): Response
     {
-        if (empty($error)) {
-            return '';
-        }
-
-        switch (true) {
-            case $error instanceof BadCredentialsException:
-            case $error instanceof UserNotFoundException:
-                return 'E-Mail-Addresse oder Passwort falsch';
-            case $error instanceof AccountNotConfirmedException:
-                $url = $this->urlGenerator->generate('app_register_resend', ['email' => $lastUsername]);
-
-                return "E-Mail-Addresse nicht bestätigt. <a href=\"{$url}\">Bestätigung erneut anfordern.</a>";
-            case $error instanceof InvalidCsrfTokenException:
-                return 'Es ist ein Fehler aufgetreten. Bitte Seite neu laden.';
-            default:
-                return 'Es ist ein unbekannter Fehler aufgetreten.';
-        }
+        return $this->redirectToRoute('index');
     }
 
     /**

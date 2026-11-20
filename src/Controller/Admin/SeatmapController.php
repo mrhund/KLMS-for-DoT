@@ -197,7 +197,7 @@ class SeatmapController extends AbstractController
 
         $seatmap = $this->seatRepository->findTakenSeats();
         $seatmapUsers = $this->seatmapService->getSeatedUser($seatmap);
-        // preload clans of seated users in bulk to avoid an individual IDM request per user in the loop below
+        // Preload clans of seated users for the seatmap rendering below.
         $this->userService->getClansByUsers(array_map(fn ($user) => $user->getUuid()->toString(), array_filter($seatmapUsers)));
 
         foreach ($seatmap as $seat) {

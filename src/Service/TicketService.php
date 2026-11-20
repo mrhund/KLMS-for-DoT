@@ -5,9 +5,8 @@ namespace App\Service;
 use App\Entity\Ticket;
 use App\Entity\User;
 use App\Exception\TicketLifecycleException;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
 use App\Repository\TicketRepository;
+use App\Repository\UserRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Ramsey\Uuid\UuidInterface;
@@ -15,16 +14,15 @@ use Ramsey\Uuid\UuidInterface;
 class TicketService
 {
     private readonly TicketRepository $ticketRepository;
-    private readonly IdmRepository $userRepo;
     private EntityManagerInterface $em;
 
     public const CODE_REGEX = '^([0-9A-Za-z]{5}-?){2}[0-9A-Za-z]{5}$';
 
-    public function __construct(TicketRepository $ticketRepository, IdmManager $iem, EntityManagerInterface $em)
+    public function __construct(TicketRepository $ticketRepository, UserRepository $userRepo, EntityManagerInterface $em)
     {
         $this->ticketRepository = $ticketRepository;
         $this->em = $em;
-        $this->userRepo = $iem->getRepository(User::class);
+        $this->userRepo = $userRepo;
     }
 
     private static function normalizeComment(?string $comment): ?string
@@ -271,7 +269,7 @@ class TicketService
             return null;
         }
 
-        return $this->userRepo->findOneById($ticket->getRedeemer());
+        return $this->userRepo->findOneByUuid($ticket->getRedeemer());
     }
 
     /**

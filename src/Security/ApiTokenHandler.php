@@ -3,8 +3,7 @@
 namespace App\Security;
 
 use App\Entity\User;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Service\ApiTokenService;
 use Symfony\Component\Security\Core\Exception\BadCredentialsException;
 use Symfony\Component\Security\Http\AccessToken\AccessTokenHandlerInterface;
@@ -12,13 +11,10 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 
 class ApiTokenHandler implements AccessTokenHandlerInterface
 {
-    private readonly IdmRepository $userRepository;
-
     public function __construct(
         private readonly ApiTokenService $apiTokenService,
-        IdmManager $idmManager,
+        private readonly UserRepository $userRepository,
     ) {
-        $this->userRepository = $idmManager->getRepository(User::class);
     }
 
     public function getUserBadgeFrom(#[\SensitiveParameter] string $accessToken): UserBadge
@@ -28,11 +24,11 @@ class ApiTokenHandler implements AccessTokenHandlerInterface
             throw new BadCredentialsException('Invalid access token.');
         }
 
-        $user = $this->userRepository->findOneById($token->getUserUuid()->toString());
+        $user = $this->userRepository->findOneByUuid($token->getUserUuid());
         if (!$user instanceof User || null === $user->getEmail() || '' === $user->getEmail()) {
             throw new BadCredentialsException('Invalid access token.');
         }
 
-        return new UserBadge($user->getEmail());
+        return new UserBadge($user->getUuid()->toString());
     }
 }

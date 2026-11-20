@@ -5,8 +5,8 @@ namespace App\Controller\Admin;
 use App\Entity\Clan;
 use App\Entity\ShopOrderStatus;
 use App\Entity\User;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\ClanRepository;
+use App\Repository\UserRepository;
 use App\Repository\ShopOrderPositionRepository;
 use App\Repository\ShopOrderRepository;
 use App\Service\StatisticService;
@@ -17,17 +17,18 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class DashboardController extends AbstractController
 {
-    private readonly IdmRepository $userRepo;
-    private readonly IdmRepository $clanRepo;
+    private readonly UserRepository $userRepo;
+    private readonly ClanRepository $clanRepo;
 
     public function __construct(
         private readonly StatisticService $statisticService,
         private readonly ShopOrderRepository $orderRepo,
         private readonly ShopOrderPositionRepository $positionRepo,
-        IdmManager $idmManager,
+        UserRepository $userRepo,
+        ClanRepository $clanRepo,
     ) {
-        $this->userRepo = $idmManager->getRepository(User::class);
-        $this->clanRepo = $idmManager->getRepository(Clan::class);
+        $this->userRepo = $userRepo;
+        $this->clanRepo = $clanRepo;
     }
 
     #[Route(path: '/', name: 'dashboard')]
@@ -36,11 +37,10 @@ class DashboardController extends AbstractController
         $weekAgo = new DateTime('-7 days');
         $monthStart = new DateTime('first day of this month midnight');
 
-        // Community Statistiken (IDM-managed — kein lokaler DB-Zugriff möglich)
-        $totalUsersCount = $this->userRepo->findAll()->count();
+        $totalUsersCount = $this->userRepo->count([]);
         $allClans = $this->clanRepo->findAll();
-        $totalClans = $allClans->count();
-        $openClans = count(array_filter(iterator_to_array($allClans), fn (Clan $c) => empty($c->getJoinPassword())));
+        $totalClans = count($allClans);
+        $openClans = count(array_filter($allClans, fn (Clan $c) => empty($c->getJoinPassword())));
 
         // Tickets
         $totalTickets = $this->statisticService->getTicketsTotal();

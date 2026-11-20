@@ -13,8 +13,7 @@ use App\Entity\ShopOrderStatus;
 use App\Entity\User;
 use App\Exception\OrderLifecycleException;
 use App\Helper\EmailRecipient;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\UserRepository;
 use App\Repository\ShopAddonsRepository;
 use App\Repository\ShopOrderPositionRepository;
 use App\Repository\ShopOrderRepository;
@@ -32,7 +31,7 @@ class ShopService
     private readonly EntityManagerInterface $em;
     private readonly TicketService $ticketService;
     private readonly EmailService $emailService;
-    private readonly IdmRepository $userRepo;
+    private readonly UserRepository $userRepo;
 
     public const DEFAULT_TICKET_PRICE = 5000;
     public const MAX_ADDON_COUNT = 20;
@@ -43,7 +42,7 @@ class ShopService
         ShopOrderRepository $orderRepository,
         ShopOrderPositionRepository $shopOrderPositionRepository,
         ShopAddonsRepository $shopAddonsRepository,
-        IdmManager          $idmManager,
+        UserRepository      $userRepo,
         SettingService $settingService,
         TicketService $ticketService,
         EmailService $emailService,
@@ -53,7 +52,7 @@ class ShopService
         $this->orderRepository = $orderRepository;
         $this->shopOrderPositionRepository = $shopOrderPositionRepository;
         $this->shopAddonsRepository = $shopAddonsRepository;
-        $this->userRepo = $idmManager->getRepository(User::class);
+        $this->userRepo = $userRepo;
         $this->settingService = $settingService;
         $this->ticketService = $ticketService;
         $this->emailService = $emailService;
@@ -133,7 +132,7 @@ class ShopService
     private function emailOrder(ShopOrder $order): void
     {
         // notify the buyer and send the codes
-        $user = $this->userRepo->findOneById($order->getOrderer());
+        $user = $this->userRepo->findOneByUuid($order->getOrderer());
         $this->emailService->scheduleHook(EmailService::APP_HOOK_ORDER, EmailRecipient::fromUser($user), [
             'order' => $order,
             'showPaymentInfo' => $order->getStatus() == ShopOrderStatus::Created,
@@ -345,12 +344,12 @@ class ShopService
         $uuids = array_map(fn($o) => $o->getOrderer(), $orders);
 
         // preload users
-        $this->userRepo->findById($uuids);
+        $this->userRepo->findByUuids($uuids);
 
         $result = [];
         foreach ($orders as $item) {
             $result[] = [
-                'user' => $this->userRepo->findOneById($item->getOrderer()),
+                'user' => $this->userRepo->findOneByUuid($item->getOrderer()),
                 'order' => $item
             ];
         }
@@ -367,12 +366,12 @@ class ShopService
         $uuids = array_map(fn($p) => $p->getOrder()->getOrderer(), $sop);
 
         // preload users
-        $this->userRepo->findById($uuids);
+        $this->userRepo->findByUuids($uuids);
 
         $result = [];
         foreach ($sop as $item) {
             $result[] = [
-                'user' => $this->userRepo->findOneById($item->getOrder()->getOrderer()),
+                'user' => $this->userRepo->findOneByUuid($item->getOrder()->getOrderer()),
                 'text' => $item->getText(),
                 'price' => $item->getPrice()
             ];

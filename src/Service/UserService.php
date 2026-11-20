@@ -4,9 +4,9 @@ namespace App\Service;
 
 use App\Entity\Clan;
 use App\Entity\User;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
+use App\Repository\ClanRepository;
 use App\Repository\UserImageRepository;
+use App\Repository\UserRepository;
 use DateInterval;
 use DateTime;
 use Ramsey\Uuid\Uuid;
@@ -15,17 +15,18 @@ use Vich\UploaderBundle\Templating\Helper\UploaderHelper;
 
 class UserService
 {
-    private readonly IdmRepository $userRepo;
-    private readonly IdmRepository $clanRepo;
     private readonly UserImageRepository $imageRepo;
     private readonly UploaderHelper $uploadHelper;
 
-    public function __construct(UserImageRepository $imageRepo, UploaderHelper $uploadHelper, IdmManager $manager)
+    public function __construct(
+        UserImageRepository $imageRepo,
+        UploaderHelper $uploadHelper,
+        private readonly UserRepository $userRepo,
+        private readonly ClanRepository $clanRepo,
+    )
     {
         $this->imageRepo = $imageRepo;
         $this->uploadHelper = $uploadHelper;
-        $this->userRepo = $manager->getRepository(User::class);
-        $this->clanRepo = $manager->getRepository(Clan::class);
     }
 
     public function getUserImage(User $user): ?string
@@ -67,7 +68,7 @@ class UserService
     }
 
     /**
-     * Preloads multiple users to avoid multiple IDM requests.
+     * Preloads multiple users into the Doctrine identity map.
      */
     public function preloadUsers(array $uuids): void
     {
@@ -81,7 +82,7 @@ class UserService
      */
     public function getUsers(array $uuids, bool $assoc = false): array
     {
-        $users = $this->userRepo->findById($uuids);
+        $users = $this->userRepo->findByUuids($uuids);
         if (!$assoc) {
             return $users;
         } else {
@@ -99,7 +100,7 @@ class UserService
      */
     public function getClans(array $uuids, bool $assoc = false): array
     {
-        $clans = $this->clanRepo->findById($uuids);
+        $clans = $this->clanRepo->findByUuids($uuids);
         if (!$assoc) {
             return $clans;
         } else {
@@ -118,7 +119,7 @@ class UserService
         $users = $this->getUsers($userUuids);
         $clan_uuid = [];
         foreach ($users as $user) {
-            foreach ($user->getClans()->toUuidArray() as $clan) {
+            foreach ($user->getClans() as $clan) {
                 $clan_uuid[] = $clan->getUuid();
             }
         }
@@ -127,10 +128,10 @@ class UserService
 
     public function isUserInClan(User|UuidInterface $user, Clan|UuidInterface $clan): bool
     {
-        $user = $user instanceof User ? $user : $this->userRepo->findOneById($user);
+        $user = $user instanceof User ? $user : $this->userRepo->findOneByUuid($user);
         $needle = $clan instanceof Clan ? $clan->getUuid() : $clan;
-        foreach ($user->getClans()->toUuidArray() as $clanUuid) {
-            if ($needle->equals($clanUuid->getUuid())) return true;
+        foreach ($user->getClans() as $userClan) {
+            if ($needle->equals($userClan->getUuid())) return true;
         }
         return false;
     }
@@ -142,12 +143,12 @@ class UserService
      */
     public function isUserInClans(User|UuidInterface $user, array $clans): bool
     {
-        $user = $user instanceof User ? $user : $this->userRepo->findOneById($user);
-        $userClanUuids = $user->getClans()->toUuidArray();
+        $user = $user instanceof User ? $user : $this->userRepo->findOneByUuid($user);
+        $userClans = $user->getClans();
         $clanUuids = array_map(fn ($clan) => $clan instanceof Clan ? $clan->getUuid() : $clan, $clans);
         foreach ($clanUuids as $clanUuid) {
-            foreach ($userClanUuids as $userClanUuid) {
-                if ($clanUuid->equals($userClanUuid->getUuid())) return true;
+            foreach ($userClans as $userClan) {
+                if ($clanUuid->equals($userClan->getUuid())) return true;
             }
         }
         return false;
@@ -155,7 +156,7 @@ class UserService
 
     public function userAgeAbove(UuidInterface|User $user, int $age): ?bool
     {
-        $user = $user instanceof User ? $user : $this->userRepo->findoneById($user);
+        $user = $user instanceof User ? $user : $this->userRepo->findOneByUuid($user);
         if (empty($user) || empty($user->getBirthdate())) {
             return null;
         }

@@ -5,7 +5,7 @@ namespace App\Tests\Integration\Service;
 use App\DataFixtures\ShopFixture;
 use App\Entity\User;
 use App\Exception\TicketLifecycleException;
-use App\Idm\IdmManager;
+use App\Repository\UserRepository;
 use App\Service\TicketService;
 use App\Service\TicketState;
 use App\Tests\Integration\DatabaseTestCase;
@@ -16,9 +16,7 @@ class TicketServiceIntegrationTest extends DatabaseTestCase
 {
     private function getUser(int $id): ?User
     {
-        $manager = self::getContainer()->get(IdmManager::class);
-        $userRepo = $manager->getRepository(User::class);
-        return $userRepo->findOneById(Uuid::fromInteger($id));
+        return self::getContainer()->get(UserRepository::class)->findOneByUuid(Uuid::fromInteger($id));
     }
 
     public function testTicketCreation()

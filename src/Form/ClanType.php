@@ -4,11 +4,13 @@ namespace App\Form;
 
 use App\Entity\Clan;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class ClanType extends AbstractType
 {
@@ -16,9 +18,13 @@ class ClanType extends AbstractType
     {
         $builder
             ->add('name')
-            ->add('joinPassword', TextType::class, [
+            ->add('joinPassword', PasswordType::class, [
                 'label' => 'Join Passwort (damit können deine Clanmates dem Clan beitreten)',
                 'required' => $options['require_password'],
+                'mapped' => false,
+                'constraints' => [
+                    new Assert\Length(min: 6, max: 128),
+                ],
                 'help' => 'Muss min. 6 Zeichen lang sein.',
                 'empty_data' => null,
                 'attr' => [

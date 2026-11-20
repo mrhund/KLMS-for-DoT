@@ -24,6 +24,12 @@ services:
             string $walletWalletLogoDataUri: '%env(WALLETWALLET_LOGO_DATA_URI)%'
             string $walletWalletIconDataUri: '%env(WALLETWALLET_ICON_DATA_URI)%'
             string $walletWalletStripDataUri: '%env(WALLETWALLET_STRIP_DATA_URI)%'
+            string $cognitoDomain: '%env(COGNITO_DOMAIN)%'
+            string $cognitoIssuer: '%env(COGNITO_ISSUER)%'
+            string $cognitoClientId: '%env(COGNITO_CLIENT_ID)%'
+            string $cognitoClientSecret: '%env(COGNITO_CLIENT_SECRET)%'
+            string $cognitoRedirectUri: '%env(COGNITO_REDIRECT_URI)%'
+            string $cognitoLogoutUri: '%env(COGNITO_LOGOUT_URI)%'
 
     #Register PSR-3 LogHandler for Sentry to resolve PSR-3 Placeholders in Reports
     Monolog\Processor\PsrLogMessageProcessor:
@@ -42,8 +48,3 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-
-when@test:
-    # add services in the test directory to be injected for testing
-    services:
-        App\Tests\IdmServerMock: ~

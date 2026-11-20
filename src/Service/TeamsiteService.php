@@ -6,10 +6,9 @@ use App\Entity\Teamsite;
 use App\Entity\TeamsiteCategory;
 use App\Entity\TeamsiteEntry;
 use App\Entity\User;
-use App\Idm\IdmManager;
-use App\Idm\IdmRepository;
 use App\Repository\TeamsiteEntryRepository;
 use App\Repository\TeamsiteRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 class TeamsiteService
@@ -17,12 +16,12 @@ class TeamsiteService
     private readonly EntityManagerInterface $em;
     private readonly TeamsiteRepository $repo;
     private readonly TeamsiteEntryRepository $entry;
-    private readonly IdmRepository $userRepo;
+    private readonly UserRepository $userRepo;
     private readonly UserService $userService;
 
     public function __construct(
         EntityManagerInterface $em,
-        IdmManager $im,
+        UserRepository $userRepo,
         TeamsiteRepository $repo,
         TeamsiteEntryRepository $entry,
         UserService $userService
@@ -30,7 +29,7 @@ class TeamsiteService
         $this->em = $em;
         $this->repo = $repo;
         $this->entry = $entry;
-        $this->userRepo = $im->getRepository(User::class);
+        $this->userRepo = $userRepo;
         $this->userService = $userService;
     }
 
@@ -68,7 +67,7 @@ class TeamsiteService
                 $uuids[] = $entry->getUserUuid();
             }
         }
-        $users = $this->userRepo->findById($uuids);
+        $users = $this->userRepo->findByUuids($uuids);
         $ids = array_map(fn (User $user) => $user->getUuid(), $users);
 
         return array_combine($ids, $users);
@@ -186,10 +185,9 @@ class TeamsiteService
             $result[] = $cat;
         }
 
-        if ($users = $this->userRepo->findById($uuids)) {
-            if (array_search(null, $users)) {
-                return false;
-            }
+        $users = $this->userRepo->findByUuids($uuids);
+        if (count($users) !== count(array_unique(array_map('strval', $uuids)))) {
+            return false;
         }
 
         return true;
