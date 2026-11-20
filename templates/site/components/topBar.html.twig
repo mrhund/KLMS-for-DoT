@@ -16,7 +16,9 @@
 		{% if app.user.user is defined %}
 			{% include 'site/components/topBar/userDropdown.html.twig' %}
 		{% else %}
-			{% include 'site/components/topBar/loginDropdown.html.twig' %}
+			<a id="dropdownMenuUser" class="btn btn-link" href="{{ path('app_login') }}">
+				<i class="fas fa-user-circle"></i> Anmelden
+			</a>
 		{% endif %}
 	</div>
 </div>
