@@ -3,10 +3,24 @@
 namespace App\Tests\Functional\Site;
 
 use App\DataFixtures\NewsFixtures;
+use App\Form\NewsType;
 use App\Tests\Functional\DatabaseWebTestCase;
 
 class NewsControllerTest extends DatabaseWebTestCase
 {
+    public function testHtml5DatesOptionIsOptIn(): void
+    {
+        $formFactory = static::getContainer()->get('form.factory');
+
+        $defaultForm = $formFactory->create(NewsType::class);
+        $this->assertFalse($defaultForm->get('publishedFrom')->getConfig()->getOption('html5'));
+        $this->assertFalse($defaultForm->get('publishedTo')->getConfig()->getOption('html5'));
+
+        $html5Form = $formFactory->create(NewsType::class, null, ['html5_dates' => true]);
+        $this->assertTrue($html5Form->get('publishedFrom')->getConfig()->getOption('html5'));
+        $this->assertTrue($html5Form->get('publishedTo')->getConfig()->getOption('html5'));
+    }
+
     public function testNewsLoad()
     {
         $this->databaseTool->loadFixtures([NewsFixtures::class]);

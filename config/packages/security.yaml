@@ -14,6 +14,13 @@ security:
         assets:
             pattern: ^/(media|images|cache|build)/
             security: false
+        mcp:
+            pattern: ^/mcp
+            stateless: true
+            provider: app_user_provider
+            access_token:
+                token_handler:
+                    id: App\Security\ApiTokenHandler
         main:
             lazy: true
             provider: app_user_provider
@@ -46,6 +53,7 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
+        - { path: ^/mcp, roles: ROLE_ADMIN }
         - { path: ^/login, roles: PUBLIC_ACCESS}
         - { path: ^/api, roles: IS_AUTHENTICATED_REMEMBERED}
         - { path: ^/admin, roles: ROLE_ADMIN }

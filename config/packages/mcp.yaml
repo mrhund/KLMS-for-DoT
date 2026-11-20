@@ -1,0 +1,14 @@
+mcp:
+    servers:
+        default:
+            name: 'klms'
+            transports:
+                http: true
+            http:
+                path: /mcp
+                allowed_hosts: ['localhost', '127.0.0.1', '[::1]', '%env(site_hostname:SITE_BASE_HOST)%']
+            registry: ['App\Mcp\']
+
+            # Enable STDIO for clients such as Claude Desktop via bin/console mcp:server.
+            # transports:
+            #     stdio: true

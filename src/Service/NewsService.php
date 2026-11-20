@@ -26,9 +26,14 @@ class NewsService
     /**
      * @return array All news elements (independent of active status)
      */
-    public function getAll(): array
+    public function getAll(?int $offset = null, ?int $limit = null): array
     {
-        return $this->repo->findAllOrdered();
+        return $this->repo->findAllOrdered($offset, $limit);
+    }
+
+    public function getById(int $id): ?News
+    {
+        return $this->repo->find($id);
     }
 
     /**

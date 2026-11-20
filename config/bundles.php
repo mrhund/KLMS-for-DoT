@@ -23,4 +23,5 @@ return [
     Endroid\QrCodeBundle\EndroidQrCodeBundle::class => ['all' => true],
     Minishlink\Bundle\WebPushBundle\MinishlinkWebPushBundle::class => ['all' => true],
     Presta\SitemapBundle\PrestaSitemapBundle::class => ['all' => true],
+    Symfony\AI\McpBundle\McpBundle::class => ['all' => true],
 ];
