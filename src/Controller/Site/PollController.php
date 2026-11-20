@@ -11,7 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
@@ -22,14 +22,14 @@ class PollController extends BaseController
     private readonly PollService $pollService;
     private readonly EntityManagerInterface $entityManager;
     private readonly CsrfTokenManagerInterface $csrfTokenManager;
-    private readonly RateLimiterFactory $pollVoteLimiter;
+    private readonly RateLimiterFactoryInterface $pollVoteLimiter;
 
     public function __construct(
         SerializerInterface $serializer,
         PollService $pollService,
         EntityManagerInterface $entityManager,
         CsrfTokenManagerInterface $csrfTokenManager,
-        RateLimiterFactory $pollVoteLimiter
+        RateLimiterFactoryInterface $pollVoteLimiter
     ) {
         parent::__construct($serializer);
         $this->pollService = $pollService;

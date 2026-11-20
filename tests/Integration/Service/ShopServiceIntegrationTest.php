@@ -135,7 +135,7 @@ class ShopServiceIntegrationTest extends DatabaseTestCase
         }
     }
 
-    private function getPriceData(): array
+    public static function getPriceData(): array
     {
         return [
             [1, 1234, 400, 9,     1234],
@@ -164,7 +164,7 @@ class ShopServiceIntegrationTest extends DatabaseTestCase
         $this->assertCount(0, $shopService->getOrderByUser($user));
 
         $order = $shopService->allocOrder($user);
-        $shopService->orderAddTickets($order, $count);
+        $shopService->orderAddTickets($order, $count, null);
         $shopService->placeOrder($order);
 
         $this->assertEquals($expectedTotal, $order->calculateTotal());

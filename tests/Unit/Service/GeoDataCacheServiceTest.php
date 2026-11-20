@@ -6,8 +6,8 @@ use App\Entity\GeoData;
 use App\Repository\GeoDataRepository;
 use App\Service\GeoDataCacheService;
 use App\Service\GeocodingService;
+use App\ValueObject\GeoPoint;
 use PHPUnit\Framework\TestCase;
-use Symfony\UX\Map\Point;
 
 class GeoDataCacheServiceTest extends TestCase
 {
@@ -31,7 +31,7 @@ class GeoDataCacheServiceTest extends TestCase
 
         $geocoding->expects($this->never())->method('geocode');
 
-    $point = $service->getPointForLocation(' Deutschland ', ' 1010 ', 'Wien ', null);
+        $point = $service->getPointForLocation(' Deutschland ', ' 1010 ', 'Wien ');
 
         $this->assertNotNull($point);
         $this->assertSame(48.2082, $point->getLatitude());
@@ -49,7 +49,7 @@ class GeoDataCacheServiceTest extends TestCase
             ->with('Deutschland', '10115', 'Berlin')
             ->willReturn(null);
 
-        $point = new Point(52.5200, 13.4050);
+        $point = new GeoPoint(52.5200, 13.4050);
         $geocoding->expects($this->once())
             ->method('geocode')
             ->with('10115 Berlin, Deutschland')
@@ -63,7 +63,7 @@ class GeoDataCacheServiceTest extends TestCase
                     && $entity->getCity() === 'Berlin';
             }), true);
 
-        $result = $service->getPointForLocation('Deutschland', '10115', 'Berlin', null);
+        $result = $service->getPointForLocation('Deutschland', '10115', 'Berlin');
 
         $this->assertSame($point, $result);
     }

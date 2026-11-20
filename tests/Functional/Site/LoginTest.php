@@ -6,6 +6,16 @@ use App\Tests\Functional\DatabaseWebTestCase;
 
 class LoginTest extends DatabaseWebTestCase
 {
+    public function testLoginHelperUsesBrowserSession(): void
+    {
+        $this->databaseTool->loadFixtures([]);
+        $this->client->followRedirects(false);
+
+        $this->login('user2@localhost.local');
+        $this->assertSelectorTextContains('#dropdownMenuUser', 'User 2');
+        $this->logout();
+    }
+
     public function testLoginAndLogout()
     {
         $this->databaseTool->loadFixtures([]);

@@ -41,6 +41,16 @@ class ContentService
         return $ret;
     }
 
+    public function getById(int $id): ?Content
+    {
+        return $this->repo->findById($id);
+    }
+
+    public function getByAlias(string $alias): ?Content
+    {
+        return $this->repo->findByAlias($alias);
+    }
+
     /**
      * @param Content $content Content object to check
      *

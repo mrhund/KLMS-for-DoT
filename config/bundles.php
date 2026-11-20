@@ -19,8 +19,8 @@ return [
     Liip\TestFixturesBundle\LiipTestFixturesBundle::class => ['test' => true],
     Sentry\SentryBundle\SentryBundle::class => ['prod' => true],
     Karser\Recaptcha3Bundle\KarserRecaptcha3Bundle::class => ['all' => true],
-    Eko\FeedBundle\EkoFeedBundle::class => ['all' => true],
     Endroid\QrCodeBundle\EndroidQrCodeBundle::class => ['all' => true],
     Minishlink\Bundle\WebPushBundle\MinishlinkWebPushBundle::class => ['all' => true],
     Presta\SitemapBundle\PrestaSitemapBundle::class => ['all' => true],
+    Symfony\AI\McpBundle\McpBundle::class => ['all' => true],
 ];

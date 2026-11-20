@@ -37,7 +37,7 @@ class ContentController extends AbstractController
         ]);
     }
 
-    #[Route(path: '/content/{slug}', requirements: ['slug' => '[a-z]+'], name: 'content_slug')]
+    #[Route(path: '/content/{slug}', requirements: ['slug' => '[a-z-]+'], name: 'content_slug')]
     public function bySlug(#[MapEntity(mapping: ['slug' => 'alias'])] Content $content): Response
     {
         return $this->render('site/content/index.html.twig', [

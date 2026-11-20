@@ -417,17 +417,8 @@ class ShopService
      */
     public function saveCheckoutId(ShopOrder $order, string $checkoutId): void
     {
-        if (!method_exists($order, 'setCheckoutId')) {
-            // If entity doesn't expose setter, do nothing
-            return;
-        }
-        try {
-            $uuid = \Ramsey\Uuid\Uuid::fromString($checkoutId);
-            $order->setCheckoutId($uuid);
-            $this->em->persist($order);
-            $this->em->flush();
-        } catch (\Throwable $e) {
-            $this->logger->warning('Could not parse checkoutId to UUID.');
-        }
+        $order->setCheckoutId(\Ramsey\Uuid\Uuid::fromString($checkoutId));
+        $this->em->persist($order);
+        $this->em->flush();
     }
 }

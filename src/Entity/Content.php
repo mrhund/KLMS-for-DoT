@@ -5,10 +5,12 @@ namespace App\Entity;
 use App\Entity\Traits\HistoryAwareEntity;
 use App\Repository\ContentRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ContentRepository::class)]
 #[ORM\HasLifecycleCallbacks]
+#[UniqueEntity('alias')]
 class Content implements HistoryAwareEntity
 {
     use Traits\EntityHistoryTrait;
@@ -16,7 +18,7 @@ class Content implements HistoryAwareEntity
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private ?int $id;
+    private ?int $id = null;
 
     #[ORM\Column(type: 'string', length: 255)]
     private ?string $title;
@@ -25,11 +27,11 @@ class Content implements HistoryAwareEntity
     private ?string $content;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private ?string $description;
+    private ?string $description = null;
 
     #[ORM\Column(type: 'string', length: 255, unique: true, nullable: true)]
     #[Assert\Regex('/^[a-z-]*$/', message: 'Nur Kleinbuchstaben und Bindestriche sind hier erlaubt.')]
-    private ?string $alias;
+    private ?string $alias = null;
 
     public function __construct()
     {

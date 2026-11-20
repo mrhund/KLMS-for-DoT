@@ -32,10 +32,12 @@ class NewsType extends AbstractType
             ->add('publishedFrom', DateTimeType::class, [
                 'required' => false,
                 'label' => 'Anzeigen ab',
+                'html5' => $options['html5_dates'],
             ])
             ->add('publishedTo', DateTimeType::class, [
                 'required' => false,
                 'label' => 'Anzeigen bis',
+                'html5' => $options['html5_dates'],
             ])
         ;
         $builder->add('imageFile', VichImageType::class, [
@@ -58,6 +60,8 @@ class NewsType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => News::class,
+            'html5_dates' => false,
         ]);
+        $resolver->setAllowedTypes('html5_dates', 'bool');
     }
 }

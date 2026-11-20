@@ -11,7 +11,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 
 class TourneyTest extends DatabaseWebTestCase
 {
-    private function provideUsersNotOnLan(): array
+    public static function provideUsersNotOnLan(): array
     {
         return [
             [''],
@@ -527,7 +527,7 @@ class TourneyTest extends DatabaseWebTestCase
         $this->assertStringNotContainsStringIgnoringCase('ausgeschieden', $crawler->filter('#tourney-list')->innerText());
     }
 
-    private static function provideUsers(): Generator
+    public static function provideUsers(): Generator
     {
         $fixtures = [TourneyFixture::class, TourneyFixtureGames::class];
         $users = ['', 'user6@localhost.local'];

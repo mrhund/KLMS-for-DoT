@@ -404,20 +404,21 @@ class TourneyServiceIntegrationTest extends DatabaseTestCase
         $this->assertGreaterThan(0, $tables['A'][0]['played']);
     }
 
-    private function provideLogResultInvalidUser(): array
+    public static function provideLogResultInvalidUser(): array
     {
         return [
-            [$this->getUser(7), null],
-            [$this->getUser(8), '/loser/i'], // user must enter the result
-            [$this->getUser(2), '//'], // user is not part of the game
+            [7, null],
+            [8, '/loser/i'], // user must enter the result
+            [2, '//'], // user is not part of the game
         ];
     }
 
     #[DataProvider('provideLogResultInvalidUser')]
-    public function testLogResultInvalidUser(User $user, ?string $exception)
+    public function testLogResultInvalidUser(int $userId, ?string $exception)
     {
         $this->databaseTool->loadFixtures([TourneyFixture::class, UserFixtures::class]);
         $service = self::getContainer()->get(TourneyService::class);
+        $user = $this->getUser($userId);
         /** @var Tourney $tourney */
         $tourney = $service->getVisibleTourneys()[0];
         $this->assertTrue($tourney->getStatus() == TourneyStage::Running);

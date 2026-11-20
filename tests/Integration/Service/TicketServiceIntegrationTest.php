@@ -37,7 +37,7 @@ class TicketServiceIntegrationTest extends DatabaseTestCase
         $this->assertFalse($tickteService->hasInvalid());
     }
 
-    private function provideUsers(): array
+    public static function provideUsers(): array
     {
         return [
             // userid, hasTicket, hasPunchedTicket, hasPurchasedTicket
@@ -47,7 +47,7 @@ class TicketServiceIntegrationTest extends DatabaseTestCase
         ];
     }
 
-    private function provideTickets(): array
+    public static function provideTickets(): array
     {
         return [
             // ticketCode,         isRedeemed, isPunched

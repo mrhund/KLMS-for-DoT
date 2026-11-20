@@ -49,10 +49,17 @@ class NewsRepository extends ServiceEntityRepository
     /**
      * @return News[] Returns an array of News objects
      */
-    public function findAllOrdered(): array
+    public function findAllOrdered(?int $offset = null, ?int $limit = null): array
     {
         $q = $this->createQuery();
         $this->addOrder($q);
+
+        if (null !== $offset) {
+            $q->setFirstResult($offset);
+        }
+        if (null !== $limit) {
+            $q->setMaxResults($limit);
+        }
 
         return $q
             ->getQuery()
