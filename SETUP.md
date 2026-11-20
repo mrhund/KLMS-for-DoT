@@ -87,6 +87,13 @@ bin/console doctrine:schema:create
 bin/console cache:clear
 ```
 
+### SumUp payments
+To enable SumUp payments, configure `lan.signup.payment_sumupapikey` with a SumUp API key and `lan.signup.payment_sumupmerchantid` with the merchant code in the administration settings, then enable `lan.signup.payment_sumupenabled`. The merchant code is not the merchant's email address. Existing client ID and client secret settings are no longer used and are not converted automatically.
+
+The API key is stored in the settings database and is visible to users who can manage settings. Restrict access accordingly. Verify checkout creation, payment verification and cancellation with a SumUp test account before enabling payments in production.
+
+If creating a checkout succeeds but saving its ID fails, the checkout may still exist at SumUp. Check and reconcile it before retrying the order.
+
 ### MCP server
 The MCP HTTP endpoint is available at `/mcp`. The project pins the experimental Symfony MCP Bundle to `1.0.0-BETA1`. Its DNS-rebinding protection permits localhost and the hostname configured in `SITE_BASE_HOST` (without its optional port). If the endpoint is accessed through another hostname, add it to `http.allowed_hosts` in `config/packages/mcp.yaml`.
 

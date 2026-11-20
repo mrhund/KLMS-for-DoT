@@ -43,12 +43,11 @@ abstract class DatabaseWebTestCase extends WebTestCase
 
     protected function login(string $user): void
     {
-        $csrfToken = $this->client->getContainer()->get('security.csrf.token_manager')->getToken('authenticate');
-        $this->client->request('POST', '/login', [
-            '_csrf_token' => $csrfToken,
-            'username' => $user,
-            'password' => 'password',
-        ]);
+        $crawler = $this->client->request('GET', '/login');
+        $form = $crawler->filter('form')->selectButton('Anmelden')->form();
+        $form['username'] = $user;
+        $form['password'] = 'password';
+        $this->client->submit($form);
         if ($this->client->getResponse()->isRedirect()) {
             $this->client->followRedirect();
         }

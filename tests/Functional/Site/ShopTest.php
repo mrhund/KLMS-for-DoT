@@ -256,7 +256,7 @@ class ShopTest extends DatabaseWebTestCase
         $this->assertResponseStatusCodeSame(200);
     }
 
-    private function provideCodes(): array
+    public static function provideCodes(): array
     {
         return [
             ["", false],

@@ -191,7 +191,9 @@ class ShopController extends AbstractController
                 switch ($action) {
                     case 'cancel':
                         $this->shopService->cancelOrder($order);
-                        $this->sumupService->delete((string)$order->getCheckoutId());
+                        if ($order->getCheckoutId() !== null) {
+                            $this->sumupService->delete((string)$order->getCheckoutId());
+                        }
                         break;
                     default:
                         $this->addFlash('error', "Invalid action specified.");
@@ -229,13 +231,12 @@ class ShopController extends AbstractController
                 $amount = $order->calculateTotal() / 100;
                 $currency = 'EUR'; // Adjust as needed
                 $checkoutRef = 'Order-' . $order->getId();
-                $payToEmail = $this->settingService->get('lan.signup.payment_sumupmerchantid');
-                $payFromEmail = $user->getEmail();
+                $merchantCode = (string) $this->settingService->get('lan.signup.payment_sumupmerchantid');
 
-                $checkoutId = $this->sumupService->createCheckout($amount, $currency, $checkoutRef, $payToEmail, $checkoutRef, $payFromEmail);
+                $checkoutId = $this->sumupService->createCheckout($amount, $currency, $checkoutRef, $merchantCode, $checkoutRef);
                 $this->shopService->saveCheckoutId($order, $checkoutId);
             } catch (\Exception $e) {
-                $this->logger->error('Unexpected SumUp error');
+                $this->logger->error('Unexpected SumUp error', ['exception' => $e]);
                 $this->addFlash('error', 'Fehler beim Erstellen der Zahlung.');
                 return $this->redirectToRoute('shop_orders');
             }

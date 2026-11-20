@@ -18,7 +18,7 @@ class UserServiceIntegrationTest extends DatabaseTestCase
         return Uuid::fromInteger($i)->toString();
     }
 
-    private function getUserData(): array
+    public static function getUserData(): array
     {
         return [
             [[], []],
@@ -28,7 +28,7 @@ class UserServiceIntegrationTest extends DatabaseTestCase
         ];
     }
 
-    private function getClanData(): array
+    public static function getClanData(): array
     {
         return [
             [[]],
@@ -126,7 +126,7 @@ class UserServiceIntegrationTest extends DatabaseTestCase
         }
     }
 
-    private function getUserClanData(): array
+    public static function getUserClanData(): array
     {
         return [
             [Uuid::fromInteger(2), Uuid::fromInteger(9), true],
@@ -150,7 +150,7 @@ class UserServiceIntegrationTest extends DatabaseTestCase
         $this->assertEquals($expected, $userService->isUserInClan($user, $clan));
     }
 
-    private function getUserClansData(): array
+    public static function getUserClansData(): array
     {
         return [
             [Uuid::fromInteger(2), [], false],

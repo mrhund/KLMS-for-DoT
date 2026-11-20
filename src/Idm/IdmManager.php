@@ -252,7 +252,7 @@ final class IdmManager
         return false;
     }
 
-    private function throwOnCode(bool|int $code, object $object = null): void
+    private function throwOnCode(bool|int $code, ?object $object = null): void
     {
         if ($code === false) {
             throw new PersistException($object, PersistException::REASON_IDM_ISSUE);

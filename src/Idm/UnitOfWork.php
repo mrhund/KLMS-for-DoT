@@ -178,7 +178,7 @@ class UnitOfWork
         return self::STATE_MANAGED;
     }
 
-    public function flush(object $object = null): void
+    public function flush(?object $object = null): void
     {
         if ($object === null) {
             foreach ($this->objects as $o) {
